@@ -1,0 +1,96 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<Project ToolsVersion="4.0" xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
+  <ItemGroup>
+    <Filter Include="Source Files">
+      <UniqueIdentifier>{4FC737F1-C7A5-4376-A066-2A32D752A2FF}</UniqueIdentifier>
+      <Extensions>cpp;c;cc;cxx;c++;cppm;ixx;def;odl;idl;hpj;bat;asm;asmx</Extensions>
+    </Filter>
+    <Filter Include="Header Files">
+      <UniqueIdentifier>{93995380-89BD-4b04-88EB-625FBE52EBFB}</UniqueIdentifier>
+      <Extensions>h;hh;hpp;hxx;h++;hm;inl;inc;ipp;xsd</Extensions>
+    </Filter>
+    <Filter Include="Resource Files">
+      <UniqueIdentifier>{67DA6AB6-F800-4c08-8B7A-83BB121AAD01}</UniqueIdentifier>
+      <Extensions>rc;ico;cur;bmp;dlg;rc2;rct;bin;rgs;gif;jpg;jpeg;jpe;resx;tiff;tif;png;wav;mfcribbon-ms</Extensions>
+    </Filter>
+    <Filter Include="Source Files\zmath">
+      <UniqueIdentifier>{25aa53b4-78bb-4aa6-a2d8-4478e7d894f6}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Source Files\noise">
+      <UniqueIdentifier>{47e18bc6-e12b-4669-b23c-30b9991ecf3d}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Header Files\zmath">
+      <UniqueIdentifier>{15a610d8-ab64-4276-8b2d-2d08ab493db0}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Header Files\noise">
+      <UniqueIdentifier>{d9a1e595-ae5c-4192-9dc2-e725626aea4a}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Header Files\zimg">
+      <UniqueIdentifier>{c7743ec8-fd6a-473e-bb11-89a7079e8949}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Source Files\zimg">
+      <UniqueIdentifier>{0a3f67a5-0b07-40b9-b86d-8bf4683d00bf}</UniqueIdentifier>
+    </Filter>
+  </ItemGroup>
+  <ItemGroup>
+    <ClInclude Include="framework.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="pch.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="Map.h">
+      <Filter>Header Files\zmath</Filter>
+    </ClInclude>
+    <ClInclude Include="Vec.h">
+      <Filter>Header Files\zmath</Filter>
+    </ClInclude>
+    <ClInclude Include="zmath_internals.h">
+      <Filter>Header Files\zmath</Filter>
+    </ClInclude>
+    <ClInclude Include="noise.h">
+      <Filter>Header Files\noise</Filter>
+    </ClInclude>
+    <ClInclude Include="Color.h">
+      <Filter>Header Files\zimg</Filter>
+    </ClInclude>
+    <ClInclude Include="Zimg.h">
+      <Filter>Header Files\zimg</Filter>
+    </ClInclude>
+    <ClInclude Include="Vec3.h">
+      <Filter>Header Files\zmath</Filter>
+    </ClInclude>
+    <ClInclude Include="Rect.h">
+      <Filter>Header Files\zmath</Filter>
+    </ClInclude>
+  </ItemGroup>
+  <ItemGroup>
+    <ClCompile Include="ZarkLib.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="pch.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="Vec.cpp">
+      <Filter>Source Files\zmath</Filter>
+    </ClCompile>
+    <ClCompile Include="Map.cpp">
+      <Filter>Source Files\zmath</Filter>
+    </ClCompile>
+    <ClCompile Include="noise.cpp">
+      <Filter>Source Files\noise</Filter>
+    </ClCompile>
+    <ClCompile Include="color.cpp">
+      <Filter>Source Files\zimg</Filter>
+    </ClCompile>
+    <ClCompile Include="zimg.cpp">
+      <Filter>Source Files\zimg</Filter>
+    </ClCompile>
+    <ClCompile Include="Vec3.cpp">
+      <Filter>Source Files\zmath</Filter>
+    </ClCompile>
+    <ClCompile Include="Rect.cpp">
+      <Filter>Source Files\zmath</Filter>
+    </ClCompile>
+  </ItemGroup>
+</Project>
