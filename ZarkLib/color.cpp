@@ -7,38 +7,39 @@ namespace zimg
 {
 
 	zimg::RGBA::RGBA(uint8 r, uint8 g, uint8 b, uint8 a)
-	{
-		R = r;
-		G = g;
-		B = b;
-		A = a;
-	}
+		: R(r)
+		, G(g)
+		, B(b)
+		, A(a)
+	{ }
 
 	zimg::RGBA::RGBA(uint8 r, uint8 g, uint8 b)
-	{
-		R = r;
-		G = g;
-		B = b;
-		A = 255;
-	}
+		: R(r)
+		, G(g)
+		, B(b)
+		, A(255)
+	{ }
 
 	RGBA::RGBA(uint8 brightness, uint8 a)
-	{
-		R = G = B = brightness;
-		A = a;
-	}
+		: R(brightness)
+		, G(brightness)
+		, B(brightness)
+		, A(a)
+	{ }
 
 	RGBA::RGBA(uint8 brightness)
-	{
-		R = G = B = brightness;
-		A = 255;
-	}
+		: R(brightness)
+		, G(brightness)
+		, B(brightness)
+		, A(255)
+	{ }
 
 	RGBA::RGBA()
-	{
-		R = G = B = 0;
-		A = 255;
-	}
+		: R(0)
+		, G(0)
+		, B(0)
+		, A(255)
+	{ }
 
 	RGBA RGBA::Opaque() const
 	{

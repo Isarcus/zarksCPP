@@ -1,0 +1,173 @@
+﻿#include "pch.h"
+#include "Mat3.h"
+
+#include "Vec3.h"
+
+#include <cmath>
+#include <cstring>
+#include <iomanip>
+#include <string>
+
+#define LOOP for (int row = 0; row < 3; row++) for (int col = 0; col < 3; col++)
+
+namespace zmath
+{
+	Mat3::Mat3() 
+		: data{	{1, 0, 0},
+				{0, 1, 0},
+				{0, 0, 1} } {}
+
+	Mat3::Mat3(double arr[3][3])
+		: data{ {arr[0][0], arr[0][1], arr[0][2]},
+				{arr[1][0], arr[1][1], arr[1][2]},
+				{arr[2][0], arr[2][1], arr[2][2]} } {}
+
+	Mat3 Mat3::operator=(Mat3 mat3)
+	{
+		LOOP data[row][col] = mat3.data[row][col];
+
+		return *this;
+	}
+
+	Mat3 Mat3::operator=(double** arr)
+	{
+		LOOP data[row][col] = arr[row][col];
+
+		return *this;
+	}
+
+	double* Mat3::operator[](int row)
+	{
+		return data[row];
+	}
+
+	Mat3 Mat3::operator+(Mat3 mat3) const
+	{
+		Mat3 ret;
+		LOOP ret[row][col] = data[row][col] + mat3[row][col];
+
+		return ret;
+	}
+
+	Mat3 Mat3::operator-(Mat3 mat3) const
+	{
+		Mat3 ret;
+		LOOP ret[row][col] = data[row][col] - mat3[row][col];
+
+		return ret;
+	}
+
+	Mat3 Mat3::operator*(Mat3 mat3) const
+	{
+		double ret[3][3];
+		LOOP
+		{
+			ret[row][col] = data[row][0] * mat3[0][col] + data[row][1] * mat3[1][col] + data[row][2] * mat3[2][col];
+		}
+		return ret;
+	}
+
+	Mat3& Mat3::operator+=(Mat3 mat3)
+	{
+		LOOP data[row][col] += mat3[row][col];
+	}
+
+	Mat3& Mat3::operator-=(Mat3 mat3)
+	{
+		LOOP data[row][col] -= mat3[row][col];
+	}
+
+	Mat3& Mat3::operator*=(Mat3 mat3)
+	{
+		double result[3][3];
+		LOOP
+		{
+			result[row][col] = data[row][0]*mat3[0][col] + data[row][1]*mat3[1][col] + data[row][2]*mat3[2][col];
+		}
+
+		std::memcpy(data, result, sizeof(result));
+
+		return *this;
+	}
+
+	Vec3 zmath::Mat3::operator*(Vec3 v3)
+	{
+		return Vec3(
+			v3.X*data[0][0] + v3.Y*data[0][1] + v3.Z*data[0][2],
+			v3.X*data[1][0] + v3.Y*data[1][1] + v3.Z*data[1][2],
+			v3.X*data[2][0] + v3.Y*data[2][1] + v3.Z*data[2][2]
+		);
+	}
+
+	Mat3 Mat3::Rotation(double γ, double β, double α)
+	{
+		using namespace std;
+
+		double rotData[3][3]
+		{
+			{cos(α)*cos(β), cos(α)*sin(β)*sin(γ) - sin(α)*cos(γ), cos(α)*sin(β)*cos(γ) + sin(α)*sin(γ)},
+			{sin(α)*cos(β), sin(α)*sin(β)*sin(γ) + cos(α)*cos(γ), sin(α)*sin(β)*cos(γ) - cos(α)*sin(γ)},
+			{-sin(β),       cos(β)*sin(γ),                        cos(β)*cos(γ)                       }
+		};
+
+		return Mat3(rotData);
+	}
+
+	Mat3 Mat3::RotationX(double theta)
+	{
+		using namespace std;
+
+		double rotData[3][3]
+		{
+			{1, 0, 0},
+			{0, cos(theta), -sin(theta)},
+			{0, sin(theta),  cos(theta)}
+		};
+
+		return Mat3(rotData);
+	}
+
+	Mat3 Mat3::RotationY(double theta)
+	{
+		using namespace std;
+
+		double rotData[3][3]
+		{
+			{cos(theta),  0, sin(theta)},
+			{0,			  1, 0},
+			{-sin(theta), 0, cos(theta)}
+		};
+
+		return Mat3(rotData);
+	}
+
+	Mat3 Mat3::RotationZ(double theta)
+	{
+		using namespace std;
+
+		double rotData[3][3]
+		{
+			{cos(theta), -sin(theta), 0},
+			{sin(theta),  cos(theta), 0},
+			{0,			  0,		  1},
+		};
+
+		return Mat3(rotData);
+	}
+
+	std::ostream& operator<<(std::ostream& out, Mat3 mat3)
+	{
+		for (int row = 0; row < 3; row++)
+		{
+			for (int col = 0; col < 3; col++)
+			{
+				std::string num = std::to_string(mat3[row][col]);
+				out << std::setw(5) << num.substr(0, 5) << " ";
+			}
+			out << "\n";
+		}
+
+		return out;
+	}
+
+}

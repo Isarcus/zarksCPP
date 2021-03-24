@@ -1,5 +1,7 @@
 #pragma once
 
+#include <iostream>
+
 namespace zmath
 {
 	typedef struct Vec3
@@ -16,6 +18,15 @@ namespace zmath
 		double Dot(Vec3 v) const;
 		double DistForm(Vec3 v) const;
 		double DistForm() const;
+
+		Vec3 Rotate(double thetaX, double thetaY, double thetaZ) const;
+		Vec3 RotateX(double theta) const;
+		Vec3 RotateY(double theta) const;
+		Vec3 RotateZ(double theta) const;
+		Vec3 Rotate(double thetaX, double thetaY, double thetaZ, Vec3 around) const;
+		Vec3 RotateX(double theta, Vec3 around) const;
+		Vec3 RotateY(double theta, Vec3 around) const;
+		Vec3 RotateZ(double theta, Vec3 around) const;
 
 		Vec3 operator+  (Vec3 v) const;
 		Vec3 operator-  (Vec3 v) const;
@@ -45,5 +56,7 @@ namespace zmath
 		static Vec3 Min(Vec3 v1, Vec3 v2);
 		static Vec3 Max(Vec3 v1, Vec3 v2);
 
+		friend std::ostream& operator<<(std::ostream& out, Vec3 v3);
+		
 	} Vec3;
 }

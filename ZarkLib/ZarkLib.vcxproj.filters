@@ -31,6 +31,18 @@
     <Filter Include="Source Files\zimg">
       <UniqueIdentifier>{0a3f67a5-0b07-40b9-b86d-8bf4683d00bf}</UniqueIdentifier>
     </Filter>
+    <Filter Include="Header Files\zmath\3D">
+      <UniqueIdentifier>{37bd2f38-c7cc-40ef-8fe4-0d04fab787ac}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Source Files\zmath\3D">
+      <UniqueIdentifier>{db044193-12c6-46fd-a8de-3e6976a39723}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Header Files\zmath\binary">
+      <UniqueIdentifier>{d72a6adc-9dc5-4947-8a5b-50b87f438272}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Source Files\zmath\binary">
+      <UniqueIdentifier>{d1e86dda-f807-4163-a7f9-0967bbe3efb7}</UniqueIdentifier>
+    </Filter>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="framework.h">
@@ -57,11 +69,23 @@
     <ClInclude Include="Zimg.h">
       <Filter>Header Files\zimg</Filter>
     </ClInclude>
-    <ClInclude Include="Vec3.h">
-      <Filter>Header Files\zmath</Filter>
-    </ClInclude>
     <ClInclude Include="Rect.h">
       <Filter>Header Files\zmath</Filter>
+    </ClInclude>
+    <ClInclude Include="Vec3.h">
+      <Filter>Header Files\zmath\3D</Filter>
+    </ClInclude>
+    <ClInclude Include="Mat3.h">
+      <Filter>Header Files\zmath\3D</Filter>
+    </ClInclude>
+    <ClInclude Include="Shape3D.h">
+      <Filter>Header Files\zmath\3D</Filter>
+    </ClInclude>
+    <ClInclude Include="Triangle3D.h">
+      <Filter>Header Files\zmath\3D</Filter>
+    </ClInclude>
+    <ClInclude Include="binary.h">
+      <Filter>Header Files\zmath\binary</Filter>
     </ClInclude>
   </ItemGroup>
   <ItemGroup>
@@ -86,11 +110,23 @@
     <ClCompile Include="zimg.cpp">
       <Filter>Source Files\zimg</Filter>
     </ClCompile>
-    <ClCompile Include="Vec3.cpp">
-      <Filter>Source Files\zmath</Filter>
-    </ClCompile>
     <ClCompile Include="Rect.cpp">
       <Filter>Source Files\zmath</Filter>
+    </ClCompile>
+    <ClCompile Include="Mat3.cpp">
+      <Filter>Source Files\zmath\3D</Filter>
+    </ClCompile>
+    <ClCompile Include="Vec3.cpp">
+      <Filter>Source Files\zmath\3D</Filter>
+    </ClCompile>
+    <ClCompile Include="Shape3D.cpp">
+      <Filter>Source Files\zmath\3D</Filter>
+    </ClCompile>
+    <ClCompile Include="Triangle3D.cpp">
+      <Filter>Source Files\zmath\3D</Filter>
+    </ClCompile>
+    <ClCompile Include="binary.cpp">
+      <Filter>Source Files\zmath\binary</Filter>
     </ClCompile>
   </ItemGroup>
 </Project>

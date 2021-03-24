@@ -8,16 +8,14 @@
 
 namespace zmath {
     Vec::Vec()
-    {
-        X = 0;
-        Y = 0;
-    }
+        : X(0)
+        , Y(0)
+    {}
 
-    Vec::Vec(double x_, double y_)
-    {
-        X = x_;
-        Y = y_;
-    }
+    Vec::Vec(double x, double y)
+        : X(x)
+        , Y(y)
+    {}
 
     void Vec::Set(double x_, double y_)
     {

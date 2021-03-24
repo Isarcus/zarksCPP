@@ -443,7 +443,7 @@ namespace zmath
 		file.write((char*)boundX, sizeof(boundX));
 		file.write((char*)boundY, sizeof(boundY));
 
-		// Write the actual map data
+		// Write the actual map data, little-endian
 		LOOP
 		{
 			double valDouble = data[x][y];

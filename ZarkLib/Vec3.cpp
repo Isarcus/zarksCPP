@@ -1,6 +1,7 @@
 #include "pch.h"
 #include "Vec3.h"
 
+#include "Mat3.h"
 #include "zmath_internals.h"
 
 #include <cmath>
@@ -8,21 +9,22 @@
 namespace zmath
 {
 	Vec3::Vec3()
-	{
-		X = Y = Z = 0;
-	}
+		: X(0)
+		, Y(0)
+		, Z(0)
+	{}
 
 	Vec3::Vec3(double x, double y, double z)
-	{
-		X = x;
-		Y = y; 
-		Z = z;
-	}
+		: X(x)
+		, Y(y)
+		, Z(z)
+	{}
 
 	Vec3::Vec3(double val)
-	{
-		X = Y = Z = val;
-	}
+		: X(val)
+		, Y(val)
+		, Z(val)
+	{}
 
 	void Vec3::Set(double x, double y, double z)
 	{
@@ -51,6 +53,46 @@ namespace zmath
 	double Vec3::DistForm() const
 	{
 		return std::sqrt(X*X + Y*Y + Z*Z);
+	}
+
+	Vec3 Vec3::Rotate(double thetaX, double thetaY, double thetaZ) const
+	{
+		return Mat3::Rotation(thetaX, thetaY, thetaZ) * (*this);
+	}
+
+	Vec3 Vec3::RotateX(double theta) const
+	{
+		return Mat3::RotationX(theta) * (*this);
+	}
+
+	Vec3 Vec3::RotateY(double theta) const
+	{
+		return Mat3::RotationY(theta) * (*this);
+	}
+
+	Vec3 Vec3::RotateZ(double theta) const
+	{
+		return Mat3::RotationZ(theta) * (*this);
+	}
+
+	Vec3 Vec3::Rotate(double thetaX, double thetaY, double thetaZ, Vec3 around) const
+	{
+		return around + (*this - around).Rotate(thetaX, thetaY, thetaZ);
+	}
+
+	Vec3 Vec3::RotateX(double theta, Vec3 around) const
+	{
+		return around + (*this - around).RotateX(theta);
+	}
+
+	Vec3 Vec3::RotateY(double theta, Vec3 around) const
+	{
+		return around + (*this - around).RotateY(theta);
+	}
+
+	Vec3 Vec3::RotateZ(double theta, Vec3 around) const
+	{
+		return around + (*this - around).RotateZ(theta);
 	}
 
 	Vec3 Vec3::operator+(Vec3 v) const { return Vec3(X + v.X, Y + v.Y, Z + v.Z); }
@@ -105,6 +147,12 @@ namespace zmath
 			(v1.Y > v2.Y) ? v1.Y : v2.Y,
 			(v1.Z > v2.Z) ? v1.Z : v2.Z
 		);
+	}
+
+	std::ostream& operator<<(std::ostream& out, Vec3 v3)
+	{
+		out << "(" << v3.X << ", " << v3.Y << ", " << v3.Z << ")";
+		return out;
 	}
 
 }

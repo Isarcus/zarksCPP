@@ -1,18 +1,27 @@
 #include "noise.h"
 #include "Zimg.h"
-//#include "Rect.h"
+#include "Rect.h"
+
+#include "Shape3D.h"
 
 #include <iostream>
 
 using namespace zmath;
 
 const unsigned long COLOR_CHANNELS = 3; // just rgb; no alpha for simplicity's sake
+const double PI = 3.14159265358979323846264;
 
 void modernArt();
 
 int main()
 {
-	zimg::Image img("noise.png");
+	std::ofstream file("test.stl");
+
+	Shape3D mainShape = Shape3D::Prism(7, 3, 2, Vec3());
+
+	mainShape.WriteSTL(file);
+	
+	file.close();
 
 	return 0;
 }
