@@ -95,6 +95,20 @@ namespace zmath
 		return around + (*this - around).RotateZ(theta);
 	}
 
+	Vec3 Vec3::Scale(double by, Vec3 around) const
+	{
+		return (*this) + ((*this) - around) * (by - 1);
+	}
+
+	Vec3 Vec3::Scale(double scaleX, double scaleY, double scaleZ, Vec3 around) const
+	{
+		return Vec3(
+			X + (X - around.X) * (scaleX - 1),
+			Y + (Y - around.Y) * (scaleY - 1),
+			Z + (Z - around.Z) * (scaleZ - 1)
+		);
+	}
+
 	Vec3 Vec3::operator+(Vec3 v) const { return Vec3(X + v.X, Y + v.Y, Z + v.Z); }
 	Vec3 Vec3::operator-(Vec3 v) const { return Vec3(X - v.X, Y - v.Y, Z - v.Z); }
 	Vec3 Vec3::operator*(Vec3 v) const { return Vec3(X * v.X, Y * v.Y, Z * v.Z); }

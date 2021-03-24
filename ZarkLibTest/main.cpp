@@ -17,7 +17,10 @@ int main()
 {
 	std::ofstream file("test.stl");
 
-	Shape3D mainShape = Shape3D::Prism(7, 3, 2, Vec3());
+	Shape3D mainShape = Shape3D::Prism(6, 3.0, 2.0, Vec3());
+
+	Shape3D prism = Shape3D::Prism(10, 1.0, 2.0, Vec3(0, 0, 5.0)).Rotate(PI / 8, PI / 8, 0, Vec3(0, 0, 5.0));
+	mainShape.Add(prism);
 
 	mainShape.WriteSTL(file);
 	

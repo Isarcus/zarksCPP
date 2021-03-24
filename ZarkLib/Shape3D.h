@@ -1,6 +1,7 @@
 #pragma once
 
 #include "Triangle3D.h"
+#include "Map.h"
 
 #include <vector>
 #include <fstream>
@@ -12,16 +13,18 @@ namespace zmath
 		Shape3D();
 		Shape3D(Triangle3D* triangles, int numTri);
 		Shape3D(double* vertices, int numTri);
+		Shape3D(Map map, Vec3 scale = Vec3(1, 1, 1), bool fillSides = true, bool fillBase = true);
+
+		void Print() const;
 
 		Shape3D& Add(Triangle3D tri);
 		Shape3D& Add(Shape3D shape);
 		Shape3D& Add(Vec3 v1, Vec3 v2, Vec3 v3);
 
-		// Shift is an expensive operation; only perform once all triangles are added!
 		Shape3D& Shift(Vec3 by);
-
-		// Rotate is a VERY expensive operation; only perform once all triangles are added!
 		Shape3D& Rotate(double thetaX, double thetaY, double thetaZ, Vec3 around = Vec3());
+		Shape3D& Scale(double by, Vec3 around = Vec3());
+		Shape3D& Scale(double scaleX, double scaleY, double scaleZ, Vec3 around = Vec3());
 
 		// This copies by value the entire dataset from one shape to another, so also a potentially expensive operation
 		Shape3D& operator=(Shape3D& shape);

@@ -28,6 +28,9 @@ namespace zmath
 		Vec3 RotateY(double theta, Vec3 around) const;
 		Vec3 RotateZ(double theta, Vec3 around) const;
 
+		Vec3 Scale(double by, Vec3 around = Vec3()) const;
+		Vec3 Scale(double scaleX, double scaleY, double scaleZ, Vec3 around = Vec3()) const;
+
 		Vec3 operator+  (Vec3 v) const;
 		Vec3 operator-  (Vec3 v) const;
 		Vec3 operator/  (Vec3 v) const;

@@ -20,6 +20,33 @@ namespace zmath
 		}
 	}
 
+	Shape3D::Shape3D(Map map, Vec3 scale, bool fillSides, bool fillBase)
+	{
+		Vec bounds = map.Bounds();
+
+		// First the heightmap data
+		for (int x = 0; x < bounds.X - 1; x++)
+		{
+			for (int y = 0; y < bounds.Y - 1; y++)
+			{
+				Vec3 baseCoord(x, y, map[x][y]);
+				Vec3 topCoord(x + 1, y + 1, map[x + 1][y + 1]);
+			}
+		}
+	}
+
+	void Shape3D::Print() const
+	{
+		std::cout << "Printing Shape3D with " << data.size() << " triangles.\n";
+
+		for (const Triangle3D& tri : data)
+		{
+			std::cout << tri.vertices[0] << "\n";
+			std::cout << tri.vertices[1] << "\n";
+			std::cout << tri.vertices[2] << "\n\n";
+		}
+	}
+
 	Shape3D& Shape3D::Add(Triangle3D tri)
 	{
 		data.push_back(tri);
@@ -59,6 +86,32 @@ namespace zmath
 	Shape3D& Shape3D::Rotate(double thetaX, double thetaY, double thetaZ, Vec3 around)
 	{
 		for (Triangle3D& tri : data) tri = tri.Rotate(thetaX, thetaY, thetaZ, around);
+
+		return *this;
+	}
+
+	Shape3D& Shape3D::Scale(double by, Vec3 around)
+	{
+		for (Triangle3D& tri : data)
+		{
+			for (Vec3& vertex : tri.vertices)
+			{
+				vertex = vertex.Scale(by, around);
+			}
+		}
+
+		return *this;
+	}
+
+	Shape3D& Shape3D::Scale(double scaleX, double scaleY, double scaleZ, Vec3 around)
+	{
+		for (Triangle3D& tri : data)
+		{
+			for (Vec3& vertex : tri.vertices)
+			{
+				vertex = vertex.Scale(scaleX, scaleY, scaleZ, around);
+			}
+		}
 
 		return *this;
 	}
