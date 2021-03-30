@@ -78,13 +78,19 @@
     <ClInclude Include="Mat3.h">
       <Filter>Header Files\zmath\3D</Filter>
     </ClInclude>
-    <ClInclude Include="Shape3D.h">
+    <ClInclude Include="Tessellation3D.h">
       <Filter>Header Files\zmath\3D</Filter>
     </ClInclude>
     <ClInclude Include="Triangle3D.h">
       <Filter>Header Files\zmath\3D</Filter>
     </ClInclude>
     <ClInclude Include="binary.h">
+      <Filter>Header Files\zmath\binary</Filter>
+    </ClInclude>
+    <ClInclude Include="Shape3D.h">
+      <Filter>Header Files\zmath\3D</Filter>
+    </ClInclude>
+    <ClInclude Include="numerals.h">
       <Filter>Header Files\zmath\binary</Filter>
     </ClInclude>
   </ItemGroup>
@@ -119,13 +125,19 @@
     <ClCompile Include="Vec3.cpp">
       <Filter>Source Files\zmath\3D</Filter>
     </ClCompile>
-    <ClCompile Include="Shape3D.cpp">
+    <ClCompile Include="Tessellation3D.cpp">
       <Filter>Source Files\zmath\3D</Filter>
     </ClCompile>
     <ClCompile Include="Triangle3D.cpp">
       <Filter>Source Files\zmath\3D</Filter>
     </ClCompile>
     <ClCompile Include="binary.cpp">
+      <Filter>Source Files\zmath\binary</Filter>
+    </ClCompile>
+    <ClCompile Include="Shape3D.cpp">
+      <Filter>Source Files\zmath\3D</Filter>
+    </ClCompile>
+    <ClCompile Include="numerals.cpp">
       <Filter>Source Files\zmath\binary</Filter>
     </ClCompile>
   </ItemGroup>

@@ -15,16 +15,27 @@ void modernArt();
 
 int main()
 {
-	std::ofstream file("test.stl");
+	// create shapes
+	Shape3D mainShape;
+	Shape3D prism = Shape3D::Sphere(7, 6.0, Vec3());
 
-	Shape3D mainShape = Shape3D::Prism(6, 3.0, 2.0, Vec3());
-
-	Shape3D prism = Shape3D::Prism(10, 1.0, 2.0, Vec3(0, 0, 5.0)).Rotate(PI / 8, PI / 8, 0, Vec3(0, 0, 5.0));
+	// append shapes
 	mainShape.Add(prism);
 
-	mainShape.WriteSTL(file);
-	
+	// cleanup
+	mainShape.STLCleanup();
+	Tessellation3D tess = mainShape.Tesselate();
+
+	// write to file
+	std::ofstream file("test.stl");
+	tess.WriteSTL(file);
 	file.close();
+
+	auto bounds = tess.Bounds();
+	std::cout << "Min: " << bounds[0] << "\n";
+	std::cout << "Max: " << bounds[1] << "\n";
+
+	//tess.Print();
 
 	return 0;
 }

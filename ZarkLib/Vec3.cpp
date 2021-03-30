@@ -8,36 +8,57 @@
 
 namespace zmath
 {
-	Vec3::Vec3()
+	Vec3::Vec3() noexcept
 		: X(0)
 		, Y(0)
 		, Z(0)
 	{}
 
-	Vec3::Vec3(double x, double y, double z)
+	Vec3::Vec3(const Vec3& v) noexcept
+		: X(v.X)
+		, Y(v.Y)
+		, Z(v.Z)
+	{ }
+
+	Vec3::Vec3(Vec3 && v) noexcept
+		: X(v.X)
+		, Y(v.Y)
+		, Z(v.Z)
+	{ }
+
+	Vec3::Vec3(double x, double y, double z) noexcept
 		: X(x)
 		, Y(y)
 		, Z(z)
 	{}
 
-	Vec3::Vec3(double val)
+	Vec3::Vec3(double val) noexcept
 		: X(val)
 		, Y(val)
 		, Z(val)
 	{}
 
-	void Vec3::Set(double x, double y, double z)
+	Vec3& Vec3::Set(double x, double y, double z)
 	{
 		X = x;
 		Y = y;
 		Z = z;
 	}
 
-	void Vec3::operator=(Vec3 v)
+	Vec3& Vec3::operator=(const Vec3& v) noexcept
 	{
 		X = v.X;
 		Y = v.Y;
 		Z = v.Z;
+		return *this;
+	}
+
+	Vec3& Vec3::operator=(Vec3&& v) noexcept
+	{
+		X = v.X;
+		Y = v.Y;
+		Z = v.Z;
+		return *this;
 	}
 
 	double Vec3::Dot(Vec3 v) const
@@ -123,20 +144,20 @@ namespace zmath
 		return Vec3(x, y, z);
 	}
 
-	void Vec3::operator+=(Vec3 v) { *this = *this + v; }
-	void Vec3::operator-=(Vec3 v) { *this = *this - v; }
-	void Vec3::operator*=(Vec3 v) { *this = *this * v; }
-	void Vec3::operator/=(Vec3 v) { *this = *this / v; }
+	Vec3& Vec3::operator+=(Vec3 v) { return (*this = *this + v, *this); }
+	Vec3& Vec3::operator-=(Vec3 v) { return (*this = *this - v, *this); }
+	Vec3& Vec3::operator*=(Vec3 v) { return (*this = *this * v, *this); }
+	Vec3& Vec3::operator/=(Vec3 v) { return (*this = *this / v, *this); }
 
 	Vec3 Vec3::operator+(double val) const { return *this + Vec3(val); }
 	Vec3 Vec3::operator-(double val) const { return *this - Vec3(val); }
 	Vec3 Vec3::operator*(double val) const { return *this * Vec3(val); }
 	Vec3 Vec3::operator/(double val) const { return *this / Vec3(val); }
 
-	void Vec3::operator+=(double val) { *this += Vec3(val); }
-	void Vec3::operator-=(double val) { *this -= Vec3(val); }
-	void Vec3::operator*=(double val) { *this *= Vec3(val); }
-	void Vec3::operator/=(double val) { *this /= Vec3(val); }
+	Vec3& Vec3::operator+=(double val) { return *this += Vec3(val); }
+	Vec3& Vec3::operator-=(double val) { return *this -= Vec3(val); }
+	Vec3& Vec3::operator*=(double val) { return *this *= Vec3(val); }
+	Vec3& Vec3::operator/=(double val) { return *this /= Vec3(val); }
 
 	bool Vec3::operator==(Vec3 v) const { return X == v.X && Y == v.Y && Z == v.Z; }
 	bool Vec3::operator!=(Vec3 v) const { return X != v.X || Y != v.Y || Z != v.Z; }
@@ -145,22 +166,33 @@ namespace zmath
 	bool Vec3::operator<=(Vec3 v) const { return X <= v.X && Y <= v.Y && Z <= v.Z; }
 	bool Vec3::operator>=(Vec3 v) const { return X >= v.X && Y >= v.Y && Z >= v.Z; }
 
-	Vec3 Vec3::Min(Vec3 v1, Vec3 v2)
+	Vec3 Vec3::Min(const Vec3& v1, const Vec3& v2)
 	{
 		return Vec3(
-			(v1.X < v2.X) ? v1.X : v2.X,
-			(v1.Y < v2.Y) ? v1.Y : v2.Y,
-			(v1.Z < v2.Z) ? v1.Z : v2.Z
+			std::min(v1.X, v2.X),
+			std::min(v1.Y, v2.Y),
+			std::min(v1.Z, v2.Z)
 		);
 	}
 
-	Vec3 Vec3::Max(Vec3 v1, Vec3 v2)
+	Vec3 Vec3::Max(const Vec3& v1, const Vec3& v2)
 	{
 		return Vec3(
-			(v1.X > v2.X) ? v1.X : v2.X,
-			(v1.Y > v2.Y) ? v1.Y : v2.Y,
-			(v1.Z > v2.Z) ? v1.Z : v2.Z
+			std::max(v1.X, v2.X),
+			std::max(v1.Y, v2.Y),
+			std::max(v1.Z, v2.Z)
 		);
+	}
+
+	Vec3 Vec3::Min(const Vec3& v1, Vec3&& v2)
+	{
+		// this is OK!! It calls the (Vec3&, Vec3&) Min function, instead of infinite recursion
+		return Min(v1, v2);
+	}
+
+	Vec3 Vec3::Max(const Vec3& v1, Vec3&& v2)
+	{
+		return Max(v1, v2);
 	}
 
 	std::ostream& operator<<(std::ostream& out, Vec3 v3)

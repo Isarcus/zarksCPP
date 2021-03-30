@@ -9,7 +9,7 @@ namespace zmath
 	class Map
 	{
 	public:
-		Map(Vec bounds_);
+		Map(Vec bounds);
 		Map(double x, double y);
 		void Delete();
 
@@ -46,12 +46,12 @@ namespace zmath
 		
 		Map& Copy() const;
 		Map& Copy(Vec min, Vec max) const;
-		Map& operator() (Vec min_, Vec max_) const; // return a reference to an underlying section of the map
+		Map& operator() (Vec min, Vec max) const; // return a reference to an underlying section of the map
 		Map& Clear(double val);
 		Map& Interpolate(double newMin, double newMax);
 		Map& Abs();
 
-		Map SlopeMap();
+		Map& SlopeMap();
 
 		// Math operator overloads
 

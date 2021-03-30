@@ -12,6 +12,16 @@ namespace zmath {
         , Y(0)
     {}
 
+    Vec::Vec(Vec&& v)
+        : X(v.X)
+        , Y(v.Y)
+    {}
+
+    Vec::Vec(const Vec& v)
+        : X(v.X)
+        , Y(v.Y)
+    {}
+
     Vec::Vec(double x, double y)
         : X(x)
         , Y(y)
@@ -60,7 +70,10 @@ namespace zmath {
         return X + Y;
     }
 
-    double Vec::Dot(Vec v) const { return X * v.X + Y * v.Y; }
+    double Vec::Dot(Vec v) const
+    {
+        return X * v.X + Y * v.Y;
+    }
 
     double Vec::DistForm(Vec v) const
     {
@@ -102,8 +115,14 @@ namespace zmath {
         return std::string("(" + std::to_string(X) + ", " + std::to_string(Y) + ")");
     }
 
-    // Setting equals operator
-    Vec Vec::operator=(Vec v)
+    Vec& Vec::operator=(Vec&& v)
+    {
+        X = v.X;
+        Y = v.Y;
+        return *this;
+    }
+
+    Vec& Vec::operator=(const Vec& v)
     {
         X = v.X;
         Y = v.Y;
@@ -117,11 +136,8 @@ namespace zmath {
 
     // Normal math operators
     Vec Vec::operator+(Vec v) const { return Vec(X + v.X, Y + v.Y); }
-
     Vec Vec::operator-(Vec v) const { return Vec(X - v.X, Y - v.Y);  }
-
     Vec Vec::operator*(Vec v) const { return Vec(X * v.X, Y * v.Y); }
-
     Vec Vec::operator/(Vec v) const
     {
         double x_, y_;
@@ -151,25 +167,28 @@ namespace zmath {
     }
 
     // Math= operators (modify the underlying Vec)
-    void Vec::operator+=(Vec v)
+    Vec& Vec::operator+=(Vec v)
     {
         X += v.X;
         Y += v.Y;
+        return *this;
     }
 
-    void Vec::operator-=(Vec v)
+    Vec& Vec::operator-=(Vec v)
     {
         X -= v.X;
         Y -= v.Y;
+        return *this;
     }
 
-    void Vec::operator*=(Vec v)
+    Vec& Vec::operator*=(Vec v)
     {
         X *= v.X;
         Y *= v.Y;
+        return *this;
     }
 
-    void Vec::operator/=(Vec v)
+    Vec& Vec::operator/=(Vec v)
     {
         if (v.X == 0)
         {
@@ -192,6 +211,7 @@ namespace zmath {
         {
             Y /= v.Y;
         }
+        return *this;
     }
 
     Vec Vec::operator+(double val) const { return Vec(X + val, Y + val); }
@@ -217,25 +237,28 @@ namespace zmath {
         return Vec(X / val, Y / val);
     }
 
-    void Vec::operator+=(double val)
+    Vec& Vec::operator+=(double val)
     {
         X += val;
         Y += val;
+        return *this;
     }
 
-    void Vec::operator-=(double val)
+    Vec& Vec::operator-=(double val)
     {
         X -= val;
         Y -= val;
+        return *this;
     }
 
-    void Vec::operator*=(double val)
+    Vec& Vec::operator*=(double val)
     {
         X *= val;
         Y *= val;
+        return *this;
     }
 
-    void Vec::operator/=(double val)
+    Vec& Vec::operator/=(double val)
     {
         if (val == 0)
         {
@@ -252,6 +275,7 @@ namespace zmath {
             X /= val;
             Y /= val;
         }
+        return *this;
     }
 
     bool Vec::operator==(Vec v) const { return (X == v.X && Y == v.Y); }

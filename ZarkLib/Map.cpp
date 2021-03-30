@@ -318,7 +318,7 @@ namespace zmath
 		return *this;
 	}
 
-	Map zmath::Map::SlopeMap()
+	Map& zmath::Map::SlopeMap()
 	{
 		Map m = *new Map(bounds);
 

@@ -155,11 +155,13 @@
   <ItemGroup>
     <ClInclude Include="binary.h" />
     <ClInclude Include="Color.h" />
+    <ClInclude Include="numerals.h" />
+    <ClInclude Include="Shape3D.h" />
     <ClInclude Include="Triangle3D.h" />
     <ClInclude Include="framework.h" />
     <ClInclude Include="Mat3.h" />
     <ClInclude Include="Rect.h" />
-    <ClInclude Include="Shape3D.h" />
+    <ClInclude Include="Tessellation3D.h" />
     <ClInclude Include="Vec3.h" />
     <ClInclude Include="Map.h" />
     <ClInclude Include="noise.h" />
@@ -171,6 +173,8 @@
   <ItemGroup>
     <ClCompile Include="binary.cpp" />
     <ClCompile Include="color.cpp" />
+    <ClCompile Include="numerals.cpp" />
+    <ClCompile Include="Shape3D.cpp" />
     <ClCompile Include="Triangle3D.cpp" />
     <ClCompile Include="Map.cpp" />
     <ClCompile Include="Mat3.cpp" />
@@ -182,7 +186,7 @@
       <PrecompiledHeader Condition="'$(Configuration)|$(Platform)'=='Release|x64'">Create</PrecompiledHeader>
     </ClCompile>
     <ClCompile Include="Rect.cpp" />
-    <ClCompile Include="Shape3D.cpp" />
+    <ClCompile Include="Tessellation3D.cpp" />
     <ClCompile Include="Vec.cpp" />
     <ClCompile Include="Vec3.cpp" />
     <ClCompile Include="ZarkLib.cpp" />

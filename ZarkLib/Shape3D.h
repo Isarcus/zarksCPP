@@ -1,53 +1,57 @@
 #pragma once
 
-#include "Triangle3D.h"
-#include "Map.h"
-
-#include <vector>
-#include <fstream>
+#include "Vec3.h"
+#include "Tessellation3D.h"
 
 namespace zmath
 {
-	class Shape3D {
+	class Shape3D
+	{
 	public:
-		Shape3D();
-		Shape3D(Triangle3D* triangles, int numTri);
-		Shape3D(double* vertices, int numTri);
-		Shape3D(Map map, Vec3 scale = Vec3(1, 1, 1), bool fillSides = true, bool fillBase = true);
+		Shape3D() noexcept;
+		Shape3D(const Shape3D& shape) noexcept;
+		Shape3D(Shape3D&& shape) noexcept;
+		Shape3D(std::vector<Vec3> vertices, std::vector<int> indices) noexcept;
 
-		void Print() const;
+		Shape3D& operator= (const Shape3D& shape) noexcept;
+		Shape3D& operator= (Shape3D&& shape) noexcept;
 
-		Shape3D& Add(Triangle3D tri);
-		Shape3D& Add(Shape3D shape);
-		Shape3D& Add(Vec3 v1, Vec3 v2, Vec3 v3);
+		Shape3D& Add(const Shape3D& shape);
+		Shape3D& Add(Shape3D&& shape);
 
 		Shape3D& Shift(Vec3 by);
+		Shape3D& Shift(double x, double y, double z);
+
 		Shape3D& Rotate(double thetaX, double thetaY, double thetaZ, Vec3 around = Vec3());
+		Shape3D& Rotate(Vec3 angles, Vec3 around = Vec3());
 		Shape3D& Scale(double by, Vec3 around = Vec3());
 		Shape3D& Scale(double scaleX, double scaleY, double scaleZ, Vec3 around = Vec3());
 
-		// This copies by value the entire dataset from one shape to another, so also a potentially expensive operation
-		Shape3D& operator=(Shape3D& shape);
+		//             //
+		// STL-RELATED //
+		//             //
 
-		// Write data to STL file
-		void WriteSTL(std::ofstream& f) const;
+		Shape3D& STLCleanup(bool scaleIfSmall = true);
+		Tessellation3D Tesselate();
 
 		//         //
 		// PRESETS //
 		//         //
 
-		// Square returns a square in the XY plane centered around the passed point, or around (0, 0) by default
-		static Shape3D Square(double size, Vec3 center = Vec3());
-		static Shape3D Rectangle(double sizeX, double sizeY, Vec3 center = Vec3());
-		static Shape3D NGon(int sides, double radius, Vec3 center = Vec3());
+		static Shape3D Polygon(int sides, double radius, Vec3 center);
+		static Shape3D Polygon(const std::vector<Vec3> points2D, bool ccw = true);
 
-		static Shape3D Cube(double size, Vec3 center = Vec3());
-		static Shape3D Prism(int baseSides, double radius, double height, Vec3 center = Vec3());
-		static Shape3D Pyramid(int baseSides, double radius, double height, Vec3 center = Vec3());
+		static Shape3D RectangularPrism(Vec3 min, Vec3 max);
+		static Shape3D Cube(Vec3 min, double size);
+		static Shape3D Prism(int sides, double radius, double height, Vec3 baseCenter);
 
-		static Shape3D Sphere(double radius, Vec3 center = Vec3());
+		/* @param acceptOrder: Should be true iff vertices are supplied such that (0, 1, 2) create a counterclockwise triangle
+		*  when viewed from the outside and (3) is behind that triangle. */
+		static Shape3D TriangularPyramid(std::array<Vec3, 4> vertices, bool acceptOrder = false);
 
+		static Shape3D Sphere(int resolution, double radius, Vec3 center);
 	private:
-		std::vector<Triangle3D> data;
+		std::vector<Vec3> vertices;
+		std::vector<int> indices;
 	};
 }

@@ -10,9 +10,11 @@ namespace zmath
 		double Y;
 
 		Vec();
-		Vec(double x_, double y_);
+		Vec(Vec&& v);
+		Vec(const Vec& v);
+		Vec(double x, double y);
 
-		void Set(double x_, double y_);
+		void Set(double x, double y);
 
 		double Slope() const;
 		double Area() const;
@@ -31,26 +33,27 @@ namespace zmath
 
 		std::string String() const;
 
-		Vec operator=  (Vec v);
+		Vec& operator=  (Vec&& v);
+		Vec& operator=  (const Vec& v);
 		bool operator!() const;
 
 		Vec operator+  (Vec v) const;
 		Vec operator-  (Vec v) const;
 		Vec operator*  (Vec v) const;
 		Vec operator/  (Vec v) const;
-		void operator+= (Vec v);
-		void operator-= (Vec v);
-		void operator*= (Vec v);
-		void operator/= (Vec v);
+		Vec& operator+= (Vec v);
+		Vec& operator-= (Vec v);
+		Vec& operator*= (Vec v);
+		Vec& operator/= (Vec v);
 
 		Vec operator+  (double val) const;
 		Vec operator-  (double val) const;
 		Vec operator*  (double val) const;
 		Vec operator/  (double val) const;
-		void operator+= (double val);
-		void operator-= (double val);
-		void operator*= (double val);
-		void operator/= (double val);
+		Vec& operator+= (double val);
+		Vec& operator-= (double val);
+		Vec& operator*= (double val);
+		Vec& operator/= (double val);
 
 		bool operator== (Vec v) const;
 		bool operator!= (Vec v) const;
