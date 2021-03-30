@@ -9,10 +9,10 @@ namespace zmath
 		Big,
 	};
 
-	void ToBytes(char* buf, uint16_t val, Endian byteOrder);
-	void ToBytes(char* buf, uint32_t val, Endian byteOrder);
-	void ToBytes(char* buf, uint64_t val, Endian byteOrder);
+	void ToBytes(uint8_t* buf, uint16_t val, Endian byteOrder);
+	void ToBytes(uint8_t* buf, uint32_t val, Endian byteOrder);
+	void ToBytes(uint8_t* buf, uint64_t val, Endian byteOrder);
 
-	void ToBytes(char* buf, float val, Endian byteOrder);
-	void ToBytes(char* buf, double val, Endian byteOrder);
+	void ToBytes(uint8_t* buf, float  val, Endian byteOrder);
+	void ToBytes(uint8_t* buf, double val, Endian byteOrder);
 }

@@ -1,7 +1,7 @@
 #include "pch.h"
 #include "binary.h"
 
-void zmath::ToBytes(char* buf, uint16_t val, Endian byteOrder)
+void zmath::ToBytes(uint8_t* buf, uint16_t val, Endian byteOrder)
 {
 	if (byteOrder == Endian::Little)
 	{
@@ -15,7 +15,7 @@ void zmath::ToBytes(char* buf, uint16_t val, Endian byteOrder)
 	}
 }
 
-void zmath::ToBytes(char* buf, uint32_t val, Endian byteOrder)
+void zmath::ToBytes(uint8_t* buf, uint32_t val, Endian byteOrder)
 {
 	if (byteOrder == Endian::Little)
 	{
@@ -33,7 +33,7 @@ void zmath::ToBytes(char* buf, uint32_t val, Endian byteOrder)
 	}
 }
 
-void zmath::ToBytes(char* buf, uint64_t val, Endian byteOrder)
+void zmath::ToBytes(uint8_t* buf, uint64_t val, Endian byteOrder)
 {
 	if (byteOrder == Endian::Little)
 	{
@@ -59,16 +59,18 @@ void zmath::ToBytes(char* buf, uint64_t val, Endian byteOrder)
 	}
 }
 
-void zmath::ToBytes(char* buf, float val, Endian byteOrder)
+void zmath::ToBytes(uint8_t* buf, float val, Endian byteOrder)
 {
-	uint32_t uval = *(uint32_t*)&val;
+	uint32_t* uptr = reinterpret_cast<uint32_t*>(&val);
+	uint32_t uval = *uptr;
 
 	ToBytes(buf, uval, byteOrder);
 }
 
-void zmath::ToBytes(char* buf, double val, Endian byteOrder)
+void zmath::ToBytes(uint8_t* buf, double val, Endian byteOrder)
 {
-	uint64_t uval = *(uint32_t*)&val;
+	uint64_t* uptr = reinterpret_cast<uint64_t*>(&val);
+	uint64_t uval = *uptr;
 
 	ToBytes(buf, uval, byteOrder);
 }
