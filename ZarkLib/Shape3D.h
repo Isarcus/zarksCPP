@@ -16,8 +16,8 @@ namespace zmath
 		Shape3D& operator= (const Shape3D& shape) noexcept;
 		Shape3D& operator= (Shape3D&& shape) noexcept;
 
-		Shape3D& Add(const Shape3D& shape);
-		Shape3D& Add(Shape3D&& shape);
+		Shape3D& Add(const Shape3D& shape, bool verticesOnly = false);
+		Shape3D& Add(Shape3D&& shape, bool verticesOnly = false);
 
 		Shape3D& Shift(Vec3 by);
 		Shape3D& Shift(double x, double y, double z);
@@ -50,6 +50,9 @@ namespace zmath
 		static Shape3D TriangularPyramid(std::array<Vec3, 4> vertices, bool acceptOrder = false);
 
 		static Shape3D Sphere(int resolution, double radius, Vec3 center);
+
+		static Shape3D Equation2D(Vec min, Vec max, double (*function)(double, double), bool sides = true, Vec resXY = Vec(1, 1));
+		
 	private:
 		std::vector<Vec3> vertices;
 		std::vector<int> indices;

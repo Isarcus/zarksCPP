@@ -20,13 +20,15 @@ namespace zmath
         , indices(indices)
     {}
 
-    Shape3D& Shape3D::Add(const Shape3D& shape)
+    Shape3D& Shape3D::Add(const Shape3D& shape, bool verticesOnly)
     {
         int startIdx = vertices.size();
         for (const Vec3& v : shape.vertices)
         {
             vertices.push_back(v);
         }
+            
+        if (verticesOnly) return *this;
 
         for (const int& idx : shape.indices)
         {
@@ -36,9 +38,9 @@ namespace zmath
         return *this;
     }
 
-    Shape3D& Shape3D::Add(Shape3D&& shape)
+    Shape3D& Shape3D::Add(Shape3D&& shape, bool verticesOnly)
     {
-        return Add(shape);
+        return Add(shape, verticesOnly);
     }
 
     Shape3D& Shape3D::Shift(Vec3 by)
@@ -353,41 +355,114 @@ namespace zmath
 
     Shape3D Shape3D::Sphere(int resolution, double radius, Vec3 center)
     {
+        const int heightResFactor = 2;
+
         Shape3D sphere;
 
         // Generate vertices
-        for (int i = 1; i < resolution*2; i++)
+        int resolutionVertical = resolution * heightResFactor;
+        double heightRadStep = ZM_PI / resolutionVertical;
+        for (int i = 1; i < resolutionVertical; i++)
         {
-            double height = -radius + (radius / resolution) * i;
-            double circleRad = std::sqrt(radius * radius - height * height);
+            double heightRadians = -ZM_PID2 + (heightRadStep * i);
+            double circleHeight = radius * std::sin(heightRadians);
+            double circleRadius = radius * std::cos(heightRadians);
 
-            Shape3D circle = Polygon(resolution, circleRad, center + Vec3(0, 0, height));
+            Shape3D circle = Polygon(resolution, circleRadius, center + Vec3(0, 0, circleHeight));
 
-            sphere.Add(circle); // HEY!!!!! sphere should not add circle; fix this
+            sphere.Add(circle, true);
         }
-        sphere.vertices.push_back(center - Vec3(0, 0, radius));
-        sphere.vertices.push_back(center + Vec3(0, 0, radius));
         
         // Assign vertices between layers
-        for (int i = 0; i < resolution - 1; i++) // layer loop
+        for (int i = 0; i < resolutionVertical - 2; i++) // vertical layer loop
         {
-            int idxStart = i * resolution;
+            int idxVertical = i * resolution;
 
             for (int j = 0; j < resolution; j++) // circle point loop
             {
-                int idx = idxStart + j;
+                int idx = idxVertical + j;
 
+                // Triangle 1 of square
                 sphere.indices.push_back(idx);
-                sphere.indices.push_back(idxStart + ((j + 1) % resolution));
-                sphere.indices.push_back(idx + resolution + ((j + 1) % resolution));
+                sphere.indices.push_back(idxVertical + ((j + 1) % resolution));
+                sphere.indices.push_back(idxVertical + ((j + 1) % resolution) + resolution);
 
-                sphere.indices.push_back(idxStart + ((j + 1) % resolution) + resolution);
+                // Triangle 2 of square
+                sphere.indices.push_back(idxVertical + ((j + 1) % resolution) + resolution);
                 sphere.indices.push_back(idx + resolution);
                 sphere.indices.push_back(idx);
             }
         }
 
+        // Create cap vertices
+        sphere.vertices.push_back(center - Vec3(0, 0, radius));
+        sphere.vertices.push_back(center + Vec3(0, 0, radius));
+
+        // Assign cap indices
+        int vertexCt = sphere.vertices.size();
+        int capTop = vertexCt - 1;
+        int capBot = vertexCt - 2;
+        for (int i = 0; i < resolution; i++)
+        {
+            // Top cap
+            sphere.indices.push_back(capTop - resolution - 1 + i);
+            sphere.indices.push_back(capTop - resolution - 1 + ((i + 1) % resolution));
+            sphere.indices.push_back(capTop);
+
+            // Bottom cap
+            sphere.indices.push_back(capBot);
+            sphere.indices.push_back((i + 1) % resolution);
+            sphere.indices.push_back(i);
+
+        }
+
         return sphere;
+    }
+
+    Shape3D Shape3D::Equation2D(Vec min, Vec max, double(*function)(double, double), bool sides, Vec stepXY)
+    {
+        Shape3D map;
+
+        Vec intRes;
+        for (double x = min.X; x <= max.X; x += stepXY.X)
+        {
+            for (double y = min.Y; y <= max.Y; y += stepXY.Y)
+            {
+                map.vertices.push_back(Vec3(x, y, function(x, y)));
+
+                if (!intRes.X) intRes.Y++;
+            }
+
+            intRes.X++;
+        }
+
+        //Vec intRes = ((max - min) / stepXY).Abs().Floor();
+
+        for (int x = 0; x < intRes.X - 1; x++)
+        {
+            for (int y = 0; y < intRes.Y - 1; y++)
+            {
+                int curIdx = y + x*intRes.Y;
+
+                map.indices.push_back(curIdx);
+                map.indices.push_back(curIdx + intRes.Y);
+                map.indices.push_back(curIdx + intRes.Y + 1);
+
+                map.indices.push_back(curIdx + intRes.Y + 1);
+                map.indices.push_back(curIdx + 1);
+                map.indices.push_back(curIdx);
+            }
+        }
+
+        if (sides)
+        {
+            // First, the bottom
+            Vec maxActual = min + stepXY * intRes;
+
+
+        }
+
+        return map;
     }
 
 
