@@ -111,4 +111,12 @@ namespace zmath
 		);
 	}
 
+	std::ostream& operator<<(std::ostream& out, Triangle3D tri)
+	{
+		return out
+			<< "{ " << tri.vertices[0]
+			<< "  " << tri.vertices[1]
+			<< "  " << tri.vertices[2] << " }";
+	}
+
 }

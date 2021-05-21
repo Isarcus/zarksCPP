@@ -28,5 +28,6 @@ namespace zmath
 		Triangle3D RotateY(double theta, Vec3 around = Vec3()) const;
 		Triangle3D RotateZ(double theta, Vec3 around = Vec3()) const;
 
+		friend std::ostream& operator<<(std::ostream& out, Triangle3D tri);
 	} Triangle3D;
 }
