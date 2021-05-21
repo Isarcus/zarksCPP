@@ -7,12 +7,18 @@
 
 namespace zmath
 {
-	typedef struct NoiseConfig {
+	typedef struct GridConfig {
+		GridConfig();
+		GridConfig(Vec bounds, Vec boxSize);
+
+		Vec	bounds;
+		Vec boxSize;
+	} GridConfig;
+
+	typedef struct NoiseConfig : GridConfig {
 		NoiseConfig();
 
 		// Universal noise inputs
-		Vec		bounds;
-		double	boxSizeInitial;
 		int		octaves;
 		bool	normalize;
 		int64_t seed;

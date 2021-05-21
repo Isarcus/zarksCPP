@@ -27,25 +27,30 @@ namespace std
 
 namespace zmath
 {
+	GridConfig::GridConfig()
+		: bounds(Vec(1000, 1000))
+		, boxSize(Vec(1000, 1000))
+	{}
+
+	GridConfig::GridConfig(Vec bounds, Vec boxSize)
+		: bounds(bounds)
+		, boxSize(boxSize)
+	{}
+
 	// Default NoiseConfig values
 	NoiseConfig::NoiseConfig()
-	{
-		bounds = Vec(1000, 1000);
-		boxSizeInitial = 1000;
-		octaves = 8;
-		normalize = true;
-		seed = std::chrono::system_clock::now().time_since_epoch().count(); // default seed is current system time
-		lNorm = 2; // lNorm is normally 2 for the distance formula. Try 1 for manhattan distance, or other numbers!
-
-		octDecrease = 0.5;
-
+		: GridConfig()
+		, octaves(8)
+		, normalize(true)
+		, lNorm(2)
+		, octDecrease(0.5)
+		, seed(std::chrono::system_clock::now().time_since_epoch().count())
 		// Simplex
-		r = 0.625;
-		rMinus = 4.0;
-
+		, r(0.625)
+		, rMinus(4.0)
 		// Worley
-		nearest = {0, 2};
-	}
+		, nearest{0, 2}
+	{}
 
 	// Note: runs more than 2x faster than the Golang equivalent I made first. Woohoo!
 	// This might actually be my fastest implementation yet, and it's not even fully optimized
@@ -77,7 +82,7 @@ namespace zmath
 		for (int oct = 0; oct < cfg.octaves; oct++)
 		{
 			double octInfluence = std::pow(cfg.octDecrease, oct);
-			double scale = 1.0 / (std::pow(0.5, oct) * cfg.boxSizeInitial);
+			Vec scaleVec = (Vec(1.0, 1.0) / cfg.boxSize) / std::pow(0.5, oct);
 
 			std::unordered_map<Vec, Vec> hash;
 
@@ -85,7 +90,7 @@ namespace zmath
 			{
 				for (int y = 0; y < cfg.bounds.Y; y++)
 				{
-					Vec ipt(scale * x, scale * y);
+					Vec ipt = scaleVec * Vec(x, y);
 					Vec skewed = skew(ipt);
 					Vec itl = skewed - skewed.Floor(); // internal simplex coordinate
 
@@ -164,7 +169,7 @@ namespace zmath
 		for (int oct = 0; oct < cfg.octaves; oct++)
 		{
 			double octInfluence = std::pow(cfg.octDecrease, oct);
-			double scale = 1.0 / (std::pow(0.5, oct) * cfg.boxSizeInitial);
+			Vec scaleVec = (Vec(1.0, 1.0) / cfg.boxSize) / std::pow(0.5, oct);
 
 			std::unordered_map<Vec, Vec> hash;
 
@@ -172,7 +177,7 @@ namespace zmath
 			{
 				for (int y = 0; y < cfg.bounds.Y; y++)
 				{
-					Vec coord(x * scale, y * scale);
+					Vec coord = scaleVec * Vec(x, y);
 					Vec base = coord.Floor();
 					Vec itl = coord - base;
 					
@@ -251,7 +256,7 @@ namespace zmath
 		for (int oct = 0; oct < cfg.octaves; oct++)
 		{
 			double octInfluence = std::pow(cfg.octDecrease, oct);
-			double scale = 1.0 / (std::pow(0.5, oct) * cfg.boxSizeInitial);
+			Vec scaleVec = (Vec(1.0, 1.0) / cfg.boxSize) / std::pow(0.5, oct);
 
 			std::unordered_map<Vec, Vec> hash;
 
@@ -259,7 +264,7 @@ namespace zmath
 			{
 				for (int y = 0; y < cfg.bounds.Y; y++)
 				{
-					Vec coord(x * scale, y * scale);
+					Vec coord = scaleVec * Vec(x, y);
 					Vec base = coord.Floor();
 					Vec itl = coord - base;
 
@@ -349,7 +354,7 @@ namespace zmath
 		for (int oct = 0; oct < cfg.octaves; oct++)
 		{
 			double octInfluence = std::pow(cfg.octDecrease, oct);
-			double scale = 1.0 / (std::pow(0.5, oct) * cfg.boxSizeInitial);
+			Vec scaleVec = (Vec(1.0, 1.0) / cfg.boxSize) / std::pow(0.5, oct);
 
 			std::unordered_map<Vec, Vec> hash;
 
@@ -357,7 +362,7 @@ namespace zmath
 			{
 				for (int y = 0; y < cfg.bounds.Y; y++)
 				{
-					Vec coord(x * scale, y * scale);
+					Vec coord = scaleVec * Vec(x, y);
 					Vec base = coord.Floor();
 					Vec itl = coord - base;
 
@@ -414,4 +419,6 @@ namespace zmath
 
 		return m;
 	}
+
+
 }
