@@ -17,6 +17,7 @@ namespace zimg
 		RGBA Transparent() const;
 		RGBA Negative() const;
 
+		uint8& operator[] (int i);
 		void operator=  (RGBA c);
 		bool operator== (RGBA c) const;
 

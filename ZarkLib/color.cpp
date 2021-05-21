@@ -2,6 +2,8 @@
 #include "Color.h"
 
 #include <cmath>
+#include <exception>
+#include <cassert>
 
 namespace zimg
 {
@@ -54,6 +56,19 @@ namespace zimg
 	RGBA RGBA::Negative() const
 	{
 		return RGBA(255 - R, 255 - G, 255 - B, A);
+	}
+
+	uint8& RGBA::operator[](int i)
+	{
+		switch (i)
+		{
+		case 0:  return R;
+		case 1:  return G;
+		case 2:  return B;
+		case 3:  return A;
+		}
+
+		assert(false);
 	}
 
 	void RGBA::operator=(RGBA c)
