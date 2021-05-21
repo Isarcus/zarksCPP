@@ -74,3 +74,91 @@ void zmath::ToBytes(uint8_t* buf, double val, Endian byteOrder)
 
 	ToBytes(buf, uval, byteOrder);
 }
+
+uint16_t zmath::ToU16(char* buf, Endian byteOrder)
+{
+	uint16_t val = 0;
+
+	uint8_t* ubuf = (uint8_t*)buf;
+
+	if (byteOrder == Endian::Little)
+	{
+		for (int i = 0; i < 2; i++) val += (1 << (i*8)) * ubuf[i];
+	}
+	else
+	{
+		for (int i = 0; i < 2; i++)
+		{
+			uint64_t placeVal = 1;
+			placeVal << (8 - 8*i);
+
+			val += placeVal * ubuf[i];
+		}
+	}
+
+	return val;
+}
+
+uint32_t zmath::ToU32(char* buf, Endian byteOrder)
+{
+	uint32_t val = 0;
+
+	uint8_t* ubuf = (uint8_t*)buf;
+
+	if (byteOrder == Endian::Little)
+	{
+		for (int i = 0; i < 4; i++) val += (1 << (i * 8)) * ubuf[i];
+	}
+	else
+	{
+		for (int i = 0; i < 4; i++)
+		{
+			uint64_t placeVal = 1;
+			placeVal << (24 - 8*i);
+
+			val += placeVal * ubuf[i];
+		}
+	}
+
+	return val;
+}
+
+uint64_t zmath::ToU64(char* buf, Endian byteOrder)
+{
+	uint16_t val = 0;
+
+	uint8_t* ubuf = (uint8_t*)buf;
+
+	if (byteOrder == Endian::Little)
+	{
+		for (int i = 0; i < 8; i++) val += (1 << (i * 8)) * ubuf[i];
+	}
+	else
+	{
+		for (int i = 0; i < 8; i++)
+		{
+			uint64_t placeVal = 1;
+			placeVal << (56 - 8*i);
+
+			val += placeVal * ubuf[i];
+		}
+	}
+
+	return val;
+}
+
+float zmath::ToF32(char* buf, Endian byteOrder)
+{
+	uint32_t val = ToU32(buf, byteOrder);
+	float* uptr = reinterpret_cast<float*>(&val);
+
+	return *uptr;
+}
+
+float zmath::ToF64(char* buf, Endian byteOrder)
+{
+	uint64_t val = ToU64(buf, byteOrder);
+	double* uptr = reinterpret_cast<double*>(&val);
+
+	return *uptr;
+}

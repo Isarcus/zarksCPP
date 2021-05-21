@@ -15,4 +15,11 @@ namespace zmath
 
 	void ToBytes(uint8_t* buf, float  val, Endian byteOrder);
 	void ToBytes(uint8_t* buf, double val, Endian byteOrder);
+
+	uint16_t ToU16(char* buf, Endian byteOrder);
+	uint32_t ToU32(char* buf, Endian byteOrder);
+	uint64_t ToU64(char* buf, Endian byteOrder);
+
+	float ToF32(char* buf, Endian byteOrder);
+	float ToF64(char* buf, Endian byteOrder);
 }
