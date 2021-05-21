@@ -55,10 +55,10 @@ namespace zmath
 
 		// Math operator overloads
 
-		Map& operator+= (Map m);
-		Map& operator-= (Map m);
-		Map& operator*= (Map m);
-		Map& operator/= (Map m);
+		Map& operator+= (Map& m);
+		Map& operator-= (Map& m);
+		Map& operator*= (Map& m);
+		Map& operator/= (Map& m);
 		Map& operator+= (double val);
 		Map& operator-= (double val);
 		Map& operator*= (double val);
@@ -66,10 +66,10 @@ namespace zmath
 
 		// Chainable functions
 
-		Map& Add(Map m);
-		Map& Sub(Map m);
-		Map& Mul(Map m);
-		Map& Div(Map m);
+		Map& Add(Map& m);
+		Map& Sub(Map& m);
+		Map& Mul(Map& m);
+		Map& Div(Map& m);
 		Map& Add(double val);
 		Map& Sub(double val);
 		Map& Mul(double val);

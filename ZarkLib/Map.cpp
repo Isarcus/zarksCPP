@@ -327,7 +327,7 @@ namespace zmath
 		return m;
 	}
 
-	Map& Map::operator+=(Map m)
+	Map& Map::operator+=(Map& m)
 	{
 		BOUNDABORT;
 
@@ -336,7 +336,7 @@ namespace zmath
 		return *this;
 	}
 
-	Map& Map::operator-=(Map m)
+	Map& Map::operator-=(Map& m)
 	{
 		BOUNDABORT;
 
@@ -345,7 +345,7 @@ namespace zmath
 		return *this;
 	}
 
-	Map& Map::operator*=(Map m)
+	Map& Map::operator*=(Map& m)
 	{
 		BOUNDABORT;
 
@@ -354,7 +354,7 @@ namespace zmath
 		return *this;
 	}
 
-	Map& Map::operator/=(Map m)
+	Map& Map::operator/=(Map& m)
 	{
 		BOUNDABORT;
 
@@ -398,10 +398,10 @@ namespace zmath
 		return *this;
 	}
 
-	Map& Map::Add(Map m) { return *this += m; }
-	Map& Map::Sub(Map m) { return *this -= m; }
-	Map& Map::Mul(Map m) { return *this *= m; }
-	Map& Map::Div(Map m) { return *this /= m; }
+	Map& Map::Add(Map& m) { return *this += m; }
+	Map& Map::Sub(Map& m) { return *this -= m; }
+	Map& Map::Mul(Map& m) { return *this *= m; }
+	Map& Map::Div(Map& m) { return *this /= m; }
 
 	Map& Map::Add(double val) { return *this += val; }
 	Map& Map::Sub(double val) { return *this -= val; }
