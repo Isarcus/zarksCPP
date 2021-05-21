@@ -21,7 +21,7 @@ namespace zmath
 	public:
 		Tessellation3D() noexcept;
 		Tessellation3D(const Tessellation3D& tess) noexcept;
-		Tessellation3D(const Tessellation3D&& tess) noexcept;
+		Tessellation3D(Tessellation3D&& tess) noexcept;
 		Tessellation3D(Triangle3D* triangles, int numTri);
 		Tessellation3D(double* vertices, int numTri);
 		Tessellation3D(Map map, Vec3 scale = Vec3(1, 1, 1), bool fillSides = true, bool fillBase = true);
@@ -44,7 +44,7 @@ namespace zmath
 		Tessellation3D& operator=(Tessellation3D&& shape) noexcept;
 
 		// Write data to STL file
-		void WriteSTL(std::ofstream& f, int beginning = 0, int end = 0) const;
+		void WriteSTL(std::ofstream& f, bool normals, int beginning = 0, int end = 0) const;
 
 		//         //
 		// PRESETS //
@@ -60,6 +60,14 @@ namespace zmath
 		static Tessellation3D Pyramid(int baseSides, double radius, double height, Vec3 center = Vec3());
 
 		static Tessellation3D Sphere(int resolution, double radius, Vec3 center = Vec3());
+
+		//             //
+		// STL WRITING //
+		//             //
+
+		static void WriteVertex(std::ofstream& f, const Vec3& v);
+
+		static Tessellation3D LoadSTL(std::ifstream& f);
 
 	private:
 		std::vector<Triangle3D> data;

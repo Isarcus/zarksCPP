@@ -8,7 +8,7 @@ namespace zmath
 {
 	Tessellation3D::Tessellation3D() noexcept {}
 	Tessellation3D::Tessellation3D(const Tessellation3D& tess) noexcept : data(tess.data) {}
-	Tessellation3D::Tessellation3D(const Tessellation3D&& tess) noexcept : data(tess.data) {}
+	Tessellation3D::Tessellation3D(Tessellation3D&& tess) noexcept : data(tess.data) {}
 
 	Tessellation3D::Tessellation3D(double* vertices, int numTri)
 	{
@@ -156,18 +156,19 @@ namespace zmath
 		return *this;
 	}
 
-	void Tessellation3D::WriteSTL(std::ofstream& f, int beginning, int end) const
+	void Tessellation3D::WriteSTL(std::ofstream& f, bool normals, int beginning, int end) const
 	{
-		const char header[80]{ "ZarkLib STL file, generated from a Shape3D!" };
-		const char attrib[2] = { 0 };
-		const char normvec[12] = { 0 };
+		const char headerBytes[80]{ "ZarkLib STL file, generated from a Shape3D!" };
+		const char attribBytes[2] = { 0 };
+
+		uint8_t normBytes[12]  = { 0 };
 
 		// bounds checking
 		end = end ? std::min(end, (int)data.size()) : data.size();
 		if (beginning < 0 || beginning >= end || end < 0) return;
 
 		// Write header to file
-		f.write(header, 80);
+		f.write(headerBytes, 80);
 
 		// Write number of triangles to file
 		uint8_t triCt[4];
@@ -181,35 +182,43 @@ namespace zmath
 		{
 			const Triangle3D& tri = data[i];
 
-			// Write the (blank) normal vector
-			f.write(normvec, 12);
+			// Write the  normal vector
+			if (normals)
+			{
+				Vec3 s1 = tri.vertices[1] - tri.vertices[0];
+				Vec3 s2 = tri.vertices[2] - tri.vertices[0];
+				Vec3 normVec(
+					s1.Y*s2.Z - s1.Z*s2.Y,
+					s1.Z*s2.X - s1.X*s2.Z,
+					s1.X*s2.Y - s1.Y*s2.X
+				);
+				normVec *= -1;
+
+				double normLen = normVec.DistForm();
+				if (normLen)
+				{
+					normVec /= normLen;
+					//std::cout << normVec << "\n";
+
+					ToBytes(normBytes,   (float)normVec.X, Endian::Little);
+					ToBytes(normBytes+4, (float)normVec.Y, Endian::Little);
+					ToBytes(normBytes+8, (float)normVec.Z, Endian::Little);
+				}
+				else {
+					std::cout << "Malformed triangle; could not compute normal:\n" << tri << "\n";
+					for (int i = 0; i < 12; i++) normBytes[i] = 0;
+				}
+			}
+			f.write((char*)normBytes, 12);
 
 			// Write each vertex
 			for (const Vec3& vertex : tri.vertices)
 			{
-				//std::cout << "Writing vertex: " << vertex << "\n";
-
-				float x, y, z;
-				x = vertex.X;
-				y = vertex.Y;
-				z = vertex.Z;
-				// std::cout << "X: " << x << " Y: " << y << " Z: " << z << "\n"; // passed the sanity check
-
-				ToBytes(buf, x, Endian::Little);
-				f.write((char*)buf, 4);
-				//std::cout << " -> X: " << bc(buf[0]) << " " << bc(buf[1]) << " " << bc(buf[2]) << " " << bc(buf[3]) << "\n";
-
-				ToBytes(buf, y, Endian::Little);
-				f.write((char*)buf, 4);
-				//std::cout << " -> Y: " << bc(buf[0]) << " " << bc(buf[1]) << " " << bc(buf[2]) << " " << bc(buf[3]) << "\n";
-
-				ToBytes(buf, z, Endian::Little);
-				f.write((char*)buf, 4);
-				//std::cout << " -> Z: " << bc(buf[0]) << " " << bc(buf[1]) << " " << bc(buf[2]) << " " << bc(buf[3]) << "\n";
+				WriteVertex(f, vertex);
 			}
 
 			// Write the (blank) attribute byte count
-			f.write(attrib, 2);
+			f.write(attribBytes, 2);
 		}
 	}
 
@@ -448,6 +457,72 @@ namespace zmath
 		delete[] circleCoordsNext;
 
 		return sphere;
+	}
+
+	void Tessellation3D::WriteVertex(std::ofstream& f, const Vec3& v)
+	{
+		uint8_t buf[4];
+
+		ToBytes(buf, (float)v.X, Endian::Little);
+		f.write((char*)buf, 4);
+
+		ToBytes(buf, (float)v.Y, Endian::Little);
+		f.write((char*)buf, 4);
+
+		ToBytes(buf, (float)v.Z, Endian::Little);
+		f.write((char*)buf, 4);
+	}
+
+	Tessellation3D Tessellation3D::LoadSTL(std::ifstream& f)
+	{
+		Tessellation3D tess;
+
+		// Load the header
+		char header[81]{ 0 };
+		f.read(header, 80);
+		std::cout << "Opened STL File!\n";
+		std::cout << " -> Header:   " << header << "\n";
+
+		// Load the triangle count
+		char triCtBytes[4];
+		f.read(triCtBytes, 4);
+		uint32_t triCt = ToU32(triCtBytes, Endian::Little);
+		std::cout << " -> Triangles: " << triCt << "\n";
+
+		// Load triangles
+		for (int i = 0; i < triCt; i++)
+		{
+			char floatBytes[4];
+
+			// Normal vector (discard)
+			f.read(floatBytes, 4);
+			f.read(floatBytes, 4);
+			f.read(floatBytes, 4);
+
+			// Load each triangle vertex
+			Vec3 vertices[3];
+			for (int j = 0; j < 3; j++)
+			{
+				f.read(floatBytes, 4);
+				vertices[j].X = ToF32(floatBytes, Endian::Little);
+
+				f.read(floatBytes, 4);
+				vertices[j].Y = ToF32(floatBytes, Endian::Little);
+
+				f.read(floatBytes, 4);
+				vertices[j].Z = ToF32(floatBytes, Endian::Little);
+			}
+			tess.data.push_back(Triangle3D(
+				vertices[0],
+				vertices[1],
+				vertices[2]
+			));
+
+			// Short of attributes (discard)
+			f.read(floatBytes, 2);
+		}
+
+		return tess;
 	}
 
 }
