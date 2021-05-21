@@ -30,6 +30,7 @@ namespace zmath
 
 		Vec Floor() const;
 		Vec Ceil() const;
+		Vec Abs() const;
 
 		std::string String() const;
 

@@ -110,6 +110,11 @@ namespace zmath {
         return Vec(ceil(X), ceil(Y));
     }
 
+    Vec Vec::Abs() const
+    {
+        return Vec(std::abs(X), std::abs(Y));
+    }
+
     std::string Vec::String() const
     {
         return std::string("(" + std::to_string(X) + ", " + std::to_string(Y) + ")");
