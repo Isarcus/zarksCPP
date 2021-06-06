@@ -71,12 +71,17 @@ namespace zimg
 		assert(false);
 	}
 
-	void RGBA::operator=(RGBA c)
+	const uint8& RGBA::operator[](int i) const
 	{
-		R = c.R;
-		G = c.G;
-		B = c.B;
-		A = c.A;
+		switch (i)
+		{
+		case 0:  return R;
+		case 1:  return G;
+		case 2:  return B;
+		case 3:  return A;
+		}
+
+		assert(false);
 	}
 
 	bool RGBA::operator==(RGBA c) const
@@ -94,7 +99,7 @@ namespace zimg
 		return RGBA(255, 255, 255);
 	}
 
-	RGBA RGBA::Interpolate(RGBA c0, RGBA c1, double t)
+	RGBA RGBA::Interpolate(const RGBA& c0, const RGBA& c1, double t)
 	{
 		double t0 = 1 - t;
 		return RGBA(
@@ -105,9 +110,18 @@ namespace zimg
 		);
 	}
 
-	/*			 *
-	 *	SCHEME	 *
-	 *			 */
+	double RGBA::Distance(const RGBA& c0, const RGBA& c1)
+	{
+		return std::sqrt(
+			std::pow((int)c0.R - (int)c1.R, 2) +
+			std::pow((int)c0.G - (int)c1.G, 2) +
+			std::pow((int)c0.B - (int)c1.B, 2)
+		);
+	}
+
+	//			 //
+	//	SCHEME	 //
+	//			 //
 
 	Scheme::Scheme(int n_, RGBA* colors_, double* thresholds_)
 	{

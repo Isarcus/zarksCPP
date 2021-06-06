@@ -18,12 +18,14 @@ namespace zimg
 		RGBA Negative() const;
 
 		uint8& operator[] (int i);
-		void operator=  (RGBA c);
+		const uint8& operator[] (int i) const;
 		bool operator== (RGBA c) const;
 
 		static RGBA Black();
 		static RGBA White();
-		static RGBA Interpolate(RGBA c0, RGBA c1, double t);
+		static RGBA Interpolate(const RGBA& c0, const RGBA& c1, double t);
+
+		static double Distance(const RGBA& c0, const RGBA& c1);
 	} RGBA;
 
 	typedef struct Scheme {
