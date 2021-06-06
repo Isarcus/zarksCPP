@@ -11,49 +11,53 @@
 #define LOOP for (int x = 0; x < bounds.X; x++) for (int y = 0; y < bounds.Y; y++)
 #define BOUNDABORT if (bounds != m.bounds) return *this;
 
-double nonsense;
-
 namespace zmath
 {
-	Map::Map(Vec bounds_)
+	Map::Map(Vec bounds)
+		: subMap(false)
+		, bounds(bounds.Floor())
 	{
-		subMap = false;
-		bounds = bounds_.Floor();
+		data = new double* [int(bounds.X)];
 
-		double** newData = new double* [int(bounds.X)];
 		for (int x = 0; x < bounds.X; x++)
 		{
-			newData[x] = new double[int(bounds.Y)];
+			data[x] = new double[int(bounds.Y)];
 
 			for (int y = 0; y < bounds.Y; y++)
 			{
-				newData[x][y] = 0;
+				data[x][y] = 0;
 			}
 		}
-
-		data = newData;
 	}
 
-	Map::Map(double x, double y)
+	Map::Map(int x, int y)
+		: subMap(false)
+		, bounds(x, y)
 	{
-		subMap = false;
-		bounds = Vec(x, y).Floor();
+		data = new double* [int(bounds.X)];
 
-		double** newData = new double* [bounds.X];
 		for (int x = 0; x < bounds.X; x++)
 		{
-			newData[x] = new double[bounds.Y];
+			data[x] = new double[int(bounds.Y)];
 
 			for (int y = 0; y < bounds.Y; y++)
 			{
-				newData[x][y] = 0;
+				data[x][y] = 0;
 			}
 		}
-
-		data = newData;
 	}
 
-	void Map::Delete()
+	Map::Map(const Map& map)
+		: bounds(map.bounds)
+		, data(map.data)
+		, subMap(map.subMap)
+	{}
+
+	Map::Map(Map&& map)
+		: Map(map)
+	{}
+
+	Map::~Map()
 	{
 		// Only an original map should deallocate all of the underlying memory...
 		if (!subMap)
@@ -73,16 +77,24 @@ namespace zmath
 		return data[x];
 	}
 
-	double& Map::At(Vec pt) const
+	double& Map::At(Vec pt)
 	{
-		if (pt < bounds && pt >= ZV) return data[int(pt.X)][int(pt.Y)];
-		return nonsense;
+		return data[int(pt.X)][int(pt.Y)];
 	}
 
-	double& Map::At(int x, int y) const
+	const double& Map::At(Vec pt) const
 	{
-		if (x < bounds.X && y < bounds.Y && x >= 0 && y >= 0) return data[x][y];
-		return nonsense;
+		return data[int(pt.X)][int(pt.Y)];
+	}
+
+	double& Map::At(int x, int y)
+	{
+		return data[x][y];
+	}
+
+	const double& Map::At(int x, int y) const
+	{
+		return data[x][y];
 	}
 
 	void Map::Set(Vec pt, double val)
@@ -95,7 +107,7 @@ namespace zmath
 		data[x][y] = val;
 	}
 
-	void Map::operator=(Map m)
+	void Map::operator=(const Map& m)
 	{
 		if (!subMap) for (int x = 0; x < bounds.X; x++) delete[] data[x];
 		delete[] data;
@@ -103,6 +115,11 @@ namespace zmath
 		data = m.data;
 		bounds = m.bounds;
 		subMap = m.subMap;
+	}
+
+	void Map::operator=(Map&& map)
+	{
+		*this = map;
 	}
 
 	double Map::GetMin() const
@@ -131,8 +148,8 @@ namespace zmath
 		// I'm the only one who has to read this code I'm the only one who has to read this code I'm the only one who has to read this code I'm the only 
 		LOOP
 		{
-			max = (max < data[x][y]) ? data[x][y] : max;
-			min = (min > data[x][y]) ? data[x][y] : min;
+			max = std::max(max, data[x][y]);
+			min = std::min(min, data[x][y]);
 		}
 
 		return minmax{ min, max };
@@ -276,7 +293,7 @@ namespace zmath
 		max = Vec::Min(max, bounds);
 
 		// Initialize null map
-		Map m = *new Map();
+		Map& m = *new Map();
 		m.bounds = max - min;
 
 		// Make the new map's data a subset of the called map's data
@@ -320,7 +337,7 @@ namespace zmath
 
 	Map& zmath::Map::SlopeMap()
 	{
-		Map m = *new Map(bounds);
+		Map& m = *new Map(bounds);
 
 		LOOP m.At(x, y) = SlopeAt(Vec(x, y));
 

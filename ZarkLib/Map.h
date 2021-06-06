@@ -10,20 +10,25 @@ namespace zmath
 	{
 	public:
 		Map(Vec bounds);
-		Map(double x, double y);
-		void Delete();
+		Map(int x, int y);
+		Map(const Map& map);
+		Map(Map&& map);
+		~Map();
 
 		// Accessors
 
-		double* operator[](int x) const; // directly reference an underlying map value without bounds checking
+		double* operator[](int x) const;
 
-		double& At(Vec pt) const;
-		double& At(int x, int y) const;
+		double& At(Vec pt);
+		const double& At(Vec pt) const;
+		double& At(int x, int y);
+		const double& At(int x, int y) const;
 
 		void Set(Vec pt, double val);
 		void Set(int x, int y, double val);
 
-		void operator= (Map m);
+		void operator= (const Map& m);
+		void operator= (Map&& m);
 
 		// Map characteristics
 
