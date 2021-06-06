@@ -5,6 +5,7 @@
 #include "Map.h"
 
 #include <string>
+#include <vector>
 
 namespace zimg
 {
@@ -16,17 +17,18 @@ namespace zimg
 		Image(zmath::Map& m, Scheme scheme);
 		Image(std::string path);
 
-		void Delete();
+		~Image();
 
 		void operator= (Image img);
 		bool operator!() const;
 
 		// Accessors and copy/paste
 
-		RGBA At(int x, int y) const;
-		RGBA At(zmath::Vec pos) const;
-		bool Set(int x, int y, RGBA col);
-		bool Set(zmath::Vec pos, RGBA col);
+		RGBA& At(int x, int y);
+		RGBA& At(zmath::Vec pos);
+
+		const RGBA& At(int x, int y) const;
+		const RGBA& At(zmath::Vec pos) const;
 
 		Image& Copy() const;
 		Image& Copy(zmath::Vec min, zmath::Vec max) const;
@@ -36,7 +38,8 @@ namespace zimg
 
 		// Manipulators
 		
-		Image Negative();
+		Image& Negative();
+		Image& RestrictPalette(const std::vector<RGBA>& palette);
 
 		// Save an image using STBI
 		void Save(std::string path, unsigned int channels) const;

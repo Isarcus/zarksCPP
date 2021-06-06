@@ -10,7 +10,7 @@
 
 #include <iostream>
 
-#define LOOP for (int x = 0; x < bounds.X; x++) for (int y = 0; y < bounds.Y; y++)
+#define LOOP_IMAGE for (int x = 0; x < bounds.X; x++) for (int y = 0; y < bounds.Y; y++)
 
 using namespace zmath;
 
@@ -163,49 +163,60 @@ namespace zimg
 		bounds = Vec(width, height);
 		isCopy = false;
 
-		int stbIdx = 0;
+		// Allocate data
 		data = new RGBA* [width];
 		for (int x = 0; x < width; x++)
 		{
-			data[x] = new RGBA[height];
-			for (int y = 0; y < height; y++)
+			data[x] = new RGBA[height]{};
+		}
+
+		int stbIdx = 0;
+		for (int y = 0; y < height; y++)
+		{
+			for (int x = 0; x < width; x++)
 			{
 				switch (channels)
 				{
 				case 1: // Grayscale
-					data[x][y] = RGBA(stbImg[stbIdx++]);
+					data[x][y] = RGBA(stbImg[stbIdx]);
+					stbIdx++;
 					break;
 
 				case 2: // Grayscale with alpha
 					data[x][y] = RGBA(
-						stbImg[stbIdx++],
-						stbImg[stbIdx++]);
+						stbImg[stbIdx],
+						stbImg[stbIdx + 1]);
+					stbIdx += 2;
 					break;
 
 				case 3: // RGB
 					data[x][y] = RGBA(
-						stbImg[stbIdx++],
-						stbImg[stbIdx++],
-						stbImg[stbIdx++]);
+						stbImg[stbIdx],
+						stbImg[stbIdx + 1],
+						stbImg[stbIdx + 2]);
+					stbIdx += 3;
 					break;
 
 				case 4: // RGBA
 					data[x][y] = RGBA(
-						stbImg[stbIdx++],
-						stbImg[stbIdx++],
-						stbImg[stbIdx++],
-						stbImg[stbIdx++]);
+						stbImg[stbIdx],
+						stbImg[stbIdx + 1],
+						stbImg[stbIdx + 2],
+						stbImg[stbIdx + 3]);
+					stbIdx += 4;
 					break;
-				}
-			}
-		}
+				} // switch (channels)
+			} // for x
+		} // for y
 
 		free(stbImg);
 
-		std::cout << "Successfully loaded image at " << path << "\n";
+		std::cout << "Successfully loaded image at " << path << "\n"
+			      << " -> Channels:   " << channels << "\n"
+			      << " -> Dimensions: " << width << "x" << height << "\n";
 	}
 
-	void Image::Delete()
+	Image::~Image()
 	{
 		if (!isCopy) for (int x = 0; x < bounds.X; x++) delete[] data[x];
 		delete[] data;
@@ -223,42 +234,31 @@ namespace zimg
 		return data == nullptr;
 	}
 
-	RGBA Image::At(int x, int y) const
+	RGBA& Image::At(int x, int y)
 	{
-		if (x < bounds.X && y < bounds.Y && x >= 0 && y >= 0) return data[x][y];
-
-		return RGBA();
+		return data[x][y];
 	}
 
-	RGBA Image::At(zmath::Vec pos) const
+	RGBA& Image::At(zmath::Vec pos)
 	{
-		if (pos < bounds && pos >= Vec()) return data[(int)pos.X][(int)pos.Y];
-
-		return RGBA();
+		return data[(int)pos.X][(int)pos.Y];
 	}
 
-	bool Image::Set(int x, int y, RGBA col)
+	const RGBA& Image::At(int x, int y) const
 	{
-		if (x < 0 || y < 0 || x >= bounds.X || y >= bounds.Y) return false;
-
-		data[x][y] = col;
-		return true;
+		return data[x][y];
 	}
 
-	bool Image::Set(zmath::Vec pos, RGBA col)
+	const RGBA& Image::At(zmath::Vec pos) const
 	{
-		if (pos.X < 0 || pos.Y < 0 || pos.X >= bounds.X || pos.Y >= bounds.Y) return false;
-		
-		pos = pos.Floor();
-		data[(int)pos.X][(int)pos.Y] = col;
-		return true;
+		return data[(int)pos.X][(int)pos.Y];
 	}
 
 	Image& Image::Copy() const
 	{
 		Image img(bounds);
 
-		LOOP img.data[x][y] = data[x][y];
+		LOOP_IMAGE img.data[x][y] = data[x][y];
 
 		return img;
 	}
@@ -268,16 +268,16 @@ namespace zimg
 		Vec min = Vec::Max(Vec::Min(min_, max_), Vec());
 		Vec max = Vec::Min(Vec::Max(min_, max_), bounds);
 
-		Image img(max - min);
+		Image* img = new Image(max - min);
 		for (int x = min.X; x < max.X; x++)
 		{
 			for (int y = min.Y; y < max.Y; y++)
 			{
-				img.data[x][y] = data[x - (int)min.X][y - (int)min.Y];
+				img->data[x][y] = data[x - (int)min.X][y - (int)min.Y];
 			}
 		}
 
-		return img;
+		return *img;
 	}
 
 	Image& Image::Copy(zmath::Rect rect) const
@@ -293,7 +293,7 @@ namespace zimg
 		{
 			for (int y = rect.min.Y; y < rect.max.Y; y++)
 			{
-				img.Set(x - rect.min.X, y - rect.min.Y, At(x, y));
+				img.At(x - rect.min.X, y - rect.min.Y) = data[x][y];
 			}
 		}
 	}
@@ -325,16 +325,44 @@ namespace zimg
 				Vec copyFromIdx = (Vec(x, y) * scale).Floor();
 				Vec copyToIdx = Vec(x, y) + within.min;
 				
-				Set(copyToIdx, img.At(copyFromIdx));
+				At(copyToIdx) = img.At(copyFromIdx);
 			}
 		}
 		
 		return *this;
 	}
 
-	Image Image::Negative()
+	Image& Image::Negative()
 	{
-		LOOP data[x][y] = data[x][y].Negative();
+		LOOP_IMAGE data[x][y] = data[x][y].Negative();
+
+		return *this;
+	}
+
+	Image& Image::RestrictPalette(const std::vector<RGBA>& palette)
+	{
+		assert(palette.size());
+
+		LOOP_IMAGE
+		{
+			int idx_min = -1;
+			double val_min = 500000; // higher than max distance between colors
+
+			for (unsigned i = 0; i < palette.size(); i++)
+			{
+				double min = RGBA::Distance(data[x][y], palette[i]);
+
+				if (min < val_min)
+				{
+					idx_min = i;
+					val_min = min;
+				}
+			}
+
+			data[x][y] = palette.at(idx_min);
+		}
+
+		return *this;
 	}
 
 	void Image::Save(std::string path, unsigned int channels = 4) const
