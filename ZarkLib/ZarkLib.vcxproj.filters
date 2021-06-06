@@ -93,11 +93,17 @@
     <ClInclude Include="numerals.h">
       <Filter>Header Files\zmath\binary</Filter>
     </ClInclude>
+    <ClInclude Include="voronoi.h">
+      <Filter>Header Files\noise</Filter>
+    </ClInclude>
+    <ClInclude Include="hypernoise.h">
+      <Filter>Header Files\noise</Filter>
+    </ClInclude>
+    <ClInclude Include="ImageProcessing.h">
+      <Filter>Header Files\zimg</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
-    <ClCompile Include="ZarkLib.cpp">
-      <Filter>Source Files</Filter>
-    </ClCompile>
     <ClCompile Include="pch.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
@@ -110,10 +116,10 @@
     <ClCompile Include="noise.cpp">
       <Filter>Source Files\noise</Filter>
     </ClCompile>
-    <ClCompile Include="color.cpp">
+    <ClCompile Include="Color.cpp">
       <Filter>Source Files\zimg</Filter>
     </ClCompile>
-    <ClCompile Include="zimg.cpp">
+    <ClCompile Include="Zimg.cpp">
       <Filter>Source Files\zimg</Filter>
     </ClCompile>
     <ClCompile Include="Rect.cpp">
@@ -140,5 +146,16 @@
     <ClCompile Include="numerals.cpp">
       <Filter>Source Files\zmath\binary</Filter>
     </ClCompile>
+    <ClCompile Include="voronoi.cpp">
+      <Filter>Source Files\noise</Filter>
+    </ClCompile>
+    <ClCompile Include="ImageProcessing.cpp">
+      <Filter>Source Files\zimg</Filter>
+    </ClCompile>
+  </ItemGroup>
+  <ItemGroup>
+    <None Include="Hypermap.inl">
+      <Filter>Source Files\zmath</Filter>
+    </None>
   </ItemGroup>
 </Project>

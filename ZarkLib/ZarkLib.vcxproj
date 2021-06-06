@@ -124,7 +124,7 @@
       <ConformanceMode>true</ConformanceMode>
       <PrecompiledHeader>Use</PrecompiledHeader>
       <PrecompiledHeaderFile>pch.h</PrecompiledHeaderFile>
-      <AdditionalIncludeDirectories>C:\Users\isaac\OneDrive\Documents\Coding\VS2019\libraries\include\stbi;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
+      <AdditionalIncludeDirectories>C:\Users\isaac\Documents\Coding\VS 2019 C++\Libraries\include\stbi;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
     </ClCompile>
     <Link>
       <SubSystem>
@@ -155,6 +155,8 @@
   <ItemGroup>
     <ClInclude Include="binary.h" />
     <ClInclude Include="Color.h" />
+    <ClInclude Include="ImageProcessing.h" />
+    <ClInclude Include="hypernoise.h" />
     <ClInclude Include="numerals.h" />
     <ClInclude Include="Shape3D.h" />
     <ClInclude Include="Triangle3D.h" />
@@ -167,12 +169,14 @@
     <ClInclude Include="noise.h" />
     <ClInclude Include="pch.h" />
     <ClInclude Include="Vec.h" />
+    <ClInclude Include="voronoi.h" />
     <ClInclude Include="Zimg.h" />
     <ClInclude Include="zmath_internals.h" />
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="binary.cpp" />
-    <ClCompile Include="color.cpp" />
+    <ClCompile Include="Color.cpp" />
+    <ClCompile Include="ImageProcessing.cpp" />
     <ClCompile Include="numerals.cpp" />
     <ClCompile Include="Shape3D.cpp" />
     <ClCompile Include="Triangle3D.cpp" />
@@ -189,8 +193,11 @@
     <ClCompile Include="Tessellation3D.cpp" />
     <ClCompile Include="Vec.cpp" />
     <ClCompile Include="Vec3.cpp" />
-    <ClCompile Include="ZarkLib.cpp" />
-    <ClCompile Include="zimg.cpp" />
+    <ClCompile Include="voronoi.cpp" />
+    <ClCompile Include="Zimg.cpp" />
+  </ItemGroup>
+  <ItemGroup>
+    <None Include="Hypermap.inl" />
   </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
   <ImportGroup Label="ExtensionTargets">
