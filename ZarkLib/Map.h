@@ -1,5 +1,6 @@
 #pragma once
-#include "Vec.h"
+#include "VecT.h"
+#include "Gauss.h"
 #include "zmath_internals.h"
 
 #include <string>
@@ -8,8 +9,9 @@ namespace zmath
 {
 	class Map
 	{
+		typedef VecT<double> Vec;
 	public:
-		Map(Vec bounds);
+		Map(VecInt bounds);
 		Map(int x, int y);
 		Map(const Map& map);
 		Map(Map&& map);
@@ -17,32 +19,32 @@ namespace zmath
 
 		// Accessors
 
-		double* operator[](int x) const;
+		double* operator[](const int& x) const;
 
-		double& At(Vec pt);
-		const double& At(Vec pt) const;
-		double& At(int x, int y);
-		const double& At(int x, int y) const;
+		double& At(const VecInt& pt);
+		const double& At(const VecInt& pt) const;
+		double& At(const int& x, const int& y);
+		const double& At(const int& x, const int& y) const;
 
-		void Set(Vec pt, double val);
+		void Set(VecInt pt, double val);
 		void Set(int x, int y, double val);
 
-		void operator= (const Map& m);
-		void operator= (Map&& m);
+		Map& operator= (const Map& m);
+		Map& operator= (Map&& m);
 
 		// Map characteristics
 
 		double GetMin() const;
 		double GetMax() const;
-		minmax GetMinMax() const;
-		Vec Bounds() const;
+		std::pair<double, double> GetMinMax() const;
+		VecInt Bounds() const;
 
 		double Sum() const;
 		double Mean() const;
 		double Variance() const;
 		double Std() const;
 
-		bool ContainsCoord(Vec pos) const;
+		bool ContainsCoord(VecInt pos) const;
 		Vec DerivativeAt(Vec pos) const;
 		double GradientAt(Vec pos) const;
 		double SlopeAt(Vec pos) const;
@@ -55,8 +57,13 @@ namespace zmath
 		Map& Clear(double val);
 		Map& Interpolate(double newMin, double newMax);
 		Map& Abs();
+		Map& Apply(const GaussField& gauss);
+		Map& Apply(double(*calculation)(double));
 
 		Map& SlopeMap();
+		Map& BoundMax(double newMax);
+		Map& BoundMin(double newMin);
+		Map& Bound(double newMin, double newMax);
 
 		// Math operator overloads
 
@@ -87,7 +94,7 @@ namespace zmath
 	private:
 		Map(); // for use in operator() overload
 
-		Vec bounds;
+		VecInt bounds;
 		double** data;
 		bool subMap; // only true for maps created with operator() calls
 	};

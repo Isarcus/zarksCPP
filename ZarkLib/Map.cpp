@@ -4,16 +4,14 @@
 #include <cmath>
 #include <fstream>
 #include <iostream>
+#include <exception>
 
-// If anyone other than me, Isaac Brooks, ever reads this, I hope you know I'm better than this. I need to believe I'm better than this.
-#define LOOPSTART for (int x = 0; x < bounds.X; x++) { for (int y = 0; y < bounds.Y; y++) {
-#define LOOPEND } }
-#define LOOP for (int x = 0; x < bounds.X; x++) for (int y = 0; y < bounds.Y; y++)
-#define BOUNDABORT if (bounds != m.bounds) return *this;
+#define LOOP_MAP for (int x = 0; x < bounds.X; x++) for (int y = 0; y < bounds.Y; y++)
+#define BOUNDABORT( m ) if (bounds != m.bounds) throw std::runtime_error("Map bounds don't match!")
 
 namespace zmath
 {
-	Map::Map(Vec bounds)
+	Map::Map(VecInt bounds)
 		: subMap(false)
 		, bounds(bounds.Floor())
 	{
@@ -72,32 +70,32 @@ namespace zmath
 		delete[] data;
 	}
 
-	double* Map::operator[](int x) const
+	double* Map::operator[](const int& x) const
 	{
 		return data[x];
 	}
 
-	double& Map::At(Vec pt)
+	double& Map::At(const VecInt& pt)
 	{
 		return data[int(pt.X)][int(pt.Y)];
 	}
 
-	const double& Map::At(Vec pt) const
+	const double& Map::At(const VecInt& pt) const
 	{
 		return data[int(pt.X)][int(pt.Y)];
 	}
 
-	double& Map::At(int x, int y)
+	double& Map::At(const int& x, const int& y)
 	{
 		return data[x][y];
 	}
 
-	const double& Map::At(int x, int y) const
+	const double& Map::At(const int& x, const int& y) const
 	{
 		return data[x][y];
 	}
 
-	void Map::Set(Vec pt, double val)
+	void Map::Set(VecInt pt, double val)
 	{
 		data[int(pt.X)][int(pt.Y)] = val;
 	}
@@ -107,26 +105,33 @@ namespace zmath
 		data[x][y] = val;
 	}
 
-	void Map::operator=(const Map& m)
+	Map& Map::operator=(const Map& m)
 	{
-		if (!subMap) for (int x = 0; x < bounds.X; x++) delete[] data[x];
-		delete[] data;
+		free2d(data, bounds.X);
 
-		data = m.data;
 		bounds = m.bounds;
-		subMap = m.subMap;
+		subMap = false;
+
+		data = alloc2d<double>(bounds.X, bounds.Y);
+		
+		LOOP_MAP
+		{
+			data[x][y] = m[x][y];
+		}
+
+		return *this;
 	}
 
-	void Map::operator=(Map&& map)
+	Map& Map::operator=(Map&& map)
 	{
-		*this = map;
+		return *this = map;
 	}
 
 	double Map::GetMin() const
 	{
 		double min = data[0][0];
 
-		LOOP min = (min > data[x][y]) ? data[x][y] : min;
+		LOOP_MAP min = (min > data[x][y]) ? data[x][y] : min;
 
 		return min;
 	}
@@ -135,27 +140,26 @@ namespace zmath
 	{
 		double max = data[0][0];
 
-		LOOP max = (max < data[x][y]) ? data[x][y] : max;
+		LOOP_MAP max = (max < data[x][y]) ? data[x][y] : max;
 
 		return max;
 	}
 
-	minmax Map::GetMinMax() const
+	std::pair<double, double> Map::GetMinMax() const
 	{
-		double min, max;
-		min = max = data[0][0];
+		std::pair<double, double> minmax;
 
 		// I'm the only one who has to read this code I'm the only one who has to read this code I'm the only one who has to read this code I'm the only 
-		LOOP
+		LOOP_MAP
 		{
-			max = std::max(max, data[x][y]);
-			min = std::min(min, data[x][y]);
+			minmax.first = std::min(minmax.first, data[x][y]);
+			minmax.second = std::max(minmax.second, data[x][y]);
 		}
 
-		return minmax{ min, max };
+		return minmax;
 	}
 
-	Vec Map::Bounds() const
+	VecInt Map::Bounds() const
 	{
 		return bounds;
 	}
@@ -163,7 +167,7 @@ namespace zmath
 	double Map::Sum() const
 	{
 		double sum = 0;
-		LOOP sum += data[x][y];
+		LOOP_MAP sum += data[x][y];
 		return sum;
 	}
 
@@ -177,7 +181,7 @@ namespace zmath
 		double mean = Mean();
 		double variance = 0;
 
-		LOOP variance += std::pow(mean - data[x][y], 2);
+		LOOP_MAP variance += std::pow(mean - data[x][y], 2);
 
 		return variance / bounds.Area() - 1;
 	}
@@ -187,9 +191,9 @@ namespace zmath
 		return std::sqrt(Variance());
 	}
 
-	bool Map::ContainsCoord(Vec pos) const
+	bool Map::ContainsCoord(VecInt pos) const
 	{
-		return pos.Floor() < bounds && pos >= ZV;
+		return pos < bounds && pos >= VecInt();
 	}
 
 	Vec Map::DerivativeAt(Vec pos) const
@@ -271,7 +275,7 @@ namespace zmath
 	Map& Map::Copy() const
 	{
 		Map* m = new Map(bounds);
-		LOOP m->data[x][y] = data[x][y];
+		LOOP_MAP m->data[x][y] = data[x][y];
 		return *m;
 	}
 
@@ -308,30 +312,42 @@ namespace zmath
 
 	Map& Map::Clear(double val)
 	{
-		LOOP data[x][y] = val;
+		LOOP_MAP data[x][y] = val;
 		return *this;
 	}
 
 	Map& Map::Interpolate(double newMin, double newMax)
 	{
-		minmax old = GetMinMax();
-		double oldRange = old.max - old.min;
+		auto old = GetMinMax();
+		double oldRange = old.second - old.first;
 		if (oldRange == 0)
 		{
-			LOOP data[x][y] = newMin;
+			LOOP_MAP data[x][y] = newMin;
 			return *this;
 		}
 
 		double newRange = newMax - newMin;
 
-		LOOP data[x][y] = (data[x][y] - old.min) / oldRange * newRange + newMin;
+		LOOP_MAP data[x][y] = (data[x][y] - old.first) / oldRange * newRange + newMin;
 
 		return *this;
 	}
 
 	Map& zmath::Map::Abs()
 	{
-		LOOP data[x][y] = std::abs(data[x][y]);
+		LOOP_MAP data[x][y] = std::abs(data[x][y]);
+		return *this;
+	}
+
+	Map& zmath::Map::Apply(const GaussField& gauss)
+	{
+		LOOP_MAP data[x][y] += gauss.Sample(x, y);
+		return *this;
+	}
+
+	Map& zmath::Map::Apply(double(*calculation)(double))
+	{
+		LOOP_MAP data[x][y] = calculation(data[x][y]);
 		return *this;
 	}
 
@@ -339,43 +355,61 @@ namespace zmath
 	{
 		Map& m = *new Map(bounds);
 
-		LOOP m.At(x, y) = SlopeAt(Vec(x, y));
+		LOOP_MAP m.At(x, y) = SlopeAt(Vec(x, y));
 
 		return m;
 	}
 
+	Map& zmath::Map::BoundMax(double newMax)
+	{
+		LOOP_MAP data[x][y] = std::min(newMax, data[x][y]);
+		return *this;
+	}
+
+	Map& zmath::Map::BoundMin(double newMin)
+	{
+		LOOP_MAP data[x][y] = std::max(newMin, data[x][y]);
+		return *this;
+	}
+
+	Map& zmath::Map::Bound(double newMin, double newMax)
+	{
+		LOOP_MAP data[x][y] = std::min(newMax, std::max(newMin, data[x][y]));
+		return *this;
+	}
+
 	Map& Map::operator+=(Map& m)
 	{
-		BOUNDABORT;
+		BOUNDABORT(m);
 
-		LOOP data[x][y] += m.data[x][y];
+		LOOP_MAP data[x][y] += m.data[x][y];
 		
 		return *this;
 	}
 
 	Map& Map::operator-=(Map& m)
 	{
-		BOUNDABORT;
+		BOUNDABORT(m);
 
-		LOOP data[x][y] -= m.data[x][y];
+		LOOP_MAP data[x][y] -= m.data[x][y];
 
 		return *this;
 	}
 
 	Map& Map::operator*=(Map& m)
 	{
-		BOUNDABORT;
+		BOUNDABORT(m);
 
-		LOOP data[x][y] *= m.data[x][y];
+		LOOP_MAP data[x][y] *= m.data[x][y];
 
 		return *this;
 	}
 
 	Map& Map::operator/=(Map& m)
 	{
-		BOUNDABORT;
+		BOUNDABORT(m);
 
-		LOOP
+		LOOP_MAP
 		{
 			if (m.data[x][y] == 0)
 			{
@@ -393,25 +427,25 @@ namespace zmath
 
 	Map& Map::operator+=(double val)
 	{
-		LOOP data[x][y] += val;
+		LOOP_MAP data[x][y] += val;
 		return *this;
 	}
 
 	Map& Map::operator-=(double val)
 	{
-		LOOP data[x][y] -= val;
+		LOOP_MAP data[x][y] -= val;
 		return *this;
 	}
 
 	Map& Map::operator*=(double val)
 	{
-		LOOP data[x][y] *= val;
+		LOOP_MAP data[x][y] *= val;
 		return *this;
 	}
 
 	Map& Map::operator/=(double val)
 	{
-		if (val != 0) LOOP data[x][y] /= val;
+		if (val != 0) LOOP_MAP data[x][y] /= val;
 		return *this;
 	}
 
@@ -427,7 +461,7 @@ namespace zmath
 
 	Map& Map::Pow(double exp)
 	{
-		LOOP data[x][y] = std::pow(data[x][y], exp);
+		LOOP_MAP data[x][y] = std::pow(data[x][y], exp);
 		return *this;
 	}
 
@@ -461,7 +495,7 @@ namespace zmath
 		file.write((char*)boundY, sizeof(boundY));
 
 		// Write the actual map data, little-endian
-		LOOP
+		LOOP_MAP
 		{
 			double valDouble = data[x][y];
 			uint64_t val = *reinterpret_cast<uint64_t*>(&valDouble);
