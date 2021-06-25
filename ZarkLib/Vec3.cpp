@@ -43,6 +43,7 @@ namespace zmath
 		X = x;
 		Y = y;
 		Z = z;
+		return *this;
 	}
 
 	Vec3& Vec3::operator=(const Vec3& v) noexcept

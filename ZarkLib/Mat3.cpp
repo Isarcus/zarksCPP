@@ -70,11 +70,13 @@ namespace zmath
 	Mat3& Mat3::operator+=(Mat3 mat3)
 	{
 		LOOP data[row][col] += mat3[row][col];
+		return *this;
 	}
 
 	Mat3& Mat3::operator-=(Mat3 mat3)
 	{
 		LOOP data[row][col] -= mat3[row][col];
+		return *this;
 	}
 
 	Mat3& Mat3::operator*=(Mat3 mat3)

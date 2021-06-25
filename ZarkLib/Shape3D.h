@@ -2,6 +2,7 @@
 
 #include "Vec3.h"
 #include "Tessellation3D.h"
+#include "VecT.h"
 
 namespace zmath
 {

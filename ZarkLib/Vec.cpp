@@ -6,6 +6,7 @@
 #include <cmath>
 #include <iostream>
 
+/*
 namespace zmath {
     Vec::Vec()
         : X(0)
@@ -113,11 +114,6 @@ namespace zmath {
     Vec Vec::Abs() const
     {
         return Vec(std::abs(X), std::abs(Y));
-    }
-
-    std::string Vec::String() const
-    {
-        return std::string("(" + std::to_string(X) + ", " + std::to_string(Y) + ")");
     }
 
     Vec& Vec::operator=(Vec&& v)
@@ -293,16 +289,16 @@ namespace zmath {
     Vec Vec::Min(Vec v1, Vec v2)
     {
         return Vec(
-            v1.X < v2.X ? v1.X : v2.X,
-            v1.Y < v2.Y ? v1.Y : v2.Y
+            std::min(v1.X, v2.X),
+            std::min(v1.Y, v2.Y)
         );
     }
 
     Vec Vec::Max(Vec v1, Vec v2)
     {
         return Vec(
-            v1.X > v2.X ? v1.X : v2.X,
-            v1.Y > v2.Y ? v1.Y : v2.Y
+            std::max(v1.X, v2.X),
+            std::max(v1.Y, v2.Y)
         );
     }
 
@@ -313,3 +309,4 @@ namespace zmath {
     }
 
 }
+*/

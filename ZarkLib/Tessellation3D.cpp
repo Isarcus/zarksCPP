@@ -7,8 +7,6 @@
 namespace zmath
 {
 	Tessellation3D::Tessellation3D() noexcept {}
-	Tessellation3D::Tessellation3D(const Tessellation3D& tess) noexcept : data(tess.data) {}
-	Tessellation3D::Tessellation3D(Tessellation3D&& tess) noexcept : data(tess.data) {}
 
 	Tessellation3D::Tessellation3D(double* vertices, int numTri)
 	{
@@ -33,7 +31,7 @@ namespace zmath
 			for (int y = 0; y < bounds.Y - 1; y++)
 			{
 				Vec3 baseCoord(x, y, map[x][y]);
-				Vec3 topCoord(x + 1, y + 1, map[x + 1][y + 1]);
+				Vec3 topCoord((double)x + 1, (double)y + 1, map[x + 1][y + 1]);
 			}
 		}
 	}
@@ -142,26 +140,12 @@ namespace zmath
 		return *this;
 	}
 
-	Tessellation3D& Tessellation3D::operator=(Tessellation3D& shape) noexcept
-	{
-		data = shape.data;
-
-		return *this;
-	}
-
-	Tessellation3D& Tessellation3D::operator=(Tessellation3D&& shape) noexcept
-	{
-		data = shape.data;
-
-		return *this;
-	}
-
 	void Tessellation3D::WriteSTL(std::ofstream& f, bool normals, int beginning, int end) const
 	{
 		const char headerBytes[80]{ "ZarkLib STL file, generated from a Shape3D!" };
-		const char attribBytes[2] = { 0 };
+		const char attribBytes[2]{};
 
-		uint8_t normBytes[12]  = { 0 };
+		uint8_t normBytes[12]{};
 
 		// bounds checking
 		end = end ? std::min(end, (int)data.size()) : data.size();
@@ -176,13 +160,12 @@ namespace zmath
 		f.write((char*)triCt, 4);
 
 		// Write triangle data to file
-		BaseConverter bc(10, 16, 2);
 		uint8_t buf[4];
 		for (int i = beginning; i < end; i++)
 		{
 			const Triangle3D& tri = data[i];
 
-			// Write the  normal vector
+			// Write the normal vector
 			if (normals)
 			{
 				Vec3 s1 = tri.vertices[1] - tri.vertices[0];
@@ -204,7 +187,8 @@ namespace zmath
 					ToBytes(normBytes+4, (float)normVec.Y, Endian::Little);
 					ToBytes(normBytes+8, (float)normVec.Z, Endian::Little);
 				}
-				else {
+				else
+				{
 					std::cout << "Malformed triangle; could not compute normal:\n" << tri << "\n";
 					for (int i = 0; i < 12; i++) normBytes[i] = 0;
 				}
@@ -478,7 +462,7 @@ namespace zmath
 		Tessellation3D tess;
 
 		// Load the header
-		char header[81]{ 0 };
+		char header[81]{};
 		f.read(header, 80);
 		std::cout << "Opened STL File!\n";
 		std::cout << " -> Header:   " << header << "\n";

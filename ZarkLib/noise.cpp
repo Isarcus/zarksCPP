@@ -59,10 +59,10 @@ namespace zmath
 		// Refer to https://github.com/Isarcus/zarks/blob/main/zmath/noise/simplex.go for original code.
 
 		// Constants
-		const double F2D = 0.3660254037844386467637231707529361834714026;
-		const double G2D = 0.2113248654051871177454256097490212721761991;
-		auto skew =   [F2D](Vec pt) { return Vec(pt.X + pt.Sum() * F2D, pt.Y + pt.Sum() * F2D); };
-		auto unskew = [G2D](Vec pt) { return Vec(pt.X - pt.Sum() * G2D, pt.Y - pt.Sum() * G2D); };
+		constexpr static const double F2D = 0.3660254037844386467637231707529361834714026;
+		constexpr static const double G2D = 0.2113248654051871177454256097490212721761991;
+		auto skew =   [](Vec pt) { return Vec(pt.X + pt.Sum() * F2D, pt.Y + pt.Sum() * F2D); };
+		auto unskew = [](Vec pt) { return Vec(pt.X - pt.Sum() * G2D, pt.Y - pt.Sum() * G2D); };
 		double r2 = cfg.r * cfg.r;
 
 		// RNG
@@ -302,7 +302,7 @@ namespace zmath
 
 					// Compute brightness
 					double Z = 1;
-					for (int i = cfg.nearest.min; i < cfg.nearest.max; i++)
+					for (int i = cfg.nearest.first; i < cfg.nearest.second; i++)
 					{
 						Z *= distances[i];
 					}
@@ -401,7 +401,7 @@ namespace zmath
 
 					// Compute brightness
 					double Z = 1;
-					for (int i = cfg.nearest.min; i < cfg.nearest.max; i++)
+					for (int i = cfg.nearest.first; i < cfg.nearest.second; i++)
 					{
 						Z *= distances[i];
 					}

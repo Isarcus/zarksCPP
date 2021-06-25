@@ -3,7 +3,6 @@
 #include <cstdint>
 
 #include "Map.h"
-#include "Vec.h"
 
 namespace zmath
 {
@@ -31,7 +30,7 @@ namespace zmath
 		double rMinus;	// this should be 4.0 unless you're wockying the slush
 
 		// Worley-specific values
-		minmax nearest;
+		std::pair<int, int> nearest;
 	} NoiseConfig;
 
 	Map Simplex(NoiseConfig cfg);

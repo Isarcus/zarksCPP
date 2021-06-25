@@ -1,6 +1,6 @@
 #pragma once
 
-#include "Vec.h"
+#include "VecT.h"
 
 namespace zmath
 {
@@ -56,7 +56,7 @@ namespace zmath
 		Rect Floor() const;
 		Rect Ceil() const;
 
-		// Might as well make this 'friend' instead of declaring outside of Rect, just to show it's here
-		friend std::ostream& operator<<(std::ostream& out, const Rect& rect);
 	} Rect;
+
+	std::ostream& operator<<(std::ostream& out, const Rect& rect);
 }

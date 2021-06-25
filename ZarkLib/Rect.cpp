@@ -215,9 +215,9 @@ namespace zmath
 		return Rect(min.Ceil(), max.Ceil());
 	}
 
-	std::ostream& operator<<(std::ostream& out, const Rect& rect)
+	std::ostream& operator<<(std::ostream& os, const Rect& rect)
 	{
-		return out << "{" << rect.min << " " << rect.max << "}";
+		return os << "{" << rect.min << " " << rect.max << "}";
 	}
 
 }

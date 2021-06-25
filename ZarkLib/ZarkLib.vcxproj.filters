@@ -43,6 +43,12 @@
     <Filter Include="Source Files\zmath\binary">
       <UniqueIdentifier>{d1e86dda-f807-4163-a7f9-0967bbe3efb7}</UniqueIdentifier>
     </Filter>
+    <Filter Include="Header Files\lang">
+      <UniqueIdentifier>{eb182458-ce3b-4b94-a03c-d39341e4e499}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Source Files\lang">
+      <UniqueIdentifier>{486c8ced-66b0-4069-8c89-24c7ee189d24}</UniqueIdentifier>
+    </Filter>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="framework.h">
@@ -52,9 +58,6 @@
       <Filter>Header Files</Filter>
     </ClInclude>
     <ClInclude Include="Map.h">
-      <Filter>Header Files\zmath</Filter>
-    </ClInclude>
-    <ClInclude Include="Vec.h">
       <Filter>Header Files\zmath</Filter>
     </ClInclude>
     <ClInclude Include="zmath_internals.h">
@@ -99,16 +102,22 @@
     <ClInclude Include="hypernoise.h">
       <Filter>Header Files\noise</Filter>
     </ClInclude>
-    <ClInclude Include="ImageProcessing.h">
-      <Filter>Header Files\zimg</Filter>
+    <ClInclude Include="VecT.h">
+      <Filter>Header Files\zmath</Filter>
+    </ClInclude>
+    <ClInclude Include="MapT.h">
+      <Filter>Header Files\zmath</Filter>
+    </ClInclude>
+    <ClInclude Include="Gauss.h">
+      <Filter>Header Files\zmath</Filter>
+    </ClInclude>
+    <ClInclude Include="ZarkLang.h">
+      <Filter>Header Files\lang</Filter>
     </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="pch.cpp">
       <Filter>Source Files</Filter>
-    </ClCompile>
-    <ClCompile Include="Vec.cpp">
-      <Filter>Source Files\zmath</Filter>
     </ClCompile>
     <ClCompile Include="Map.cpp">
       <Filter>Source Files\zmath</Filter>
@@ -149,13 +158,11 @@
     <ClCompile Include="voronoi.cpp">
       <Filter>Source Files\noise</Filter>
     </ClCompile>
-    <ClCompile Include="ImageProcessing.cpp">
-      <Filter>Source Files\zimg</Filter>
-    </ClCompile>
-  </ItemGroup>
-  <ItemGroup>
-    <None Include="Hypermap.inl">
+    <ClCompile Include="Gauss.cpp">
       <Filter>Source Files\zmath</Filter>
-    </None>
+    </ClCompile>
+    <ClCompile Include="ZarkLang.cpp">
+      <Filter>Source Files\lang</Filter>
+    </ClCompile>
   </ItemGroup>
 </Project>

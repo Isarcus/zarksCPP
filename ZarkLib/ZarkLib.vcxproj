@@ -155,8 +155,9 @@
   <ItemGroup>
     <ClInclude Include="binary.h" />
     <ClInclude Include="Color.h" />
-    <ClInclude Include="ImageProcessing.h" />
+    <ClInclude Include="Gauss.h" />
     <ClInclude Include="hypernoise.h" />
+    <ClInclude Include="MapT.h" />
     <ClInclude Include="numerals.h" />
     <ClInclude Include="Shape3D.h" />
     <ClInclude Include="Triangle3D.h" />
@@ -168,15 +169,16 @@
     <ClInclude Include="Map.h" />
     <ClInclude Include="noise.h" />
     <ClInclude Include="pch.h" />
-    <ClInclude Include="Vec.h" />
+    <ClInclude Include="VecT.h" />
     <ClInclude Include="voronoi.h" />
+    <ClInclude Include="ZarkLang.h" />
     <ClInclude Include="Zimg.h" />
     <ClInclude Include="zmath_internals.h" />
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="binary.cpp" />
     <ClCompile Include="Color.cpp" />
-    <ClCompile Include="ImageProcessing.cpp" />
+    <ClCompile Include="Gauss.cpp" />
     <ClCompile Include="numerals.cpp" />
     <ClCompile Include="Shape3D.cpp" />
     <ClCompile Include="Triangle3D.cpp" />
@@ -191,13 +193,10 @@
     </ClCompile>
     <ClCompile Include="Rect.cpp" />
     <ClCompile Include="Tessellation3D.cpp" />
-    <ClCompile Include="Vec.cpp" />
     <ClCompile Include="Vec3.cpp" />
     <ClCompile Include="voronoi.cpp" />
+    <ClCompile Include="ZarkLang.cpp" />
     <ClCompile Include="Zimg.cpp" />
-  </ItemGroup>
-  <ItemGroup>
-    <None Include="Hypermap.inl" />
   </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
   <ImportGroup Label="ExtensionTargets">

@@ -1,11 +1,12 @@
 #pragma once
 
 #include "Vec3.h"
+#include <array>
 
 namespace zmath
 {
 	typedef struct Triangle3D {
-		Vec3 vertices[3];
+		std::array<Vec3, 3> vertices;
 
 		Triangle3D(Vec3 v1, Vec3 v2, Vec3 v3);
 

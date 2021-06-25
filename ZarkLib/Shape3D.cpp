@@ -89,12 +89,16 @@ namespace zmath
     {
         vertices = shape.vertices;
         indices = shape.indices;
+
+        return *this;
     }
 
     Shape3D& Shape3D::operator=(Shape3D&& shape) noexcept
     {
         vertices = shape.vertices;
         indices = shape.indices;
+
+        return *this;
     }
 
     Shape3D& Shape3D::STLCleanup(bool scaleIfSmall)
