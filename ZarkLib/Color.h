@@ -1,6 +1,6 @@
 #pragma once
 
-namespace zimg
+namespace zmath
 {
 	typedef unsigned char uint8;
 

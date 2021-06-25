@@ -5,17 +5,17 @@
 #include <exception>
 #include <cassert>
 
-namespace zimg
+namespace zmath
 {
 
-	zimg::RGBA::RGBA(uint8 r, uint8 g, uint8 b, uint8 a)
+	zmath::RGBA::RGBA(uint8 r, uint8 g, uint8 b, uint8 a)
 		: R(r)
 		, G(g)
 		, B(b)
 		, A(a)
 	{ }
 
-	zimg::RGBA::RGBA(uint8 r, uint8 g, uint8 b)
+	zmath::RGBA::RGBA(uint8 r, uint8 g, uint8 b)
 		: R(r)
 		, G(g)
 		, B(b)
