@@ -3,50 +3,62 @@
 #include "Color.h"
 #include "Rect.h"
 #include "Map.h"
+#include "VecT.h"
 
 #include <string>
 #include <vector>
+#include <array>
 
-namespace zimg
+namespace zmath
 {
 	class Image {
 	public:
 		Image(int width, int height, RGBA col = RGBA::Black());
-		Image(zmath::Vec bounds, RGBA col = RGBA::Black());
-		Image(zmath::Map& m);
-		Image(zmath::Map& m, Scheme scheme);
+		Image(zmath::VecInt bounds_in, RGBA col = RGBA::Black());
+		Image(const Map& m);
+		Image(const Map& m, Scheme scheme);
 		Image(std::string path);
+		Image(const Image& img);
 
 		~Image();
 
-		void operator= (Image img);
+		VecInt Bounds() const;
+
+		Image& operator= (const Image& img);
 		bool operator!() const;
 
 		// Accessors and copy/paste
 
 		RGBA& At(int x, int y);
-		RGBA& At(zmath::Vec pos);
-
+		RGBA& At(VecInt pos);
 		const RGBA& At(int x, int y) const;
-		const RGBA& At(zmath::Vec pos) const;
+		const RGBA& At(VecInt pos) const;
+
+		RGBA* const& operator[](int x);
+		const RGBA* const& operator[](int x) const;
 
 		Image& Copy() const;
-		Image& Copy(zmath::Vec min, zmath::Vec max) const;
-		Image& Copy(zmath::Rect rect) const;
-		Image& Paste(Image img, zmath::Vec at);
-		Image& Paste(Image img, zmath::Rect within);
+		Image& Copy(zmath::VecInt min, zmath::VecInt max) const;
+		Image& Paste(Image img, VecInt at);
+		Image& Paste(Image img, Rect within);
 
 		// Manipulators
 		
+		Image& Resize(VecInt to_bounds);
+		Image& Resize(double scaleFactor);
 		Image& Negative();
 		Image& RestrictPalette(const std::vector<RGBA>& palette);
+		Image& Fractalify(int octaves);
+		Image& Droppify(std::array<Vec, 3> origins, std::array<double, 3> periods);
+		Image& BlurGaussian(double sigma);
+		Image& WarpGaussian(const Map& map, double sigma);
 
 		// Save an image using STBI
-		void Save(std::string path, unsigned int channels) const;
+		void Save(std::string path, unsigned int channels = 3) const;
 
 	private:
 		RGBA** data;
-		zmath::Vec bounds;
+		zmath::VecInt bounds;
 
 		bool isCopy;
 	};
