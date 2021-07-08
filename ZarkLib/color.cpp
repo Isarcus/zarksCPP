@@ -3,6 +3,7 @@
 
 #include <cmath>
 #include <exception>
+#include <iostream>
 #include <cassert>
 
 namespace zmath
@@ -89,6 +90,11 @@ namespace zmath
 		return R == c.R && G == c.G && B == c.B && A == c.A;
 	}
 
+	double RGBA::Brightness(bool accountForAlpha) const
+	{
+		return ((int)R + (int)G + (int)B) * (accountForAlpha ? (A / 255.0) : 1) / 765.0;
+	}
+
 	RGBA RGBA::Black()
 	{
 		return RGBA();
@@ -143,6 +149,11 @@ namespace zmath
 
 		thresholds = new double[n - 2];
 		for (int i = 0; i < n - 2; i++) thresholds[i] = (i+1) / (double)(n - 1);
+	}
+
+	std::ostream& operator<<(std::ostream& os, const RGBA& c)
+	{
+		return os << "(" << (int)c.R << ", " << (int)c.G << ", " << (int)c.B << ", " << (int)c.A << ")";
 	}
 
 }

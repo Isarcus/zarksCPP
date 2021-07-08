@@ -1,5 +1,7 @@
 #pragma once
 
+#include <iostream>
+
 namespace zmath
 {
 	typedef unsigned char uint8;
@@ -21,11 +23,15 @@ namespace zmath
 		const uint8& operator[] (int i) const;
 		bool operator== (RGBA c) const;
 
+		double Brightness(bool accountForAlpha = false) const;
+
 		static RGBA Black();
 		static RGBA White();
 		static RGBA Interpolate(const RGBA& c0, const RGBA& c1, double t);
 
 		static double Distance(const RGBA& c0, const RGBA& c1);
+
+		friend std::ostream& operator<<(std::ostream& os, const RGBA& c);
 	} RGBA;
 
 	typedef struct Scheme {
