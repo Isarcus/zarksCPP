@@ -339,6 +339,38 @@ namespace zmath
 		return *this;
 	}
 
+	Map& zmath::Map::FillBorder(int thickness, double val)
+	{
+		thickness = std::min(thickness, bounds.Min());
+		// Left
+		Fill({ 0, 0 }, { thickness, bounds.Y }, val);
+		// Right
+		Fill({ bounds.X - thickness, 0 }, { bounds.X, bounds.Y }, val);
+		// Top (no corners)
+		Fill({ thickness, bounds.Y - thickness }, { bounds.X - thickness, bounds.Y }, val);
+		// Bottom (no corners)
+		Fill({ thickness, 0 }, { bounds.X - thickness, thickness }, val);
+		return *this;
+	}
+
+	Map& zmath::Map::Fill(VecInt min, VecInt max, double val)
+	{
+		for (int x = min.X; x < max.X; x++)
+		{
+			for (int y = min.Y; y < max.Y; y++)
+			{
+				data[x][y] = val;
+			}
+		}
+		return *this;
+	}
+
+	Map& zmath::Map::Replace(double val, double with)
+	{
+		LOOP_MAP if (data[x][y] == val) data[x][y] = with;
+		return *this;
+	}
+
 	Map& zmath::Map::Apply(const GaussField& gauss)
 	{
 		LOOP_MAP data[x][y] += gauss.Sample(x, y);
