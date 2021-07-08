@@ -1,10 +1,14 @@
+#define _CRT_SECURE_NO_WARNINGS
+
 #include "noise.h"
 #include "Zimg.h"
 #include "Rect.h"
-
 #include "Shape3D.h"
 
 #include <iostream>
+#include <cstdlib>
+#include <string>
+#include <random>
 
 using namespace zmath;
 
@@ -15,29 +19,14 @@ void modernArt();
 
 int main()
 {
-	// create shapes
-	Shape3D mainShape;
-	Shape3D prism = Shape3D::Sphere(7, 6.0, Vec3());
-
-	// append shapes
-	mainShape.Add(prism);
-
-	// cleanup
-	mainShape.STLCleanup();
-	Tessellation3D tess = mainShape.Tesselate();
-
-	// write to file
-	std::ofstream file("test.stl");
-	tess.WriteSTL(file);
-	file.close();
-
-	auto bounds = tess.Bounds();
-	std::cout << "Min: " << bounds[0] << "\n";
-	std::cout << "Max: " << bounds[1] << "\n";
-
-	//tess.Print();
-
-	return 0;
+	std::string imglib = getenv("IMGLIB");
+	Image img(imglib + "/ai/split_me.png");
+	
+	img.SaveMNIST(
+		imglib + "/ai/homemade_data.bt",
+		imglib + "/ai/homemade_labels.bt",
+		4
+	);
 }
 
 void modernArt()
@@ -45,7 +34,7 @@ void modernArt()
 	// Generate image!
 	NoiseConfig cfg;
 	cfg.bounds = Vec(1000, 1000);
-	cfg.boxSizeInitial = 300;
+	//cfg.boxSize = 300;
 	cfg.octaves = 1;
 	cfg.octDecrease = 0.5;
 	cfg.lNorm = 20; // 20
@@ -60,13 +49,13 @@ void modernArt()
 	//slope.Save("noise.zmap");
 
 	const int colorCt = 2;
-	zimg::RGBA colors[colorCt]{
-		zimg::RGBA(0, 0, 0),
-		zimg::RGBA(255, 255, 255),
+	zmath::RGBA colors[colorCt]{
+		zmath::RGBA(0, 0, 0),
+		zmath::RGBA(255, 255, 255),
 	};
 
-	zimg::Scheme scheme(colorCt, colors);
-	zimg::Image img(slope, scheme);
+	zmath::Scheme scheme(colorCt, colors);
+	zmath::Image img(slope, scheme);
 
 	img.Save(std::string("noise.png"), 3);
 }

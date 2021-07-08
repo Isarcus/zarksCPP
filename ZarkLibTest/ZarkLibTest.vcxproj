@@ -116,7 +116,7 @@
       <SDLCheck>true</SDLCheck>
       <PreprocessorDefinitions>_DEBUG;_CONSOLE;%(PreprocessorDefinitions)</PreprocessorDefinitions>
       <ConformanceMode>true</ConformanceMode>
-      <AdditionalIncludeDirectories>C:\Users\isaac\OneDrive\Documents\Coding\VS2019\projects\ZarkLib\ZarkLib\ZarkLib;C:\Users\isaac\OneDrive\Documents\Coding\VS2019\libraries\include\stbi;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
+      <AdditionalIncludeDirectories>C:\Users\isaac\Documents\Coding\VS 2019 C++\Projects\ZarkLib\ZarkLib;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
     </ClCompile>
     <Link>
       <SubSystem>Console</SubSystem>
@@ -147,6 +147,9 @@
     <ProjectReference Include="..\ZarkLib\ZarkLib.vcxproj">
       <Project>{feabb48b-7ca2-4aeb-ad2a-ae71a0e0e5c6}</Project>
     </ProjectReference>
+  </ItemGroup>
+  <ItemGroup>
+    <None Include="example.zs" />
   </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
   <ImportGroup Label="ExtensionTargets">
