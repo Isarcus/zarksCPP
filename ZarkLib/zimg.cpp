@@ -12,6 +12,7 @@
 #include "stb_image_write.h"
 
 #include <iostream>
+#include <fstream>
 
 #define LOOP_IMAGE for (int x = 0; x < bounds.X; x++) for (int y = 0; y < bounds.Y; y++)
 
@@ -210,6 +211,10 @@ Image::Image(const Image& img)
 	(*this) = img;
 }
 
+Image::Image()
+	: Image(1, 1)
+{}
+
 Image::~Image()
 {
 	if (!isCopy) for (int x = 0; x < bounds.X; x++) delete[] data[x];
@@ -368,6 +373,16 @@ Image& zmath::Image::Resize(double scaleFactor)
 	return Resize(Vec(bounds) * scaleFactor);
 }
 
+Image& zmath::Image::Clear(RGBA col)
+{
+	LOOP_IMAGE
+	{
+		data[x][y] = col;
+	}
+
+	return *this;
+}
+
 Image& Image::Negative()
 {
 	LOOP_IMAGE data[x][y] = data[x][y].Negative();
@@ -474,7 +489,7 @@ Image& zmath::Image::Droppify(std::array<Vec, 3> origins, std::array<double, 3> 
 }
 
 // Blurs an image Gaussianly!
-Image& zmath::Image::BlurGaussian(double sigma)
+Image& zmath::Image::BlurGaussian(double sigma, bool blurAlpha)
 {
 	int radius = sigma * 2;
 	GaussField gauss(sigma, 1.0, Vec());
@@ -490,7 +505,7 @@ Image& zmath::Image::BlurGaussian(double sigma)
 		std::array<double, 4> rgba;
 		for (const auto& point : points)
 		{
-			VecInt pointPos = point.first + imgPos;
+			const VecInt pointPos = point.first + imgPos;
 
 			// If contains coord
 			if (pointPos >= VecInt() && pointPos < bounds)
@@ -509,14 +524,14 @@ Image& zmath::Image::BlurGaussian(double sigma)
 		imgNew[x][y] = RGBA((uint8)std::min(255.0, std::round(rgba[0])),
 							(uint8)std::min(255.0, std::round(rgba[1])),
 							(uint8)std::min(255.0, std::round(rgba[2])),
-							(uint8)std::min(255.0, std::round(rgba[3])));
+							(blurAlpha) ? At(imgPos).A : (uint8)std::min(255.0, std::round(rgba[3])));
 	}
 
 	return *this = imgNew;
 }
 
 // Warps an image Gaussianly-ish!
-Image& zmath::Image::WarpGaussian(const Map& map, double sigma)
+Image& zmath::Image::PixelateGaussian(const Map& map, double sigma)
 {
 	MapT<std::pair<Vec, double>> transforms(bounds);
 
@@ -566,6 +581,28 @@ Image& zmath::Image::WarpGaussian(const Map& map, double sigma)
 	return *this;
 }
 
+Image& zmath::Image::EnhanceContrast(double sigma)
+{
+	Image blurred(*this);
+	blurred.BlurGaussian(sigma);
+
+	LOOP_IMAGE
+	{
+		double dR = ((int)data[x][y].R - (int)blurred[x][y].R) / 255.0;
+		double dG = ((int)data[x][y].G - (int)blurred[x][y].G) / 255.0;
+		double dB = ((int)data[x][y].B - (int)blurred[x][y].B) / 255.0;
+
+		if (dR < 0) data[x][y].R *= (1.0 + dR);
+		else data[x][y].R += dR * (255.0 - data[x][y].R);
+		if (dG < 0) data[x][y].G *= (1.0 + dG);
+		else data[x][y].G += dG * (255.0 - data[x][y].G);
+		if (dB < 0) data[x][y].B *= (1.0 + dB);
+		else data[x][y].B += dB * (255.0 - data[x][y].B);
+	}
+
+	return *this;
+}
+
 void Image::Save(std::string path, unsigned int channels) const
 {
 	if (channels != 3 && channels != 4)
@@ -592,6 +629,89 @@ void Image::Save(std::string path, unsigned int channels) const
 	stbi_write_png(path.c_str(), bounds.X, bounds.Y, channels, pixels, bounds.X * channels);
 
 	delete[] pixels;
+}
+
+void zmath::Image::SaveMNIST(std::string path_images, std::string path_labels, int columns, int emptyBorderSize) const
+{
+	constexpr int MNIST_IMG_WIDTH = 28;
+	constexpr int MNIST_IMG_HEIGHT = 28;
+	constexpr int MNIST_IMG_SIZE = MNIST_IMG_WIDTH * MNIST_IMG_HEIGHT;
+	static const VecInt MNIST_BOUNDS(MNIST_IMG_WIDTH, MNIST_IMG_HEIGHT);
+
+	VecInt minBounds = MNIST_BOUNDS * VecInt(columns, 10);
+	if (bounds.X < minBounds.X || bounds.Y < minBounds.Y)
+	{
+		std::cout << "Sorry, this image is too small to convert to MNIST data! " << bounds << "\n";
+		return;
+	}
+	Image copy(*this);
+	//copy.BlurGaussian(1.0, false);
+	copy.Resize(minBounds);
+
+	// Open files, check if ok, and write empty headers
+	std::ofstream fout_images(path_images, std::ios_base::binary);
+	std::ofstream fout_labels(path_labels, std::ios_base::binary);
+	if (fout_images.fail())
+	{
+		std::cout << "[ERROR] Couldn't create file at " << path_images << "\n";
+		return;
+	}
+	if (fout_labels.fail())
+	{
+		std::cout << "[ERROR] Couldn't create file at " << path_labels << "\n";
+		return;
+	}
+	char header_empty[16];
+	fout_images.write(header_empty, 16);
+	fout_labels.write(header_empty, 8);
+
+	// Write data to files
+	for (int col = 0; col < columns; col++)
+	{
+		for (int row = 0; row < 10; row++)
+		{
+			// Get map brightness
+			Map map(MNIST_IMG_WIDTH, MNIST_IMG_HEIGHT);
+			VecInt startPos = MNIST_BOUNDS * VecInt(col, row);
+			for (int x = 0; x < MNIST_IMG_WIDTH; x++)
+			{
+				for (int y = 0; y < MNIST_IMG_HEIGHT; y++)
+				{
+					VecInt mapPos(x, y);
+					VecInt samplePos = startPos + mapPos;
+
+					double brightness = copy.At(samplePos).Brightness();
+					map.Set(mapPos, brightness);
+				}
+			}
+
+			// Normalize 
+			map.Interpolate(1, 0);
+			map.FillBorder(emptyBorderSize, 0);
+			map.Interpolate(0, 1);
+			//Image im_ex(map);
+			//im_ex.Save("test/" + std::to_string(row) + "_" + std::to_string(col) + ".png");
+
+			// Write map
+			unsigned char bytes[MNIST_IMG_SIZE];
+			int idx_byte = 0;
+			for (int y = 0; y < MNIST_IMG_HEIGHT; y++)
+			{
+				for (int x = 0; x < MNIST_IMG_WIDTH; x++)
+				{
+					bytes[idx_byte++] = std::round(map[x][y] * 255.0);
+				}
+			}
+
+			fout_images.write((char*)bytes, MNIST_IMG_SIZE);
+			char row_char = row;
+			fout_labels.write(&row_char, 1);
+		}
+	}
+	fout_images.close();
+	fout_labels.close();
+
+	std::cout << "Finished writing data for " << columns * 10 << " MNIST images\n";
 }
 
 } // namespace zimg

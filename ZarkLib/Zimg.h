@@ -19,6 +19,7 @@ namespace zmath
 		Image(const Map& m, Scheme scheme);
 		Image(std::string path);
 		Image(const Image& img);
+		Image();
 
 		~Image();
 
@@ -46,15 +47,18 @@ namespace zmath
 		
 		Image& Resize(VecInt to_bounds);
 		Image& Resize(double scaleFactor);
+		Image& Clear(RGBA col = RGBA::Black());
 		Image& Negative();
 		Image& RestrictPalette(const std::vector<RGBA>& palette);
 		Image& Fractalify(int octaves);
 		Image& Droppify(std::array<Vec, 3> origins, std::array<double, 3> periods);
-		Image& BlurGaussian(double sigma);
-		Image& WarpGaussian(const Map& map, double sigma);
+		Image& BlurGaussian(double sigma, bool blurAlpha = true);
+		Image& PixelateGaussian(const Map& map, double sigma);
+		Image& EnhanceContrast(double sigma);
 
 		// Save an image using STBI
 		void Save(std::string path, unsigned int channels = 3) const;
+		void SaveMNIST(std::string path_images, std::string path_labels, int columns, int emptyBorderSize = 2) const;
 
 	private:
 		RGBA** data;
