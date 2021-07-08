@@ -96,9 +96,6 @@
     <ClInclude Include="numerals.h">
       <Filter>Header Files\zmath\binary</Filter>
     </ClInclude>
-    <ClInclude Include="voronoi.h">
-      <Filter>Header Files\noise</Filter>
-    </ClInclude>
     <ClInclude Include="hypernoise.h">
       <Filter>Header Files\noise</Filter>
     </ClInclude>
@@ -111,9 +108,6 @@
     <ClInclude Include="Gauss.h">
       <Filter>Header Files\zmath</Filter>
     </ClInclude>
-    <ClInclude Include="ZarkLang.h">
-      <Filter>Header Files\lang</Filter>
-    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="pch.cpp">
@@ -124,9 +118,6 @@
     </ClCompile>
     <ClCompile Include="noise.cpp">
       <Filter>Source Files\noise</Filter>
-    </ClCompile>
-    <ClCompile Include="Color.cpp">
-      <Filter>Source Files\zimg</Filter>
     </ClCompile>
     <ClCompile Include="Zimg.cpp">
       <Filter>Source Files\zimg</Filter>
@@ -155,14 +146,11 @@
     <ClCompile Include="numerals.cpp">
       <Filter>Source Files\zmath\binary</Filter>
     </ClCompile>
-    <ClCompile Include="voronoi.cpp">
-      <Filter>Source Files\noise</Filter>
-    </ClCompile>
     <ClCompile Include="Gauss.cpp">
       <Filter>Source Files\zmath</Filter>
     </ClCompile>
-    <ClCompile Include="ZarkLang.cpp">
-      <Filter>Source Files\lang</Filter>
+    <ClCompile Include="Color.cpp">
+      <Filter>Source Files</Filter>
     </ClCompile>
   </ItemGroup>
 </Project>
