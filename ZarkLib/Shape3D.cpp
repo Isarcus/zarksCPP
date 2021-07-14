@@ -10,11 +10,6 @@ namespace zmath
         , indices(shape.indices)
     { }
 
-    Shape3D::Shape3D(Shape3D&& shape) noexcept
-        : vertices(shape.vertices)
-        , indices(shape.indices)
-    {}
-
     Shape3D::Shape3D(std::vector<Vec3> vertices, std::vector<int> indices) noexcept
         : vertices(vertices)
         , indices(indices)
@@ -36,11 +31,6 @@ namespace zmath
         }
 
         return *this;
-    }
-
-    Shape3D& Shape3D::Add(Shape3D&& shape, bool verticesOnly)
-    {
-        return Add(shape, verticesOnly);
     }
 
     Shape3D& Shape3D::Shift(Vec3 by)
@@ -158,7 +148,7 @@ namespace zmath
         return *this;
     }
 
-    Tessellation3D Shape3D::Tesselate()
+    Tessellation3D Shape3D::Tessellate()
     {
         Tessellation3D tess;
 
