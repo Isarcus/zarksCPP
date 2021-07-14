@@ -39,6 +39,7 @@ namespace zmath
 
 		// Write data to STL file
 		void WriteSTL(std::ofstream& f, bool normals, int beginning = 0, int end = 0) const;
+		void WriteSTL(std::string filepath, bool normals, int beginning = 0, int end = 0) const;
 
 		//         //
 		// PRESETS //

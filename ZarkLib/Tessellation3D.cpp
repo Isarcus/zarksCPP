@@ -194,9 +194,11 @@ namespace zmath
 
 	void Tessellation3D::WriteSTL(std::ofstream& f, bool normals, int beginning, int end) const
 	{
-		const char headerBytes[80]{ "ZarkLib STL file, generated from a Shape3D!" };
-		const char attribBytes[2]{};
+		std::cout << "Writing STL file with " << data.size() << " triangles!\n";
 
+		const char headerBytes[80]{ "ZarkLib STL file, generated from a Shape3D!" };
+
+		uint8_t attribBytes[2]{};
 		uint8_t normBytes[12]{};
 
 		// bounds checking
@@ -253,8 +255,20 @@ namespace zmath
 			}
 
 			// Write the (blank) attribute byte count
-			f.write(attribBytes, 2);
+			f.write((char*)attribBytes, 2);
 		}
+	}
+
+	void Tessellation3D::WriteSTL(std::string filepath, bool normals, int beginning, int end) const
+	{
+		std::ofstream fout(filepath, std::ios_base::binary);
+
+		if (fout.fail())
+		{
+			throw std::runtime_error("Could not open file at " + filepath);
+		}
+
+		WriteSTL(fout, normals, beginning, end);
 	}
 
 	Tessellation3D Tessellation3D::Square(double size, Vec3 center)
