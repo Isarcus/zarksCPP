@@ -34,9 +34,9 @@ namespace zmath
 		std::pair<int, int> nearest;
 	} NoiseConfig;
 
-	Map Simplex(NoiseConfig cfg);
-	Map Perlin(NoiseConfig cfg);
-	Map Worley(NoiseConfig cfg);
+	Map& Simplex(NoiseConfig cfg);
+	Map& Perlin(NoiseConfig cfg);
+	Map& Worley(NoiseConfig cfg);
 
-	Map WorleyPlex(NoiseConfig cfg, Map& baseMap);
+	Map& WorleyPlex(NoiseConfig cfg, Map& baseMap);
 }
