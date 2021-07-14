@@ -154,7 +154,7 @@
   </ItemDefinitionGroup>
   <ItemGroup>
     <ClInclude Include="binary.h" />
-    <ClInclude Include="Color.h" />
+    <ClInclude Include="color.h" />
     <ClInclude Include="Gauss.h" />
     <ClInclude Include="hypernoise.h" />
     <ClInclude Include="MapT.h" />
@@ -175,7 +175,7 @@
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="binary.cpp" />
-    <ClCompile Include="Color.cpp" />
+    <ClCompile Include="color.cpp" />
     <ClCompile Include="Gauss.cpp" />
     <ClCompile Include="numerals.cpp" />
     <ClCompile Include="Shape3D.cpp" />

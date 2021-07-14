@@ -150,7 +150,7 @@
       <Filter>Source Files\zmath</Filter>
     </ClCompile>
     <ClCompile Include="color.cpp">
-      <Filter>Source Files</Filter>
+      <Filter>Source Files\zimg</Filter>
     </ClCompile>
   </ItemGroup>
 </Project>

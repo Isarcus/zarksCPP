@@ -1,6 +1,6 @@
 #pragma once
 
-#include "Color.h"
+#include "color.h"
 #include "Rect.h"
 #include "Map.h"
 #include "VecT.h"

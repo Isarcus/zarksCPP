@@ -1,5 +1,5 @@
 #include "pch.h"
-#include "Color.h"
+#include "color.h"
 
 #include <cmath>
 #include <exception>
