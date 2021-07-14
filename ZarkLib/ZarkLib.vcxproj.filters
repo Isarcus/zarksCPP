@@ -66,7 +66,7 @@
     <ClInclude Include="noise.h">
       <Filter>Header Files\noise</Filter>
     </ClInclude>
-    <ClInclude Include="Color.h">
+    <ClInclude Include="color.h">
       <Filter>Header Files\zimg</Filter>
     </ClInclude>
     <ClInclude Include="Zimg.h">
@@ -149,7 +149,7 @@
     <ClCompile Include="Gauss.cpp">
       <Filter>Source Files\zmath</Filter>
     </ClCompile>
-    <ClCompile Include="Color.cpp">
+    <ClCompile Include="color.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
   </ItemGroup>
