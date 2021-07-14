@@ -2,7 +2,9 @@
 #include "Tessellation3D.h"
 #include "binary.h"
 #include "zmath_internals.h"
-#include "numerals.h";
+#include "numerals.h"
+
+#include <cstring>
 
 namespace zmath
 {
@@ -14,25 +16,75 @@ namespace zmath
 		for (int i = 0; i < numTri; i++)
 		{
 			data.push_back(Triangle3D(
-				vertices[idx++],
-				vertices[idx++],
-				vertices[idx++]
+				vertices[idx],
+				vertices[idx + 1],
+				vertices[idx + 2]
 			));
+
+			idx += 3;
 		}
 	}
 
-	Tessellation3D::Tessellation3D(Map map, Vec3 scale, bool fillSides, bool fillBase)
+	Tessellation3D::Tessellation3D(const Map& map, Vec3 scale, bool fillSides, bool fillBase)
 	{
-		Vec bounds = map.Bounds();
+		VecInt bounds = map.Bounds();
 
 		// First the heightmap data
 		for (int x = 0; x < bounds.X - 1; x++)
 		{
 			for (int y = 0; y < bounds.Y - 1; y++)
 			{
-				Vec3 baseCoord(x, y, map[x][y]);
-				Vec3 topCoord((double)x + 1, (double)y + 1, map[x + 1][y + 1]);
+				Vec3 c00(x, map[x][y], y);
+				Vec3 c01(x, map[x][y + 1], y + 1);
+				Vec3 c10(x + 1, map[x + 1][y], y);
+				Vec3 c11(x + 1, map[x + 1][y + 1], y + 1);
+
+				data.push_back(Triangle3D(c00, c10, c11));
+				data.push_back(Triangle3D(c11, c01, c00));
 			}
+		}
+
+		if (fillSides)
+		{
+			// top & bottom
+			for (int x = 0; x < bounds.X - 1; x++)
+			{
+				for (int y = 0; y < bounds.Y; y += bounds.Y - 1)
+				{
+					Vec3 c00(x, 0, y);
+					Vec3 c01(x, map[x][y], y);
+					Vec3 c10(x + 1, 0, y);
+					Vec3 c11(x + 1, map[x + 1][y], y);
+
+					data.push_back(Triangle3D(c00, c10, c11));
+					data.push_back(Triangle3D(c11, c01, c00));
+				}
+			}
+
+			// left & right
+			for (int y = 0; y < bounds.Y - 1; y++)
+			{
+				for (int x = 0; x < bounds.X; x += bounds.X - 1)
+				{
+					Vec3 c00(x, 0, y);
+					Vec3 c01(x, map[x][y], y);
+					Vec3 c10(x, 0, y + 1);
+					Vec3 c11(x, map[x][y + 1], y + 1);
+
+					data.push_back(Triangle3D(c00, c10, c11));
+					data.push_back(Triangle3D(c11, c01, c00));
+				}
+			}
+		}
+
+		if (fillBase)
+		{
+			data.push_back(Triangle3D(
+				Vec3(0, 0, 0), Vec3(bounds.X - 1, 0, 0), Vec3(bounds.X - 1, 0, bounds.Y - 1)
+			));
+			data.push_back(Triangle3D(
+				Vec3(bounds.X - 1, 0, bounds.Y - 1), Vec3(0, 0, bounds.Y - 1), Vec3(0, 0, 0)
+			));
 		}
 	}
 
@@ -160,7 +212,6 @@ namespace zmath
 		f.write((char*)triCt, 4);
 
 		// Write triangle data to file
-		uint8_t buf[4];
 		for (int i = beginning; i < end; i++)
 		{
 			const Triangle3D& tri = data[i];
@@ -474,7 +525,7 @@ namespace zmath
 		std::cout << " -> Triangles: " << triCt << "\n";
 
 		// Load triangles
-		for (int i = 0; i < triCt; i++)
+		for (uint32_t i = 0; i < triCt; i++)
 		{
 			char floatBytes[4];
 

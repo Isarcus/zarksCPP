@@ -22,7 +22,7 @@ namespace zmath
 		Tessellation3D() noexcept;
 		Tessellation3D(Triangle3D* triangles, int numTri);
 		Tessellation3D(double* vertices, int numTri);
-		Tessellation3D(Map map, Vec3 scale = Vec3(1, 1, 1), bool fillSides = true, bool fillBase = true);
+		Tessellation3D(const Map& map, Vec3 scale = Vec3(1, 1, 1), bool fillSides = true, bool fillBase = true);
 
 		void Print() const;
 		std::array<Vec3, 2> Bounds() const;
