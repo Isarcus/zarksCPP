@@ -99,6 +99,18 @@ namespace zmath
 		return arr1;
 	}
 
+	template <typename T>
+	void reverse(T& arr)
+	{
+		const size_t size = arr.size();
+		for (size_t i = 0; i < size / 2; i++)
+		{
+			const auto temp = std::move(arr[i]);
+			arr[i] = arr[size - 1 - i];
+			arr[size - 1 - i] = temp;
+		}
+	}
+
 	//      //
 	// MATH //
 	//      //
@@ -106,7 +118,7 @@ namespace zmath
 	template <typename T>
 	T AbsT(const T& val)
 	{
-		return std::abs(T);
+		return std::abs(val);
 	}
 
 	template <typename T>

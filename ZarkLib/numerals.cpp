@@ -1,5 +1,6 @@
 #include "pch.h"
 #include "numerals.h"
+#include "zmath_internals.h"
 
 using std::string;
 
@@ -25,8 +26,8 @@ namespace zmath
 			placeValue *= toBase;
 		}
 
-		while (result.size() < minWidth) result += '0';
-		std::reverse(result.begin(), result.end());
+		while ((int)result.size() < minWidth) result += '0';
+		reverse(result);
 
 		return result;
 	}

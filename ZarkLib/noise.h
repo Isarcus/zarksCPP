@@ -16,6 +16,7 @@ namespace zmath
 
 	typedef struct NoiseConfig : GridConfig {
 		NoiseConfig();
+		void NewSeed();
 
 		// Universal noise inputs
 		int		octaves;

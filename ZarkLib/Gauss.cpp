@@ -10,9 +10,9 @@ constexpr static const double ACCEPTABLE_FLOAT_ERROR = 0.0000001;
 namespace zmath
 {
 	GaussField::GaussField(Vec sigma, double amplitude, Vec center)
-	: sigma(sigma)
+	: center(center)
+	, sigma(sigma)
 	, amplitude(amplitude)
-	, center(center)
 {
 	SetSigma(sigma);
 }

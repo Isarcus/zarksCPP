@@ -283,18 +283,18 @@ RGBA* const& zmath::Image::operator[](int x)
 	return data[x];
 }
 
-const RGBA* const& zmath::Image::operator[](int x) const
+const RGBA* zmath::Image::operator[](int x) const
 {
 	return data[x];
 }
 
 Image& Image::Copy() const
 {
-	Image img(bounds);
+	Image* img = new Image(bounds);
 
-	LOOP_IMAGE img.data[x][y] = data[x][y];
+	LOOP_IMAGE img->data[x][y] = data[x][y];
 
-	return img;
+	return *img;
 }
 
 Image& Image::Copy(zmath::VecInt min_, zmath::VecInt max_) const
@@ -474,8 +474,8 @@ Image& zmath::Image::Droppify(std::array<Vec, 3> origins, std::array<double, 3> 
 		}
 
 		// Adjust intensity of weights
-		double intensity = DistForm(weights);
-		weights /= intensity;
+		double intensity = DistForm<double, 3>(weights);
+		operator/=<double, 3>(weights, intensity);
 
 		// Apply weights
 		RGBA& pix = data[x][y];
@@ -519,7 +519,7 @@ Image& zmath::Image::BlurGaussian(double sigma, bool blurAlpha)
 			}
 		}
 
-		rgba /= influence;
+		operator/=<double, 4>(rgba, influence);
 
 		imgNew[x][y] = RGBA((uint8)std::min(255.0, std::round(rgba[0])),
 							(uint8)std::min(255.0, std::round(rgba[1])),

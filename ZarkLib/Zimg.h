@@ -36,7 +36,7 @@ namespace zmath
 		const RGBA& At(VecInt pos) const;
 
 		RGBA* const& operator[](int x);
-		const RGBA* const& operator[](int x) const;
+		const RGBA* operator[](int x) const;
 
 		Image& Copy() const;
 		Image& Copy(zmath::VecInt min, zmath::VecInt max) const;

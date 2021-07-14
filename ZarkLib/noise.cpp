@@ -18,8 +18,8 @@ namespace std
 		{
 			const size_t multBy = 73; // 31 
 			size_t res = 17;
-			res = res * 73 + hash<double>()(k.X);
-			res = res * 73 + hash<double>()(k.Y);
+			res = res * multBy + hash<double>()(k.X);
+			res = res * multBy + hash<double>()(k.Y);
 			return res;
 		}
 	};
@@ -42,15 +42,20 @@ namespace zmath
 		: GridConfig()
 		, octaves(8)
 		, normalize(true)
+		, seed(std::chrono::system_clock::now().time_since_epoch().count())
 		, lNorm(2)
 		, octDecrease(0.5)
-		, seed(std::chrono::system_clock::now().time_since_epoch().count())
 		// Simplex
 		, r(0.625)
 		, rMinus(4.0)
 		// Worley
 		, nearest{0, 2}
 	{}
+
+	void NoiseConfig::NewSeed()
+	{
+		seed = std::chrono::system_clock::now().time_since_epoch().count();
+	}
 
 	// Note: runs more than 2x faster than the Golang equivalent I made first. Woohoo!
 	// This might actually be my fastest implementation yet, and it's not even fully optimized
@@ -67,7 +72,7 @@ namespace zmath
 
 		// RNG
 		std::default_random_engine eng(cfg.seed);
-		std::uniform_real_distribution<double> angleRNG(0, 2.0*std::_Pi);
+		std::uniform_real_distribution<double> angleRNG(0, 2.0*ZM_PI);
 
 		// Map setup
 		cfg.bounds = cfg.bounds.Floor();
@@ -155,7 +160,7 @@ namespace zmath
 
 		// RNG
 		std::default_random_engine eng(cfg.seed);
-		std::uniform_real_distribution<double> angleRNG(0, 2.0*std::_Pi);
+		std::uniform_real_distribution<double> angleRNG(0, 2.0*ZM_PI);
 
 		// Initialize map
 		Map map = *new Map(cfg.bounds);
@@ -231,12 +236,10 @@ namespace zmath
 	Map Worley(NoiseConfig cfg)
 	{
 		// this coordList works for simpler algorithms that use fewer than ~5 points
-		const int coordLen = 25;
-		Vec* coordList = new Vec[coordLen];
-		int idx = 0;
+		std::vector<Vec> coordList;
 		for (int x = -2; x <= 2; x++)
 			for (int y = -2; y <= 2; y++)
-				coordList[idx++] = Vec(x, y);
+				coordList.push_back(Vec(x, y));
 
 		// RNG
 		std::default_random_engine eng(cfg.seed);
@@ -250,7 +253,7 @@ namespace zmath
 		Map m = *new Map(cfg.bounds);
 
 		// Allocate this here, no point in constantly de- and re-allocating it in the loop
-		double distanceLen = coordLen; // TODO: multiply by config.N once implemented
+		int distanceLen = coordList.size(); // TODO: multiply by config.N once implemented
 		double* distances = new double[distanceLen];
 
 		for (int oct = 0; oct < cfg.octaves; oct++)
@@ -269,7 +272,7 @@ namespace zmath
 					Vec itl = coord - base;
 
 					// Get the distances to each point
-					for (int i = 0; i < coordLen; i++)
+					for (int i = 0; i < distanceLen; i++)
 					{
 						Vec test = base + coordList[i];
 						if (hash.find(test) == hash.end())
@@ -348,7 +351,7 @@ namespace zmath
 		Map m = *new Map(cfg.bounds);
 
 		// Allocate this here, no point in constantly de- and re-allocating it in the loop
-		double distanceLen = coordLen; // TODO: multiply by config.N once implemented
+		int distanceLen = coordLen; // TODO: multiply by config.N once implemented
 		double* distances = new double[distanceLen];
 
 		for (int oct = 0; oct < cfg.octaves; oct++)

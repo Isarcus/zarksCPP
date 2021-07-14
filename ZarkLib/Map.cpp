@@ -12,8 +12,8 @@
 namespace zmath
 {
 	Map::Map(VecInt bounds)
-		: subMap(false)
-		, bounds(bounds.Floor())
+		: bounds(bounds.Floor())
+		, subMap(false)
 	{
 		data = new double* [int(bounds.X)];
 
@@ -29,8 +29,8 @@ namespace zmath
 	}
 
 	Map::Map(int x, int y)
-		: subMap(false)
-		, bounds(x, y)
+		: bounds(x, y)
+		, subMap(false)
 	{
 		data = new double* [int(bounds.X)];
 
@@ -261,12 +261,6 @@ namespace zmath
 		return dh / weight;
 	}
 
-	double Map::GradientAt(Vec pos) const
-	{
-		Vec dh = DerivativeAt(pos);
-		return std::atan2(pos.Y, pos.X);
-	}
-
 	double Map::SlopeAt(Vec pos) const
 	{
 		return DerivativeAt(pos).DistForm(Vec());
@@ -281,18 +275,14 @@ namespace zmath
 
 	Map& Map::Copy(Vec min, Vec max) const
 	{
-		Map smaller = (*this)(min, max);
-		Map copy = smaller.Copy();
-		delete &smaller;
-
-		return copy;
+		return (*this)(min, max);
 	}
 
-	Map& Map::operator()(Vec min_, Vec max_) const
+	Map& Map::operator()(VecInt min_, VecInt max_) const
 	{
 		// Create correctly bounded and organized min and max vectors
-		Vec min = Vec::Min(min_, max_).Floor();
-		Vec max = Vec::Max(min_, max_).Floor();
+		VecInt min = Vec::Min(min_, max_);
+		VecInt max = Vec::Max(min_, max_);
 		min = Vec::Max(min, Vec());
 		max = Vec::Min(max, bounds);
 

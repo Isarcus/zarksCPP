@@ -1,9 +1,10 @@
 #pragma once
 
-#include <cmath>
-#include <exception>
 #include "VecT.h"
 #include "zmath_internals.h"
+
+#include <cmath>
+#include <exception>
 
 #define LOOP_MAP for (int x = 0; x < width; x++) for (int y = 0; y < height; y++) 
 
@@ -98,9 +99,8 @@ inline MapT<T>::MapT(VecInt bounds)
 	: bounds(bounds)
 	, width(bounds.X)
 	, height(bounds.Y)
-{
-	data = alloc2d<T>(bounds.X, bounds.Y);
-}
+	, data(alloc2d<T>(bounds.X, bounds.Y))
+{}
 
 template<typename T>
 inline MapT<T>::MapT(int x, int y)

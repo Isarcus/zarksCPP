@@ -101,15 +101,15 @@ namespace zmath
 		);
 	}
 
-	Mat3 Mat3::Rotation(double γ, double β, double α)
+	Mat3 Mat3::Rotation(double gamma, double beta, double alpha)
 	{
 		using namespace std;
 
 		double rotData[3][3]
 		{
-			{cos(α)*cos(β), cos(α)*sin(β)*sin(γ) - sin(α)*cos(γ), cos(α)*sin(β)*cos(γ) + sin(α)*sin(γ)},
-			{sin(α)*cos(β), sin(α)*sin(β)*sin(γ) + cos(α)*cos(γ), sin(α)*sin(β)*cos(γ) - cos(α)*sin(γ)},
-			{-sin(β),       cos(β)*sin(γ),                        cos(β)*cos(γ)                       }
+			{cos(alpha)*cos(beta), cos(alpha)*sin(beta)*sin(gamma) - sin(alpha)*cos(gamma), cos(alpha)*sin(beta)*cos(gamma) + sin(alpha)*sin(gamma)},
+			{sin(alpha)*cos(beta), sin(alpha)*sin(beta)*sin(gamma) + cos(alpha)*cos(gamma), sin(alpha)*sin(beta)*cos(gamma) - cos(alpha)*sin(gamma)},
+			{-sin(beta),       cos(beta)*sin(gamma),                        cos(beta)*cos(gamma)                       }
 		};
 
 		return Mat3(rotData);

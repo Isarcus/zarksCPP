@@ -46,14 +46,13 @@ namespace zmath
 
 		bool ContainsCoord(VecInt pos) const;
 		Vec DerivativeAt(Vec pos) const;
-		double GradientAt(Vec pos) const;
 		double SlopeAt(Vec pos) const;
 
 		// Chainable manipulation functions
 		
 		Map& Copy() const;
 		Map& Copy(Vec min, Vec max) const;
-		Map& operator() (Vec min, Vec max) const; // return a reference to an underlying section of the map
+		Map& operator() (VecInt min, VecInt max) const; // return a reference to an underlying section of the map
 		Map& Clear(double val);
 		Map& Interpolate(double newMin, double newMax);
 		Map& Abs();

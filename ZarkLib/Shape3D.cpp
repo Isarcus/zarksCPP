@@ -109,7 +109,7 @@ namespace zmath
         const double minSafestDistance = 1.1; // 1.01 not enough; this works fine
         double minDist = minSafestDistance;
 
-        int idx = 0;
+        size_t idx = 0;
         while (idx + 2 < indices.size())
         {
             const Vec3& v1 = vertices[indices[idx++]];
@@ -162,14 +162,16 @@ namespace zmath
     {
         Tessellation3D tess;
 
-        int idx = 0;
+        size_t idx = 0;
         while (idx+2 < indices.size())
         {
             tess.Add(
-                vertices[indices[idx++]],
-                vertices[indices[idx++]],
-                vertices[indices[idx++]]
+                vertices[indices[idx]],
+                vertices[indices[idx + 1]],
+                vertices[indices[idx + 2]]
             );
+
+            idx += 3;
         }
 
         return tess;
@@ -278,7 +280,16 @@ namespace zmath
         int sides = points2D.size();
         if (sides < 3) return polygon;
 
-        if (!ccw) std::reverse(points2D.end(), points2D.begin());
+        if (!ccw)
+        {
+            size_t pointNum = points2D.size();
+            for (size_t i = 0; i < pointNum / 2; i++)
+            {
+                Vec3 temp = points2D[i];
+                points2D[i] = points2D[pointNum - 1 - i];
+                points2D[pointNum - 1 - i] = temp;
+            }
+        }
 
         for (int i = 0; i < sides - 2; i++)
         {
@@ -346,13 +357,13 @@ namespace zmath
         center /= 4.0;
 
         // Start by finding if there exists a greatest/least X-coordinate vertex
-        Vec3 greatestCoords = vertices[0];
-        Vec3 leastCoords = vertices[0];
-        int outlierIndices[3]{};
-        for (const Vec3& v : vertices)
-        {
-            // TODO: WORK THIS MATH OUT!!!
-        }
+        //Vec3 greatestCoords = vertices[0];
+        //Vec3 leastCoords = vertices[0];
+        //int outlierIndices[3]{};
+        // for (const Vec3& v : vertices)
+        // {
+        //     // TODO: WORK THIS MATH OUT!!!
+        // }
 
         return pyramid;
     }
@@ -458,13 +469,13 @@ namespace zmath
             }
         }
 
-        if (sides)
-        {
-            // First, the bottom
-            Vec maxActual = min + stepXY * intRes;
+        // if (sides)
+        // {
+        //     // First, the bottom
+        //     Vec maxActual = min + stepXY * intRes;
 
 
-        }
+        // }
 
         return map;
     }
