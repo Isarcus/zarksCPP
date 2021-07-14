@@ -52,10 +52,10 @@ void zmath::ToBytes(uint8_t* buf, uint64_t val, Endian byteOrder)
 		buf[1] = val >> 48;
 		buf[2] = val >> 40;
 		buf[3] = val >> 32;
-		buf[0] = val >> 24;
-		buf[1] = val >> 16;
-		buf[2] = val >> 8;
-		buf[3] = val;
+		buf[4] = val >> 24;
+		buf[5] = val >> 16;
+		buf[6] = val >> 8;
+		buf[7] = val;
 	}
 }
 
@@ -90,7 +90,7 @@ uint16_t zmath::ToU16(char* buf, Endian byteOrder)
 		for (int i = 0; i < 2; i++)
 		{
 			uint64_t placeVal = 1;
-			placeVal << (8 - 8*i);
+			placeVal <<= (8 - 8*i);
 
 			val += placeVal * ubuf[i];
 		}
@@ -114,7 +114,7 @@ uint32_t zmath::ToU32(char* buf, Endian byteOrder)
 		for (int i = 0; i < 4; i++)
 		{
 			uint64_t placeVal = 1;
-			placeVal << (24 - 8*i);
+			placeVal <<= (24 - 8*i);
 
 			val += placeVal * ubuf[i];
 		}
@@ -138,7 +138,7 @@ uint64_t zmath::ToU64(char* buf, Endian byteOrder)
 		for (int i = 0; i < 8; i++)
 		{
 			uint64_t placeVal = 1;
-			placeVal << (56 - 8*i);
+			placeVal <<= (56 - 8*i);
 
 			val += placeVal * ubuf[i];
 		}
