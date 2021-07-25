@@ -8,6 +8,7 @@
 #include <string>
 #include <vector>
 #include <array>
+#include <memory>
 
 namespace zmath
 {
@@ -19,6 +20,7 @@ namespace zmath
 		Image(const Map& m, Scheme scheme);
 		Image(std::string path);
 		Image(const Image& img);
+		Image(Image&& img);
 		Image();
 
 		~Image();
@@ -26,7 +28,7 @@ namespace zmath
 		VecInt Bounds() const;
 
 		Image& operator= (const Image& img);
-		bool operator!() const;
+		Image& operator= (Image&& img);
 
 		// Accessors and copy/paste
 
@@ -38,8 +40,7 @@ namespace zmath
 		RGBA* const& operator[](int x);
 		const RGBA* operator[](int x) const;
 
-		Image& Copy() const;
-		Image& Copy(zmath::VecInt min, zmath::VecInt max) const;
+		std::unique_ptr<Image> Copy(zmath::VecInt min, zmath::VecInt max) const;
 		Image& Paste(Image img, VecInt at);
 		Image& Paste(Image img, Rect within);
 

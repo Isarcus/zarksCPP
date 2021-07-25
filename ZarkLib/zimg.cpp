@@ -211,6 +211,11 @@ Image::Image(const Image& img)
 	(*this) = img;
 }
 
+Image::Image(Image&& img)
+{
+	*this = std::move(img);
+}
+
 Image::Image()
 	: Image(1, 1)
 {}
@@ -228,22 +233,31 @@ VecInt Image::Bounds() const
 
 Image& Image::operator=(const Image& img)
 {
-	free2d(data, bounds.X);
-	bounds = img.bounds;
-	isCopy = false;
-
-	data = alloc2d<RGBA>(bounds.X, bounds.Y, RGBA::Black());
-	LOOP_IMAGE
+	if (bounds != img.bounds)
 	{
-		data[x][y] = img[x][y];
+		free2d(data, bounds.X);
+		bounds = img.bounds;
+		isCopy = false;
+
+		data = alloc2d<RGBA>(bounds.X, bounds.Y, RGBA::Black());
 	}
 
+	LOOP_IMAGE data[x][y] = img[x][y];
 	return *this;
 }
 
-bool Image::operator!() const
+Image& Image::operator=(Image&& img)
 {
-	return data == nullptr;
+	free2d(data, bounds.X);
+	bounds = img.bounds;
+	isCopy = img.isCopy;
+	data = img.data;
+
+	img.data = nullptr;
+	img.bounds = VecInt(0, 0);
+	img.isCopy = false;
+
+	return *this;
 }
 
 RGBA& Image::At(int x, int y)
@@ -288,16 +302,7 @@ const RGBA* zmath::Image::operator[](int x) const
 	return data[x];
 }
 
-Image& Image::Copy() const
-{
-	Image* img = new Image(bounds);
-
-	LOOP_IMAGE img->data[x][y] = data[x][y];
-
-	return *img;
-}
-
-Image& Image::Copy(zmath::VecInt min_, zmath::VecInt max_) const
+std::unique_ptr<Image> Image::Copy(zmath::VecInt min_, zmath::VecInt max_) const
 {
 	VecInt min = VecInt::Max(VecInt::Min(min_, max_), VecInt());
 	VecInt max = VecInt::Min(VecInt::Max(min_, max_), bounds);
@@ -311,7 +316,7 @@ Image& Image::Copy(zmath::VecInt min_, zmath::VecInt max_) const
 		}
 	}
 
-	return *img;
+	return std::unique_ptr<Image>(img);
 }
 
 Image& Image::Paste(Image img, zmath::VecInt at)
