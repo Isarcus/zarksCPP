@@ -36,7 +36,10 @@ Map::Map(Map&& map)
 
 Map::~Map()
 {
-	FreeData();
+	if (!subMap)
+	{
+		FreeData();
+	}
 }
 
 Map& Map::operator=(const Map& m)
