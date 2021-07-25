@@ -159,6 +159,7 @@
     <ClInclude Include="hypernoise.h" />
     <ClInclude Include="MapT.h" />
     <ClInclude Include="numerals.h" />
+    <ClInclude Include="Sampleable2D.h" />
     <ClInclude Include="Shape3D.h" />
     <ClInclude Include="Triangle3D.h" />
     <ClInclude Include="framework.h" />
