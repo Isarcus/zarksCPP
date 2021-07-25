@@ -20,25 +20,12 @@ void modernArt();
 
 int main()
 {
-	NoiseConfig cfg;
-	cfg.bounds = { 500, 500 };
-	cfg.boxSize = { 400, 400 };
-	cfg.nearest = { 2, 4 };
-	cfg.octaves = 2;
-	cfg.lNorm = 1.5;
-	cfg.seed = 16270097341950460;
-	Map m = *Worley(cfg);
+	std::string imglib = std::getenv("IMGLIB");
+	Image imgObama(imglib + "/stock/obama.jpg");
 
-	m = *m.SlopeMap();
-	m.Interpolate(0, 1);
-
-	Image img(m);
-	img.Save("test.png");
-	
-	m.Interpolate(6, 40);
-	Tessellation3D tess(m);
-	tess.Rotate(ZM_PID2, 0, 0);
-	tess.WriteSTL("test.stl", false);
+	Image tiled(500, 500);
+	tiled.Tile(imgObama, VecInt(100, 45), VecInt(-20, -30));
+	tiled.Save("test.png");
 }
 
 void modernArt()
@@ -57,16 +44,12 @@ void modernArt()
 	Map slope = *noiseMap.SlopeMap();
 	slope.Interpolate(0, 1);
 
-	//slope.Interpolate(-1, 1).Abs().Interpolate(1, 0);
-	//slope.Save("noise.zmap");
-
-	const int colorCt = 2;
-	zmath::RGBA colors[colorCt]{
-		zmath::RGBA(0, 0, 0),
-		zmath::RGBA(255, 255, 255),
+	std::vector<RGBA> colors{
+		RGBA(0, 0, 0),
+		RGBA(255, 255, 255)
 	};
 
-	zmath::Scheme scheme(colorCt, colors);
+	zmath::Scheme scheme(colors);
 	zmath::Image img(slope, scheme);
 
 	img.Save(std::string("noise.png"), COLOR_CHANNELS);

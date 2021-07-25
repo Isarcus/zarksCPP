@@ -15,6 +15,7 @@
 #include <fstream>
 
 #define LOOP_IMAGE for (int x = 0; x < bounds.X; x++) for (int y = 0; y < bounds.Y; y++)
+#define LOOP_IMAGE_HORIZONTAL for (int y = 0; y < bounds.Y; y++) for (int x = 0; x < bounds.X; x++)
 
 using namespace zmath;
 
@@ -22,116 +23,58 @@ namespace zmath
 {
 
 Image::Image(int width, int height, RGBA col)
-{
-	isCopy = false;
-		
-	if (width < 1 || height < 1)
-	{
-		data = nullptr;
-		bounds = Vec();
-		return;
-	}
-
-	bounds = Vec(width, height);
-
-	data = new RGBA* [width];
-	for (int x = 0; x < width; x++)
-	{
-		data[x] = new RGBA[height];
-		for (int y = 0; y < height; y++)
-		{
-			data[x][y] = col;
-		}
-	}
-}
+	: Sampleable2D(VecInt::Max(VecInt(width, height), VecInt(1, 1)), col)
+{}
 
 Image::Image(zmath::VecInt bounds_in, RGBA col)
-{
-	isCopy = false;
-	
-	// Bound image to smallest possible size of (1, 1)
-	bounds = VecInt::Max(bounds_in, VecInt(1, 1));
-
-	data = alloc2d<RGBA>(bounds.X, bounds.Y, col);
-}
+	: Image(bounds_in.X, bounds_in.Y, col)
+{}
 
 Image::Image(const zmath::Map& m)
+	: Image(m.Bounds())
 {
-	isCopy = false;
-
-	if (m.Bounds().X < 1 || m.Bounds().Y < 1)
+	LOOP_IMAGE
 	{
-		data = nullptr;
-		bounds = Vec();
-		return;
-	}
-
-	int width = m.Bounds().X, height = m.Bounds().Y;
-	bounds = Vec(width, height);
-
-	data = new RGBA* [width];
-	for (int x = 0; x < width; x++)
-	{
-		data[x] = new RGBA[height];
-		for (int y = 0; y < height; y++)
-		{
-			uint8 shade = 255.999 * m[x][y];
-			data[x][y] = RGBA(shade, shade, shade);
-		}
+		uint8 shade = 255.999 * m[x][y];
+		data[x][y] = RGBA(shade, shade, shade);
 	}
 }
 
 Image::Image(const zmath::Map& m, Scheme scheme)
+	: Image(m.Bounds())
 {
-	isCopy = false;
-
-	if (m.Bounds().X < 1 || m.Bounds().Y < 1)
-	{
-		data = nullptr;
-		bounds = Vec();
-		return;
-	}
-
-	int width = m.Bounds().X, height = m.Bounds().Y;
-	bounds = Vec(width, height);
-
 	// Create an accurate thresholds array
-	double* thresholds = new double[scheme.n];
-	thresholds[0] = 0;
-	thresholds[scheme.n - 1] = 1;
-	for (int i = 1; i < scheme.n - 1; i++) thresholds[i] = scheme.thresholds[i - 1];
+	std::vector<double> thresholds(scheme.colors.size());
+	thresholds.back() = 1;
+	for (int i = 1; i < scheme.colors.size() - 1; i++)
+	{
+		thresholds[i] = scheme.thresholds[i - 1];
+	}
 
 	// Loop and assign colors
-	data = new RGBA* [width];
-	for (int x = 0; x < width; x++)
+	LOOP_IMAGE
 	{
-		data[x] = new RGBA[height];
-		for (int y = 0; y < height; y++)
+		double val = m[x][y];
+
+		int idxUpper = 0;
+		for (unsigned i = 0; i < scheme.colors.size(); i++)
 		{
-			double val = m[x][y];
-
-			int idxUpper = 0;
-			for (int i = 0; i < scheme.n; i++)
+			if (val < thresholds[i])
 			{
-				if (val < thresholds[i])
-				{
-					idxUpper = i;
-					break;
-				}
+				idxUpper = i;
+				break;
 			}
-
-			double min = thresholds[idxUpper - 1];
-			double range = thresholds[idxUpper] - min;
-
-			data[x][y] = RGBA::Interpolate(
-				scheme.colors[idxUpper - 1],
-				scheme.colors[idxUpper],
-				(val - min) / range
-			);
 		}
-	}
 
-	delete[] thresholds;
+		double min = thresholds[idxUpper - 1];
+		double range = thresholds[idxUpper] - min;
+
+		data[x][y] = RGBA::Interpolate(
+			scheme.colors[idxUpper - 1],
+			scheme.colors[idxUpper],
+			(val - min) / range
+		);
+	}
 }
 
 Image::Image(std::string path)
@@ -146,58 +89,49 @@ Image::Image(std::string path)
 
 		data = nullptr;
 		bounds = Vec();
-		isCopy = false;
 		return;
 	}
 
 	bounds = Vec(width, height);
-	isCopy = false;
 
 	// Allocate data
-	data = new RGBA* [width];
-	for (int x = 0; x < width; x++)
-	{
-		data[x] = new RGBA[height]{};
-	}
+	data = alloc2d<RGBA>(width, height);
 
 	int stbIdx = 0;
-	for (int y = 0; y < height; y++)
+	LOOP_IMAGE_HORIZONTAL
 	{
-		for (int x = 0; x < width; x++)
+		switch (channels)
 		{
-			switch (channels)
-			{
-			case 1: // Grayscale
-				data[x][y] = RGBA(stbImg[stbIdx]);
-				stbIdx++;
-				break;
+		case 1: // Grayscale
+			data[x][y] = RGBA(stbImg[stbIdx]);
+			stbIdx++;
+			break;
 
-			case 2: // Grayscale with alpha
-				data[x][y] = RGBA(
-					stbImg[stbIdx],
-					stbImg[stbIdx + 1]);
-				stbIdx += 2;
-				break;
+		case 2: // Grayscale with alpha
+			data[x][y] = RGBA(
+				stbImg[stbIdx],
+				stbImg[stbIdx + 1]);
+			stbIdx += 2;
+			break;
 
-			case 3: // RGB
-				data[x][y] = RGBA(
-					stbImg[stbIdx],
-					stbImg[stbIdx + 1],
-					stbImg[stbIdx + 2]);
-				stbIdx += 3;
-				break;
+		case 3: // RGB
+			data[x][y] = RGBA(
+				stbImg[stbIdx],
+				stbImg[stbIdx + 1],
+				stbImg[stbIdx + 2]);
+			stbIdx += 3;
+			break;
 
-			case 4: // RGBA
-				data[x][y] = RGBA(
-					stbImg[stbIdx],
-					stbImg[stbIdx + 1],
-					stbImg[stbIdx + 2],
-					stbImg[stbIdx + 3]);
-				stbIdx += 4;
-				break;
-			} // switch (channels)
-		} // for x
-	} // for y
+		case 4: // RGBA
+			data[x][y] = RGBA(
+				stbImg[stbIdx],
+				stbImg[stbIdx + 1],
+				stbImg[stbIdx + 2],
+				stbImg[stbIdx + 3]);
+			stbIdx += 4;
+			break;
+		} // switch (channels)
+	}
 
 	free(stbImg);
 
@@ -211,14 +145,18 @@ Image::Image(const Image& img)
 	(*this) = img;
 }
 
+Image::Image(Image&& img)
+{
+	*this = std::move(img);
+}
+
 Image::Image()
 	: Image(1, 1)
 {}
 
 Image::~Image()
 {
-	if (!isCopy) for (int x = 0; x < bounds.X; x++) delete[] data[x];
-	delete[] data;
+	free2d(data, bounds.X);
 }
 
 VecInt Image::Bounds() const
@@ -228,76 +166,31 @@ VecInt Image::Bounds() const
 
 Image& Image::operator=(const Image& img)
 {
+	if (bounds != img.bounds)
+	{
+		free2d(data, bounds.X);
+		bounds = img.bounds;
+
+		data = alloc2d<RGBA>(bounds.X, bounds.Y, RGBA::Black());
+	}
+
+	LOOP_IMAGE data[x][y] = img[x][y];
+	return *this;
+}
+
+Image& Image::operator=(Image&& img)
+{
 	free2d(data, bounds.X);
 	bounds = img.bounds;
-	isCopy = false;
+	data = img.data;
 
-	data = alloc2d<RGBA>(bounds.X, bounds.Y, RGBA::Black());
-	LOOP_IMAGE
-	{
-		data[x][y] = img[x][y];
-	}
+	img.data = nullptr;
+	img.bounds = VecInt(0, 0);
 
 	return *this;
 }
 
-bool Image::operator!() const
-{
-	return data == nullptr;
-}
-
-RGBA& Image::At(int x, int y)
-{
-	if (x < 0 || x >= bounds.X ||
-		y < 0 || y >= bounds.Y)
-	{
-		throw std::runtime_error("Out of bounds Image access!");
-	}
-
-	return data[x][y];
-}
-
-RGBA& Image::At(zmath::VecInt pos)
-{
-	return At(pos.X, pos.Y);
-}
-
-const RGBA& Image::At(int x, int y) const
-{
-	if (x < 0 || x >= bounds.X ||
-		y < 0 || y >= bounds.Y)
-	{
-		throw std::runtime_error("Out of bounds Image access!");
-	}
-
-	return data[x][y];
-}
-
-const RGBA& Image::At(VecInt pos) const
-{
-	return At(pos.X, pos.Y);
-}
-
-RGBA* const& zmath::Image::operator[](int x)
-{
-	return data[x];
-}
-
-const RGBA* zmath::Image::operator[](int x) const
-{
-	return data[x];
-}
-
-Image& Image::Copy() const
-{
-	Image* img = new Image(bounds);
-
-	LOOP_IMAGE img->data[x][y] = data[x][y];
-
-	return *img;
-}
-
-Image& Image::Copy(zmath::VecInt min_, zmath::VecInt max_) const
+std::unique_ptr<Image> Image::Copy(zmath::VecInt min_, zmath::VecInt max_) const
 {
 	VecInt min = VecInt::Max(VecInt::Min(min_, max_), VecInt());
 	VecInt max = VecInt::Min(VecInt::Max(min_, max_), bounds);
@@ -311,40 +204,47 @@ Image& Image::Copy(zmath::VecInt min_, zmath::VecInt max_) const
 		}
 	}
 
-	return *img;
+	return std::unique_ptr<Image>(img);
 }
 
-Image& Image::Paste(Image img, zmath::VecInt at)
+Image& Image::Paste(const Image& img, zmath::VecInt at)
 {
-	VecInt max = VecInt::Min(at.Floor() + img.bounds, bounds);
-	for (int x = at.X; x < max.X; x++)
+	VecInt max = VecInt::Min(at + img.bounds, bounds);
+	for (int x = 0; x < img.bounds.X; x++)
 	{
-		for (int y = at.Y; y < max.Y; y++)
+		for (int y = 0; y < img.bounds.Y; y++)
 		{
-			data[x][y] = img.data[x - (int)at.X][y - (int)at.Y];
+			VecInt thisCoord = at + VecInt(x, y);
+			if (ContainsCoord(thisCoord))
+			{
+				data[thisCoord.X][thisCoord.Y] = img.data[x][y];
+			}
 		}
 	}
 
 	return *this;
 }
 
-Image& Image::Paste(Image img, zmath::Rect within)
+Image& zmath::Image::Tile(const Image& tile, VecInt tileSize, VecInt offset)
 {
-	// Get the scale of the pasted image compared to the area it's being pasted into
-	within.Floor();
-	VecT<double> scale = (VecT<double>)img.bounds / within.Dimensions();
-		
-	for (int x = within.min.X; x < within.max.X; x++)
+	Image tileAdj = tile;
+	tileAdj.Resize(tileSize);
+	VecInt tileBounds = tileAdj.Bounds();
+
+	// Bound offset within range of ( -tileBounds, {0, 0} ]
+	VecInt offsetAdj = offset.Mod(tileBounds);
+	if (offsetAdj != VecInt(0, 0)) offsetAdj -= tileBounds;
+
+	for (int tileX = 0; offsetAdj.X + tileX * tileBounds.X < bounds.X; tileX++)
 	{
-		for (int y = within.min.Y; y < within.max.Y; y++)
+		for (int tileY = 0; offsetAdj.Y + tileY * tileBounds.Y < bounds.Y; tileY++)
 		{
-			VecInt copyFromIdx = (VecT<double>(x, y) * scale).Floor();
-			VecInt copyToIdx = VecInt(x, y) + within.min;
-				
-			At(copyToIdx) = img.At(copyFromIdx);
+			VecInt thisPaste = offsetAdj + VecInt(tileX, tileY) * tileBounds;
+
+			Paste(tileAdj, thisPaste);
 		}
 	}
-		
+
 	return *this;
 }
 

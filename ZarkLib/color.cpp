@@ -129,26 +129,19 @@ namespace zmath
 	//	SCHEME	 //
 	//			 //
 
-	Scheme::Scheme(int n_, RGBA* colors_, double* thresholds_)
-	{
-		n = n_;
-		colors = colors_;
-		thresholds = thresholds_;
-	}
+	Scheme::Scheme(std::vector<RGBA> colors, std::vector<double> thresholds)
+		: colors(colors)
+		, thresholds(thresholds)
+	{}
 
-	Scheme::Scheme(int n_, RGBA* colors_)
+	Scheme::Scheme(std::vector<RGBA> colors)
+		: colors(colors)
 	{
-		n = n_;
-		colors = colors_;
-
-		if (n < 3)
+		thresholds = std::vector<double>(std::max(0, (int)colors.size() - 2));
+		for (unsigned i = 0; i < thresholds.size(); i++)
 		{
-			thresholds = nullptr;
-			return;
+			thresholds[i] = (i + 1) / (double)(colors.size() - 1);
 		}
-
-		thresholds = new double[n - 2];
-		for (int i = 0; i < n - 2; i++) thresholds[i] = (i+1) / (double)(n - 1);
 	}
 
 	std::ostream& operator<<(std::ostream& os, const RGBA& c)

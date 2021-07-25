@@ -15,8 +15,8 @@ namespace zmath
 		T** data;
 		
 		Sampleable2D();
-		Sampleable2D(int x, int y);
-		Sampleable2D(VecInt bounds);
+		Sampleable2D(int x, int y, const T& val = T());
+		Sampleable2D(VecInt bounds, const T& val = T());
 
 		void BoundCheck(Vec check) const;
 		void BoundCheck(VecInt check) const;
@@ -91,15 +91,15 @@ namespace zmath
 	{}
 
 	template<typename T>
-	inline Sampleable2D<T>::Sampleable2D(VecInt bounds)
+	inline Sampleable2D<T>::Sampleable2D(VecInt bounds, const T& val)
 		: bounds(VecInt::Max(bounds, VecInt(0, 0)))
 	{
-		data = alloc2d<T>(this->bounds.X, this->bounds.Y);
+		data = alloc2d<T>(this->bounds.X, this->bounds.Y, val);
 	}
 
 	template<typename T>
-	inline Sampleable2D<T>::Sampleable2D(int x, int y)
-		: Sampleable2D(VecInt(x, y))
+	inline Sampleable2D<T>::Sampleable2D(int x, int y, const T& val)
+		: Sampleable2D(VecInt(x, y), val)
 	{}
 
 	template<typename T>

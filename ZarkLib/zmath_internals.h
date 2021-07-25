@@ -4,6 +4,8 @@
 #include <array>
 #include <cmath>
 
+#include "color.h"
+
 #define DOUBLEMAX std::numeric_limits<double>::max()
 #define DOUBLEMIN std::numeric_limits<double>::lowest() // whoever designed std naming was high on many drugs
 
@@ -50,7 +52,7 @@ namespace zmath
 	//        //
 
 	template <typename T>
-	T** alloc2d(int width, int height, T fill = T())
+	T** alloc2d(int width, int height, const T& fill = T())
 	{
 		T** data = new T * [width];
 		for (int x = 0; x < width; x++)
@@ -120,11 +122,27 @@ namespace zmath
 	// MATH //
 	//      //
 
+	inline double interpLinear(double val0, double val1, double t)
+	{
+		return t * val1 + (1.0 - t) * val0;
+	}
+
 	inline double interp5(double val0, double val1, double t)
 	{
-		double weight = 6 * std::pow(t, 5) - 15 * std::pow(t, 4) + 10 * std::pow(t, 3);
-		return weight * val1 + (1.0 - weight) * val0;
+		double t_adj = 6 * std::pow(t, 5) - 15 * std::pow(t, 4) + 10 * std::pow(t, 3);
+		return interpLinear(val0, val1, t_adj);
 	};
+
+	inline RGBA interp5(RGBA val0, RGBA val1, double t)
+	{
+		double t_adj = 6 * std::pow(t, 5) - 15 * std::pow(t, 4) + 10 * std::pow(t, 3);
+		return RGBA(
+			std::round(interpLinear(val0.R, val1.R, t_adj)),
+			std::round(interpLinear(val0.G, val1.G, t_adj)),
+			std::round(interpLinear(val0.B, val1.B, t_adj)),
+			std::round(interpLinear(val0.A, val1.A, t_adj))
+		);
+	}
 
 	template <typename T>
 	T AbsT(const T& val)

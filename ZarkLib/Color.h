@@ -1,6 +1,7 @@
 #pragma once
 
 #include <iostream>
+#include <vector>
 
 namespace zmath
 {
@@ -35,11 +36,10 @@ namespace zmath
 	} RGBA;
 
 	typedef struct Scheme {
-		Scheme(int n, RGBA* colors, double* thresholds);
-		Scheme(int n, RGBA* colors);
+		Scheme(std::vector<RGBA> colors, std::vector<double> thresholds);
+		Scheme(std::vector<RGBA> colors);
 
-		int n; // number of colors
-		RGBA* colors;
-		double* thresholds; // should always be n-2
+		std::vector<RGBA> colors;
+		std::vector<double> thresholds; // should always be n-2
 	} Scheme;
 }

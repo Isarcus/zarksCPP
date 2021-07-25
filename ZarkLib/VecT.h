@@ -37,6 +37,7 @@ namespace zmath
 		T LNorm(double L) const;
 		double Angle() const;
 
+		VecT Mod(VecT denom) const;
 		VecT Floor() const;
 		VecT Ceil() const;
 		VecT Abs() const;
@@ -172,6 +173,15 @@ template<class T>
 inline double VecT<T>::Angle() const
 {
 	return std::atan2(Y, X);
+}
+
+template<class T>
+inline VecT<T> VecT<T>::Mod(VecT denom) const
+{
+	return VecT(
+		std::fmod(X, denom.X),
+		std::fmod(Y, denom.Y)
+	);
 }
 
 template<class T>

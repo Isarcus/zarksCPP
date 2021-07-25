@@ -1,5 +1,6 @@
 #pragma once
 
+#include "Sampleable2D.h"
 #include "color.h"
 #include "Rect.h"
 #include "Map.h"
@@ -8,10 +9,11 @@
 #include <string>
 #include <vector>
 #include <array>
+#include <memory>
 
 namespace zmath
 {
-	class Image {
+	class Image : public Sampleable2D<RGBA> {
 	public:
 		Image(int width, int height, RGBA col = RGBA::Black());
 		Image(zmath::VecInt bounds_in, RGBA col = RGBA::Black());
@@ -19,6 +21,7 @@ namespace zmath
 		Image(const Map& m, Scheme scheme);
 		Image(std::string path);
 		Image(const Image& img);
+		Image(Image&& img);
 		Image();
 
 		~Image();
@@ -26,22 +29,13 @@ namespace zmath
 		VecInt Bounds() const;
 
 		Image& operator= (const Image& img);
-		bool operator!() const;
+		Image& operator= (Image&& img);
 
-		// Accessors and copy/paste
+		// Copy/paste
 
-		RGBA& At(int x, int y);
-		RGBA& At(VecInt pos);
-		const RGBA& At(int x, int y) const;
-		const RGBA& At(VecInt pos) const;
-
-		RGBA* const& operator[](int x);
-		const RGBA* operator[](int x) const;
-
-		Image& Copy() const;
-		Image& Copy(zmath::VecInt min, zmath::VecInt max) const;
-		Image& Paste(Image img, VecInt at);
-		Image& Paste(Image img, Rect within);
+		std::unique_ptr<Image> Copy(zmath::VecInt min, zmath::VecInt max) const;
+		Image& Paste(const Image& img, VecInt at);
+		Image& Tile(const Image& tile, VecInt tileSize, VecInt offset = VecInt(0, 0));
 
 		// Manipulators
 		
@@ -59,11 +53,5 @@ namespace zmath
 		// Save an image using STBI
 		void Save(std::string path, unsigned int channels = 3) const;
 		void SaveMNIST(std::string path_images, std::string path_labels, int columns, int emptyBorderSize = 2) const;
-
-	private:
-		RGBA** data;
-		zmath::VecInt bounds;
-
-		bool isCopy;
 	};
 }
