@@ -93,9 +93,6 @@
     <ClInclude Include="numerals.h">
       <Filter>Header Files\zmath\binary</Filter>
     </ClInclude>
-    <ClInclude Include="hypernoise.h">
-      <Filter>Header Files\noise</Filter>
-    </ClInclude>
     <ClInclude Include="VecT.h">
       <Filter>Header Files\zmath</Filter>
     </ClInclude>

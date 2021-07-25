@@ -156,7 +156,6 @@
     <ClInclude Include="binary.h" />
     <ClInclude Include="color.h" />
     <ClInclude Include="Gauss.h" />
-    <ClInclude Include="hypernoise.h" />
     <ClInclude Include="MapT.h" />
     <ClInclude Include="numerals.h" />
     <ClInclude Include="Sampleable2D.h" />
