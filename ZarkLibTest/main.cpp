@@ -4,6 +4,7 @@
 #include "Zimg.h"
 #include "Rect.h"
 #include "Shape3D.h"
+#include "Tessellation3D.h"
 
 #include <iostream>
 #include <cstdlib>
@@ -19,21 +20,32 @@ void modernArt();
 
 int main()
 {
-	std::string imglib = getenv("IMGLIB");
-	Image img(imglib + "/ai/split_me.png");
+	NoiseConfig cfg;
+	cfg.bounds = { 500, 500 };
+	cfg.boxSize = { 400, 400 };
+	cfg.nearest = { 2, 4 };
+	cfg.octaves = 2;
+	cfg.lNorm = 1.5;
+	cfg.seed = 16270097341950460;
+	Map m = *Worley(cfg);
+
+	m = *m.SlopeMap();
+	m.Interpolate(0, 1);
+
+	Image img(m);
+	img.Save("test.png");
 	
-	img.SaveMNIST(
-		imglib + "/ai/homemade_data.bt",
-		imglib + "/ai/homemade_labels.bt",
-		4
-	);
+	m.Interpolate(6, 40);
+	Tessellation3D tess(m);
+	tess.Rotate(ZM_PID2, 0, 0);
+	tess.WriteSTL("test.stl", false);
 }
 
 void modernArt()
 {
 	// Generate image!
 	NoiseConfig cfg;
-	cfg.bounds = Vec(1000, 1000);
+	cfg.bounds = VecInt(1000, 1000);
 	//cfg.boxSize = 300;
 	cfg.octaves = 1;
 	cfg.octDecrease = 0.5;
@@ -41,8 +53,8 @@ void modernArt()
 
 	cfg.nearest = { 2, 4 }; // { 2, 4 }
 
-	Map noiseMap = Worley(cfg);
-	Map slope = noiseMap.SlopeMap();
+	Map noiseMap = *Worley(cfg);
+	Map slope = *noiseMap.SlopeMap();
 	slope.Interpolate(0, 1);
 
 	//slope.Interpolate(-1, 1).Abs().Interpolate(1, 0);
@@ -57,5 +69,5 @@ void modernArt()
 	zmath::Scheme scheme(colorCt, colors);
 	zmath::Image img(slope, scheme);
 
-	img.Save(std::string("noise.png"), 3);
+	img.Save(std::string("noise.png"), COLOR_CHANNELS);
 }

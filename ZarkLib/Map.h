@@ -1,33 +1,21 @@
 #pragma once
 #include "VecT.h"
 #include "Gauss.h"
-#include "zmath_internals.h"
+#include "Sampleable2D.h"
 
 #include <string>
+#include <memory>
 
 namespace zmath
 {
-	class Map
+	class Map : public Sampleable2D<double>
 	{
-		typedef VecT<double> Vec;
 	public:
 		Map(VecInt bounds);
 		Map(int x, int y);
 		Map(const Map& map);
 		Map(Map&& map);
 		~Map();
-
-		// Accessors
-
-		double* operator[](const int& x) const;
-
-		double& At(const VecInt& pt);
-		const double& At(const VecInt& pt) const;
-		double& At(const int& x, const int& y);
-		const double& At(const int& x, const int& y) const;
-
-		void Set(VecInt pt, double val);
-		void Set(int x, int y, double val);
 
 		Map& operator= (const Map& m);
 		Map& operator= (Map&& m);
@@ -44,15 +32,15 @@ namespace zmath
 		double Variance() const;
 		double Std() const;
 
-		bool ContainsCoord(VecInt pos) const;
-		Vec DerivativeAt(Vec pos) const;
-		double SlopeAt(Vec pos) const;
+		Vec DerivativeAt(VecInt pos) const;
+		double SlopeAt(VecInt pos) const;
+
+		// return a reference to an underlying section of the map
+		std::unique_ptr<Map> Copy(VecInt min, VecInt max) const;
+		std::unique_ptr<Map> operator() (VecInt min, VecInt max) const;
 
 		// Chainable manipulation functions
-		
-		Map& Copy() const;
-		Map& Copy(Vec min, Vec max) const;
-		Map& operator() (VecInt min, VecInt max) const; // return a reference to an underlying section of the map
+
 		Map& Clear(double val);
 		Map& Interpolate(double newMin, double newMax);
 		Map& Abs();
@@ -62,17 +50,17 @@ namespace zmath
 		Map& Apply(const GaussField& gauss);
 		Map& Apply(double(*calculation)(double));
 
-		Map& SlopeMap();
+		std::unique_ptr<Map> SlopeMap();
 		Map& BoundMax(double newMax);
 		Map& BoundMin(double newMin);
 		Map& Bound(double newMin, double newMax);
 
 		// Math operator overloads
 
-		Map& operator+= (Map& m);
-		Map& operator-= (Map& m);
-		Map& operator*= (Map& m);
-		Map& operator/= (Map& m);
+		Map& operator+= (const Map& m);
+		Map& operator-= (const Map& m);
+		Map& operator*= (const Map& m);
+		Map& operator/= (const Map& m);
 		Map& operator+= (double val);
 		Map& operator-= (double val);
 		Map& operator*= (double val);
@@ -80,10 +68,10 @@ namespace zmath
 
 		// Chainable functions
 
-		Map& Add(Map& m);
-		Map& Sub(Map& m);
-		Map& Mul(Map& m);
-		Map& Div(Map& m);
+		Map& Add(const Map& m);
+		Map& Sub(const Map& m);
+		Map& Mul(const Map& m);
+		Map& Div(const Map& m);
 		Map& Add(double val);
 		Map& Sub(double val);
 		Map& Mul(double val);
@@ -94,10 +82,6 @@ namespace zmath
 		void Save(std::string path);
 
 	private:
-		Map(); // for use in operator() overload
-
-		VecInt bounds;
-		double** data;
 		bool subMap; // only true for maps created with operator() calls
 	};
 }

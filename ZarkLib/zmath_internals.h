@@ -66,13 +66,18 @@ namespace zmath
 	}
 
 	template <typename T>
-	void free2d(T** data, int width)
+	void free2d(T**& data, int width)
 	{
-		for (int x = 0; x < width; x++)
+		if (data)
 		{
-			delete[] data[x];
+			for (int x = 0; x < width; x++)
+			{
+				delete[] data[x];
+			}
+			delete[] data;
+
+			data = nullptr;
 		}
-		delete[] data;
 	}
 
 	//       //
@@ -114,6 +119,12 @@ namespace zmath
 	//      //
 	// MATH //
 	//      //
+
+	inline double interp5(double val0, double val1, double t)
+	{
+		double weight = 6 * std::pow(t, 5) - 15 * std::pow(t, 4) + 10 * std::pow(t, 3);
+		return weight * val1 + (1.0 - weight) * val0;
+	};
 
 	template <typename T>
 	T AbsT(const T& val)

@@ -1,8 +1,9 @@
 #pragma once
 
-#include <cstdint>
-
 #include "Map.h"
+
+#include <cstdint>
+#include <memory>
 
 namespace zmath
 {
@@ -34,9 +35,9 @@ namespace zmath
 		std::pair<int, int> nearest;
 	} NoiseConfig;
 
-	Map& Simplex(NoiseConfig cfg);
-	Map& Perlin(NoiseConfig cfg);
-	Map& Worley(NoiseConfig cfg);
+	std::unique_ptr<Map> Simplex(NoiseConfig cfg);
+	std::unique_ptr<Map> Perlin(NoiseConfig cfg);
+	std::unique_ptr<Map> Worley(NoiseConfig cfg);
 
-	Map& WorleyPlex(NoiseConfig cfg, Map& baseMap);
+	std::unique_ptr<Map> WorleyPlex(NoiseConfig cfg, Map& baseMap);
 }
