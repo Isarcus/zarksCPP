@@ -179,12 +179,15 @@ Image& Image::operator=(const Image& img)
 
 Image& Image::operator=(Image&& img)
 {
-	free2d(data, bounds.X);
-	bounds = img.bounds;
-	data = img.data;
+	if (this != &img)
+	{
+		free2d(data, bounds.X);
+		bounds = img.bounds;
+		data = img.data;
 
-	img.data = nullptr;
-	img.bounds = VecInt(0, 0);
+		img.data = nullptr;
+		img.bounds = VecInt(0, 0);
+	}
 
 	return *this;
 }

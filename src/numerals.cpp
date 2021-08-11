@@ -5,8 +5,8 @@ using std::string;
 
 namespace zmath
 {
-	const string numTable = "0123456789ABCDEFGHIJKLMNOPQRSTUVWXYZ";
-	const int maxNum = numTable.size();
+	static const string numTable = "0123456789ABCDEFGHIJKLMNOPQRSTUVWXYZ";
+	static const int maxNum = numTable.size();
 
 	string ConvertBase(int val, int toBase, int minWidth)
 	{

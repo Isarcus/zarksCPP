@@ -124,9 +124,9 @@ namespace zmath
 		return *this;
 	}
 
-	Tessellation3D& Tessellation3D::Add(Tessellation3D shape)
+	Tessellation3D& Tessellation3D::Add(const Tessellation3D& shape)
 	{
-		for (Triangle3D& tri : shape.data) data.push_back(tri);
+		for (const Triangle3D& tri : shape.data) data.push_back(tri);
 
 		return *this;
 	}

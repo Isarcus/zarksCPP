@@ -60,15 +60,18 @@ Map& Map::operator=(const Map& m)
 
 Map& Map::operator=(Map&& map)
 {
-	FreeData();
+	if (this != &map)
+	{
+		FreeData();
 
-	data = map.data;
-	bounds = map.bounds;
-	subMap = map.subMap;
+		data = map.data;
+		bounds = map.bounds;
+		subMap = map.subMap;
 
-	map.data = nullptr;
-	map.bounds = VecInt(0, 0);
-	map.subMap = false;
+		map.data = nullptr;
+		map.bounds = VecInt(0, 0);
+		map.subMap = false;
+	}
 
 	return *this;
 }

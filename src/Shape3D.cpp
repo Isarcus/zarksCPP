@@ -84,8 +84,8 @@ namespace zmath
 
     Shape3D& Shape3D::operator=(Shape3D&& shape) noexcept
     {
-        vertices = shape.vertices;
-        indices = shape.indices;
+        vertices = std::move(shape.vertices);
+        indices = std::move(shape.indices);
 
         return *this;
     }

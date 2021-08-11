@@ -28,7 +28,7 @@ namespace zmath
 		std::array<Vec3, 2> Bounds() const;
 
 		Tessellation3D& Add(Triangle3D tri);
-		Tessellation3D& Add(Tessellation3D shape);
+		Tessellation3D& Add(const Tessellation3D& shape);
 		Tessellation3D& Add(Vec3 v1, Vec3 v2, Vec3 v3);
 
 		Tessellation3D& Shift(Vec3 by);
