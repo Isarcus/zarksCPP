@@ -1,10 +1,8 @@
 #define _CRT_SECURE_NO_WARNINGS
 
-#include "noise.h"
-#include "Zimg.h"
-#include "Rect.h"
-#include "Shape3D.h"
-#include "Tessellation3D.h"
+#include <zarks/noise/noise2D.h>
+#include <zarks/image/Image.h>
+#include <zarks/math/3D/Shape3D.h>
 
 #include <iostream>
 #include <cstdlib>
@@ -20,12 +18,7 @@ void modernArt();
 
 int main()
 {
-	std::string imglib = std::getenv("IMGLIB");
-	Image imgObama(imglib + "/stock/obama.jpg");
-
-	Image tiled(500, 500);
-	tiled.Tile(imgObama, VecInt(100, 45), VecInt(-20, -30));
-	tiled.Save("test.png");
+	modernArt();
 }
 
 void modernArt()
