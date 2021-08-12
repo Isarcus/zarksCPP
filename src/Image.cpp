@@ -45,7 +45,7 @@ Image::Image(const zmath::Map& m, Scheme scheme)
 	// Create an accurate thresholds array
 	std::vector<double> thresholds(scheme.colors.size());
 	thresholds.back() = 1;
-	for (int i = 1; i < scheme.colors.size() - 1; i++)
+	for (unsigned i = 1; i < scheme.colors.size() - 1; i++)
 	{
 		thresholds[i] = scheme.thresholds[i - 1];
 	}
@@ -211,7 +211,6 @@ std::unique_ptr<Image> Image::Copy(zmath::VecInt min_, zmath::VecInt max_) const
 
 Image& Image::Paste(const Image& img, zmath::VecInt at)
 {
-	VecInt max = VecInt::Min(at + img.bounds, bounds);
 	for (int x = 0; x < img.bounds.X; x++)
 	{
 		for (int y = 0; y < img.bounds.Y; y++)

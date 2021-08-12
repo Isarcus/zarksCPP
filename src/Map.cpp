@@ -12,6 +12,11 @@
 namespace zmath
 {
 
+Map::Map()
+	: Sampleable2D()
+	, subMap(true)
+{}
+
 Map::Map(VecInt bounds)
 	: Sampleable2D(bounds)
 	, subMap(false)
@@ -42,35 +47,35 @@ Map::~Map()
 	}
 }
 
-Map& Map::operator=(const Map& m)
+Map& Map::operator=(const Map& rhs)
 {
-	if (bounds != m.bounds)
+	if (bounds != rhs.bounds)
 	{
 		FreeData();
 
-		bounds = m.bounds;
+		bounds = rhs.bounds;
 		subMap = false;
 
 		data = alloc2d<double>(bounds.X, bounds.Y);
 	}
 
-	LOOP_MAP data[x][y] = m.data[x][y];
+	LOOP_MAP data[x][y] = rhs.data[x][y];
 	return *this;
 }
 
-Map& Map::operator=(Map&& map)
+Map& Map::operator=(Map&& rhs)
 {
-	if (this != &map)
+	if (this != &rhs)
 	{
 		FreeData();
 
-		data = map.data;
-		bounds = map.bounds;
-		subMap = map.subMap;
+		data = rhs.data;
+		bounds = rhs.bounds;
+		subMap = rhs.subMap;
 
-		map.data = nullptr;
-		map.bounds = VecInt(0, 0);
-		map.subMap = false;
+		rhs.data = nullptr;
+		rhs.bounds = VecInt(0, 0);
+		rhs.subMap = false;
 	}
 
 	return *this;
@@ -210,12 +215,12 @@ double Map::SlopeAt(VecInt pos) const
 	return DerivativeAt(pos).DistForm();
 }
 
-std::unique_ptr<Map> Map::Copy(VecInt min, VecInt max) const
+Map Map::Copy(VecInt min, VecInt max) const
 {
 	return (*this)(min, max);
 }
 
-std::unique_ptr<Map> Map::operator()(VecInt min_, VecInt max_) const
+Map Map::operator()(VecInt min_, VecInt max_) const
 {
 	// Create correctly bounded and organized min and max vectors
 	VecInt min = Vec::Min(min_, max_);
@@ -224,17 +229,17 @@ std::unique_ptr<Map> Map::operator()(VecInt min_, VecInt max_) const
 	max = VecInt::Min(max, bounds);
 
 	// Initialize submap
-	Map& m = *new Map(max - min);
+	Map m;
 	m.subMap = true;
 
 	// Make the new map's data a subset of the called map's data
 	m.data = new double* [max.X - min.X];
 	for (int idx = 0, x = min.X; x < max.X; x++, idx++)
 	{
-		m.data[idx] = &(data[x][(int)min.Y]);
+		m.data[idx] = &(data[x][min.Y]);
 	}
 
-	return std::unique_ptr<Map>(&m);
+	return m;
 }
 
 Map& Map::Clear(double val)
@@ -260,13 +265,13 @@ Map& Map::Interpolate(double newMin, double newMax)
 	return *this;
 }
 
-Map& zmath::Map::Abs()
+Map& Map::Abs()
 {
 	LOOP_MAP data[x][y] = std::abs(data[x][y]);
 	return *this;
 }
 
-Map& zmath::Map::FillBorder(int thickness, double val)
+Map& Map::FillBorder(int thickness, double val)
 {
 	thickness = std::min(thickness, bounds.Min());
 	// Left
@@ -280,7 +285,7 @@ Map& zmath::Map::FillBorder(int thickness, double val)
 	return *this;
 }
 
-Map& zmath::Map::Fill(VecInt min, VecInt max, double val)
+Map& Map::Fill(VecInt min, VecInt max, double val)
 {
 	for (int x = min.X; x < max.X; x++)
 	{
@@ -292,46 +297,46 @@ Map& zmath::Map::Fill(VecInt min, VecInt max, double val)
 	return *this;
 }
 
-Map& zmath::Map::Replace(double val, double with)
+Map& Map::Replace(double val, double with)
 {
 	LOOP_MAP if (data[x][y] == val) data[x][y] = with;
 	return *this;
 }
 
-Map& zmath::Map::Apply(const GaussField& gauss)
+Map& Map::Apply(const GaussField& gauss)
 {
 	LOOP_MAP data[x][y] += gauss.Sample(x, y);
 	return *this;
 }
 
-Map& zmath::Map::Apply(double(*calculation)(double))
+Map& Map::Apply(double(*calculation)(double))
 {
 	LOOP_MAP data[x][y] = calculation(data[x][y]);
 	return *this;
 }
 
-std::unique_ptr<Map> zmath::Map::SlopeMap()
+Map Map::SlopeMap()
 {
-	Map& m = *new Map(bounds);
+	Map m(bounds);
 
 	LOOP_MAP m.At(x, y) = SlopeAt(VecInt(x, y));
 
-	return std::unique_ptr<Map>(&m);
+	return m;
 }
 
-Map& zmath::Map::BoundMax(double newMax)
+Map& Map::BoundMax(double newMax)
 {
 	LOOP_MAP data[x][y] = std::min(newMax, data[x][y]);
 	return *this;
 }
 
-Map& zmath::Map::BoundMin(double newMin)
+Map& Map::BoundMin(double newMin)
 {
 	LOOP_MAP data[x][y] = std::max(newMin, data[x][y]);
 	return *this;
 }
 
-Map& zmath::Map::Bound(double newMin, double newMax)
+Map& Map::Bound(double newMin, double newMax)
 {
 	LOOP_MAP data[x][y] = std::min(newMax, std::max(newMin, data[x][y]));
 	return *this;
@@ -372,8 +377,8 @@ Map& Map::operator/=(const Map& m)
 	{
 		if (m.data[x][y] == 0)
 		{
-			if (data[x][y] > 0) data[x][y] = std::numeric_limits<double>::max();
-			else if (data[x][y] < 0) data[x][y] = std::numeric_limits<double>::lowest();
+			if (data[x][y] > 0) data[x][y] = DOUBLEMAX;
+			else if (data[x][y] < 0) data[x][y] = DOUBLEMIN;
 		}
 		else
 		{

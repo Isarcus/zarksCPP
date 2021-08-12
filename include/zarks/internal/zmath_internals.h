@@ -130,7 +130,7 @@ namespace zmath
 	{
 		double t_adj = 6 * std::pow(t, 5) - 15 * std::pow(t, 4) + 10 * std::pow(t, 3);
 		return interpLinear(val0, val1, t_adj);
-	};
+	}
 
 	inline RGBA interp5(RGBA val0, RGBA val1, double t)
 	{

@@ -10,6 +10,9 @@ namespace zmath
 {
 	class Map : public Sampleable2D<double>
 	{
+	private:
+		Map();
+
 	public:
 		Map(VecInt bounds);
 		Map(int x, int y);
@@ -36,8 +39,8 @@ namespace zmath
 		double SlopeAt(VecInt pos) const;
 
 		// return a reference to an underlying section of the map
-		std::unique_ptr<Map> Copy(VecInt min, VecInt max) const;
-		std::unique_ptr<Map> operator() (VecInt min, VecInt max) const;
+		Map Copy(VecInt min, VecInt max) const;
+		Map operator() (VecInt min, VecInt max) const;
 
 		// Chainable manipulation functions
 
@@ -50,7 +53,7 @@ namespace zmath
 		Map& Apply(const GaussField& gauss);
 		Map& Apply(double(*calculation)(double));
 
-		std::unique_ptr<Map> SlopeMap();
+		Map SlopeMap();
 		Map& BoundMax(double newMax);
 		Map& BoundMin(double newMin);
 		Map& Bound(double newMin, double newMax);

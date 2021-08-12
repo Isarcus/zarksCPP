@@ -443,8 +443,8 @@ namespace zmath
 		if (resolution < 3) return Tessellation3D();
 
 		// Allocate the circle coordinate arrays
-		Vec3* circleCoordsCurrent = new Vec3[resolution];
-		Vec3* circleCoordsNext = new Vec3[resolution];
+		std::vector<Vec3> circleCoordsCurrent(resolution);
+		std::vector<Vec3> circleCoordsNext(resolution);
 
 		// Assign correct values to initial circleCoordsNext, which will then be copied into circleCoordsCurrent
 		for (int i = 0; i < resolution; i++) circleCoordsNext[i] = center - Vec3(0, 0, radius);
@@ -454,7 +454,7 @@ namespace zmath
 		for (int layer = 1; layer < resolution; layer++)
 		{
 			// Copy Next into Current
-			memcpy(circleCoordsCurrent, circleCoordsNext, sizeof(Vec3) * resolution);
+			circleCoordsCurrent = circleCoordsNext;
 
 			// Calculate the correct values for Next
 			double sphereRad = -radius + 2.0 * layer * radius / resolution;
@@ -499,10 +499,6 @@ namespace zmath
 				circleCoordsNext[(i + 1) % resolution]
 			);
 		}
-
-		// free up memory
-		delete[] circleCoordsCurrent;
-		delete[] circleCoordsNext;
 
 		return sphere;
 	}

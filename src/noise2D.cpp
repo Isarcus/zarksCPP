@@ -59,7 +59,7 @@ namespace zmath
 
 	// Note: runs more than 2x faster than the Golang equivalent I made first. Woohoo!
 	// This might actually be my fastest implementation yet, and it's not even fully optimized
-	std::unique_ptr<Map> Simplex(NoiseConfig cfg)
+	Map Simplex(NoiseConfig cfg)
 	{
 		// Refer to https://github.com/Isarcus/zarks/blob/main/zmath/noise/simplex.go for original code.
 
@@ -76,7 +76,7 @@ namespace zmath
 
 		// Map setup
 		cfg.bounds = cfg.bounds.Floor();
-		Map& map = *new Map(cfg.bounds);
+		Map map(cfg.bounds);
 
 		std::cout << "Creating new Simplex Map:\n";
 		std::cout << " -> Width:  " << cfg.bounds.X << "\n";
@@ -144,20 +144,20 @@ namespace zmath
 
 		if (cfg.normalize) map.Interpolate(0, 1);
 
-		return std::unique_ptr<Map>(&map);
+		return map;
 	}
 
 	// Note to self: it seems like hash maps are a solid way to go for storing RNG noise vectors. This isn't as fast,
 	// however, as the Golang implementation at https://github.com/Isarcus/zarks/blob/main/zmath/noise/perlin.go because
 	// that one goes box-by-box rather than iterating across the image column-by-column. Still, this one is respectable!
-	std::unique_ptr<Map> Perlin(NoiseConfig cfg)
+	Map Perlin(NoiseConfig cfg)
 	{
 		// RNG
 		std::default_random_engine eng(cfg.seed);
 		std::uniform_real_distribution<double> angleRNG(0, 2.0*PI);
 
 		// Initialize map
-		Map& map = *new Map(cfg.bounds);
+		Map map(cfg.bounds);
 
 		std::cout << "Generating new Perlin map:\n";
 		std::cout << " -> Width:  " << cfg.bounds.X << "\n";
@@ -223,10 +223,10 @@ namespace zmath
 
 		if (cfg.normalize) map.Interpolate(0, 1);
 
-		return std::unique_ptr<Map>(&map);
+		return map;
 	}
 
-	std::unique_ptr<Map> Worley(NoiseConfig cfg)
+	Map Worley(NoiseConfig cfg)
 	{
 		// this coordList works for simpler algorithms that use fewer than ~5 points
 		std::vector<Vec> coordList;
@@ -243,7 +243,7 @@ namespace zmath
 		std::cout << " -> Height: " << cfg.bounds.Y << "\n";
 		std::cout << " -> Seed:   " << cfg.seed << "\n";
 
-		Map& map = *new Map(cfg.bounds);
+		Map map(cfg.bounds);
 
 		// Allocate this here, no point in constantly de- and re-allocating it in the loop
 		int distanceLen = coordList.size(); // TODO: multiply by config.N once implemented
@@ -314,15 +314,15 @@ namespace zmath
 
 		if (cfg.normalize) map.Interpolate(0, 1);
 
-		return std::unique_ptr<Map>(&map);
+		return map;
 	}
 
-	std::unique_ptr<Map> WorleyPlex(NoiseConfig cfg, Map& baseMap)
+	Map WorleyPlex(NoiseConfig cfg, Map& baseMap)
 	{
 		if (cfg.bounds != baseMap.Bounds())
 		{
 			std::cout << "Bounds mismatch :/ \n";
-			return std::unique_ptr<Map>(new Map(baseMap.Bounds()));
+			return Map(baseMap.Bounds());
 		}
 
 		const int coordLen = 25;
@@ -341,7 +341,7 @@ namespace zmath
 		std::cout << " -> Height: " << cfg.bounds.Y << "\n";
 		std::cout << " -> Seed:   " << cfg.seed << "\n";
 
-		Map& map = *new Map(cfg.bounds);
+		Map map(cfg.bounds);
 
 		// Allocate this here, no point in constantly de- and re-allocating it in the loop
 		int distanceLen = coordLen; // TODO: multiply by config.N once implemented
@@ -413,7 +413,7 @@ namespace zmath
 
 		if (cfg.normalize) map.Interpolate(0, 1);
 
-		return std::unique_ptr<Map>(&map);
+		return map;
 	}
 
 
