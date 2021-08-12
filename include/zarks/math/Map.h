@@ -23,6 +23,8 @@ namespace zmath
 		Map& operator= (const Map& m);
 		Map& operator= (Map&& m);
 
+		void FreeData() override;
+
 		// Map characteristics
 
 		double GetMin() const;

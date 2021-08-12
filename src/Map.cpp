@@ -41,10 +41,7 @@ Map::Map(Map&& map)
 
 Map::~Map()
 {
-	if (!subMap)
-	{
-		FreeData();
-	}
+	FreeData();
 }
 
 Map& Map::operator=(const Map& rhs)
@@ -79,6 +76,20 @@ Map& Map::operator=(Map&& rhs)
 	}
 
 	return *this;
+}
+
+void Map::FreeData()
+{
+	if (subMap)
+	{
+		delete data;
+		data = nullptr;
+		bounds = VecInt(0, 0);
+	}
+	else
+	{
+		Sampleable2D::FreeData();
+	}
 }
 
 double Map::GetMin() const
