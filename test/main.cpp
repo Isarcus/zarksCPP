@@ -33,8 +33,8 @@ void modernArt()
 
 	cfg.nearest = { 2, 4 }; // { 2, 4 }
 
-	Map noiseMap = *Worley(cfg);
-	Map slope = *noiseMap.SlopeMap();
+	Map noiseMap = Worley(cfg);
+	Map slope = noiseMap.SlopeMap();
 	slope.Interpolate(0, 1);
 
 	std::vector<RGBA> colors{
@@ -45,5 +45,5 @@ void modernArt()
 	zmath::Scheme scheme(colors);
 	zmath::Image img(slope, scheme);
 
-	img.Save(std::string("noise.png"), COLOR_CHANNELS);
+	img.Save("noise.png", COLOR_CHANNELS);
 }
