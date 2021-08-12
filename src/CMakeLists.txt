@@ -1,4 +1,4 @@
-add_library(LibZarks
+add_library(${ZARKS_LIB_NAME}
     binary.cpp
     color.cpp
     GaussField.cpp

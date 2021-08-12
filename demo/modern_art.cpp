@@ -4,26 +4,11 @@
 #include <zarks/image/Image.h>
 #include <zarks/math/3D/Shape3D.h>
 
-#include <iostream>
-#include <cstdlib>
-#include <string>
-#include <random>
-
 using namespace zmath;
-
-const unsigned long COLOR_CHANNELS = 3; // just rgb; no alpha for simplicity's sake
-const double PI = 3.14159265358979323846264;
-
-void modernArt();
 
 int main()
 {
-	modernArt();
-}
-
-void modernArt()
-{
-	// Generate image!
+    // Generate image!
 	NoiseConfig cfg;
 	cfg.bounds = VecInt(1000, 1000);
 	//cfg.boxSize = 300;
@@ -45,5 +30,7 @@ void modernArt()
 	zmath::Scheme scheme(colors);
 	zmath::Image img(slope, scheme);
 
-	img.Save("noise.png", COLOR_CHANNELS);
+	img.Save("noise.png", 3);
+
+    return 0;
 }
