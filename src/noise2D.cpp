@@ -157,9 +157,6 @@ namespace zmath
 		return map;
 	}
 
-	// Note to self: it seems like hash maps are a solid way to go for storing RNG noise vectors. This isn't as fast,
-	// however, as the Golang implementation at https://github.com/Isarcus/zarks/blob/main/zmath/noise/perlin.go because
-	// that one goes box-by-box rather than iterating across the image column-by-column. Still, this one is respectable!
 	Map Perlin(const NoiseConfig& cfg)
 	{
 		// RNG
