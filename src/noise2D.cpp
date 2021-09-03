@@ -174,16 +174,22 @@ namespace zmath
 		// Beep beep so let's ride
 		for (int oct = 0; oct < cfg.octaves; oct++)
 		{
+			// Create hashmap from coordinates to unit vectors to reuse randomly generated angles
 			std::unordered_map<VecInt, Vec> hash;
+
+			// Determine influence of this octave
 			double octInfluence = std::pow(cfg.octDecrease, oct);
+
+			// Determine size of each Perlin box in this octave
 			Vec octaveBoxSize = cfg.boxSize * octInfluence;
 
-			// Box minimum x and y
+			// Loop box-by-box through the map
 			for (double bx = 0, bnx = 0; bx < cfg.bounds.X; bx += octaveBoxSize.X, bnx++)
 			{
 				for (double by = 0, bny = 0; by < cfg.bounds.Y; by += octaveBoxSize.Y, bny++)
 				{
-					// Determine vectors of this box's corners
+					// We are now operating within a single Perlin box.
+					// Here, determine the random vectors of this box's four corners.
 					VecInt base = Vec(bx, by).Floor();
 					Vec corners[2][2];
 					for (int cx = 0; cx <= 1; cx++)
@@ -207,25 +213,38 @@ namespace zmath
 						}
 					}
 
-					// Loop through this box and sum to map
+					// With this box's corner vector's determined, we can now loop through
+					// each point within the box to determine how much to add to the heightmap.
+
+					// The size of this particular box. This can vary by 1 if octaveBoxSize is
+					// not a whole number, which is quite common.
 					VecInt thisBoxSize = (Vec(bx, by) + octaveBoxSize).Floor() - Vec(bx, by).Floor();
 					double dots[2][2];
 					for (int ix = 0; ix < thisBoxSize.X; ix++)
 					{
+						// X Bound check
 						if (base.X + ix > cfg.bounds.X) continue;
 
 						for (int iy = 0; iy < thisBoxSize.Y; iy++)
 						{
+							// Y bound check
 							if (base.Y + iy > cfg.bounds.Y) continue;
 
+							// Internal coordinate within this box; ranging from (0, 0) to (1, 1)
 							Vec itl = Vec(ix, iy) / Vec(thisBoxSize);
+
+							// Absolute coordinate within the larger map
 							VecInt absolute = base + VecInt(ix, iy);
 
+							// For each corner, determine the dot product of its random
+							// directional vector with the distance vector from that corner
+							// to the current internal coordinate
 							dots[0][0] = (itl - Vec(0, 0)).Dot(corners[0][0]);
 							dots[0][1] = (itl - Vec(0, 1)).Dot(corners[0][1]);
 							dots[1][0] = (itl - Vec(1, 0)).Dot(corners[1][0]);
 							dots[1][1] = (itl - Vec(1, 1)).Dot(corners[1][1]);
 
+							// Interpolate dot product results
 							double y0, y1, Z;
 							y0 = interp5(dots[0][0], dots[1][0], itl.X);
 							y1 = interp5(dots[0][1], dots[1][1], itl.X);
