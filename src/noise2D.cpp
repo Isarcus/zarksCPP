@@ -360,6 +360,9 @@ namespace zmath
 		return map;
 	}
 
+	// WorleyPlex is identical to Worley in almost every way, with the main exception
+	// being that the vector LNorm used to compute distances between points depends on
+	// the values of a passed-in heightmap. This can create some cool effects!
 	Map WorleyPlex(const NoiseConfig& cfg, const Map& baseMap)
 	{
 		if (cfg.bounds != baseMap.Bounds())
@@ -414,9 +417,6 @@ namespace zmath
 
 						// This is where the base map is used
 						distances[i] = (hash.at(test) + coordList[i] - itl).LNorm(baseMap[x][y]);
-
-						// uncomment for quantized distance; looks best with lnorm = 2
-						// distances[i] = ((int)(distances[i] * 20.0)) / 20.0;
 					}
 
 					// Sort the distances, low to high. TODO: use a better sorting algorithm
@@ -442,13 +442,12 @@ namespace zmath
 					{
 						Z *= distances[i];
 					}
-					//std::cout << distances[1] << "\n";
 
 					// Final summation
 					map.At(x, y) += Z * octInfluence;
 				}
 			}
-			
+
 			// Notify octave completion
 			std::cout << " -> Octave \033[1;32m" << oct + 1 << "\033[0m Finished.\r" << std::flush;
 		}
