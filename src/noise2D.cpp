@@ -265,8 +265,8 @@ namespace zmath
 		Map map(cfg.bounds);
 
 		// Allocate this here, no point in constantly de- and re-allocating it in the loop
-		int distanceLen = coordList.size(); // TODO: multiply by config.N once implemented
-		double* distances = new double[distanceLen];
+		unsigned distanceLen = coordList.size(); // TODO: multiply by config.N once implemented
+		std::vector<double> distances(distanceLen);
 
 		for (int oct = 0; oct < cfg.octaves; oct++)
 		{
@@ -284,7 +284,7 @@ namespace zmath
 					Vec itl = coord - base;
 
 					// Get the distances to each point
-					for (int i = 0; i < distanceLen; i++)
+					for (unsigned i = 0; i < distanceLen; i++)
 					{
 						Vec test = base + coordList[i];
 						if (hash.find(test) == hash.end())
@@ -302,7 +302,7 @@ namespace zmath
 					while (true)
 					{
 						bool done = true;
-						for (int i = 1; i < distanceLen; i++)
+						for (unsigned i = 1; i < distanceLen; i++)
 						{
 							if (distances[i - 1] > distances[i])
 							{
@@ -329,8 +329,6 @@ namespace zmath
 			}
 		}
 
-		delete[] distances;
-
 		if (cfg.normalize) map.Interpolate(0, 1);
 
 		return map;
@@ -344,12 +342,10 @@ namespace zmath
 			return Map(baseMap.Bounds());
 		}
 
-		const int coordLen = 25;
-		Vec* coordList = new Vec[coordLen];
-		int idx = 0;
+		std::vector<Vec> coordList;
 		for (int x = -2; x <= 2; x++)
 			for (int y = -2; y <= 2; y++)
-				coordList[idx++] = Vec(x, y);
+				coordList.push_back(Vec(x, y));
 
 		// RNG
 		std::default_random_engine eng(cfg.seed);
@@ -363,8 +359,8 @@ namespace zmath
 		Map map(cfg.bounds);
 
 		// Allocate this here, no point in constantly de- and re-allocating it in the loop
-		int distanceLen = coordLen; // TODO: multiply by config.N once implemented
-		double* distances = new double[distanceLen];
+		unsigned distanceLen = coordList.size(); // TODO: multiply by config.N once implemented
+		std::vector<double> distances(distanceLen);
 
 		for (int oct = 0; oct < cfg.octaves; oct++)
 		{
@@ -382,7 +378,7 @@ namespace zmath
 					Vec itl = coord - base;
 
 					// Get the distances to each point
-					for (int i = 0; i < coordLen; i++)
+					for (unsigned i = 0; i < distanceLen; i++)
 					{
 						Vec test = base + coordList[i];
 						if (hash.find(test) == hash.end())
@@ -401,7 +397,7 @@ namespace zmath
 					while (true)
 					{
 						bool done = true;
-						for (int i = 1; i < distanceLen; i++)
+						for (unsigned i = 1; i < distanceLen; i++)
 						{
 							if (distances[i - 1] > distances[i])
 							{
@@ -427,8 +423,6 @@ namespace zmath
 				}
 			}
 		}
-
-		delete[] distances;
 
 		if (cfg.normalize) map.Interpolate(0, 1);
 
