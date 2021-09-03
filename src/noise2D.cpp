@@ -73,10 +73,10 @@ namespace zmath
 		// Map setup
 		Map map(cfg.bounds);
 
-		std::cout << "Creating new Simplex Map:\n";
-		std::cout << " -> Width:  " << cfg.bounds.X << "\n";
-		std::cout << " -> Height: " << cfg.bounds.Y << "\n";
-		std::cout << " -> Seed:   " << cfg.seed << "\n";
+		std::cout << "Creating new Simplex Map:\n"
+		          << " -> Width:  " << cfg.bounds.X << "\n"
+		          << " -> Height: " << cfg.bounds.Y << "\n"
+		          << " -> Seed:   " << cfg.seed << "\n";
 		
 		// Dive in
 		for (int oct = 0; oct < cfg.octaves; oct++)
@@ -148,8 +148,9 @@ namespace zmath
 			} 
 
 			// Notify octave completion
-			std::cout << " -> Octave " << oct + 1 << " Finished.\n";
+			std::cout << " -> Octave \033[1;32m" << oct + 1 << "\033[0m Finished.\r" << std::flush;
 		}
+		std::cout << " -> All done!                       \n";
 
 		// Perform final normalization, if applicable
 		if (cfg.normalize) map.Interpolate(0, 1);
@@ -166,10 +167,10 @@ namespace zmath
 		// Initialize map
 		Map map(cfg.bounds);
 
-		std::cout << "Generating new Perlin map:\n";
-		std::cout << " -> Width:  " << cfg.bounds.X << "\n";
-		std::cout << " -> Height: " << cfg.bounds.Y << "\n";
-		std::cout << " -> Seed:   " << cfg.seed << "\n";
+		std::cout << "Generating new Perlin map:\n"
+		          << " -> Width:  " << cfg.bounds.X << "\n"
+		          << " -> Height: " << cfg.bounds.Y << "\n"
+		          << " -> Seed:   " << cfg.seed << "\n";
 
 		// Beep beep so let's ride
 		for (int oct = 0; oct < cfg.octaves; oct++)
@@ -256,8 +257,10 @@ namespace zmath
 				}
 			}
 
-			std::cout << " -> Octave " << oct + 1 << " finished.\n";
+			// Notify octave completion
+			std::cout << " -> Octave \033[1;32m" << oct + 1 << "\033[0m Finished.\r" << std::flush;
 		}
+		std::cout << " -> All done!                       \n";
 
 		if (cfg.normalize) map.Interpolate(0, 1);
 
@@ -276,15 +279,15 @@ namespace zmath
 		std::default_random_engine eng(cfg.seed);
 		std::uniform_real_distribution<double> uniformRNG(0, 1);
 
-		std::cout << "Generating new Worley map:\n";
-		std::cout << " -> Width:  " << cfg.bounds.X << "\n";
-		std::cout << " -> Height: " << cfg.bounds.Y << "\n";
-		std::cout << " -> Seed:   " << cfg.seed << "\n";
+		std::cout << "Generating new Worley map:\n"
+		          << " -> Width:  " << cfg.bounds.X << "\n"
+		          << " -> Height: " << cfg.bounds.Y << "\n"
+		          << " -> Seed:   " << cfg.seed << "\n";
 
+		// Initialize map
 		Map map(cfg.bounds);
 
-		// Allocate this here, no point in constantly de- and re-allocating it in the loop
-		unsigned distanceLen = coordList.size(); // TODO: multiply by config.N once implemented
+		unsigned distanceLen = coordList.size();
 		std::vector<double> distances(distanceLen);
 
 		for (int oct = 0; oct < cfg.octaves; oct++)
@@ -299,13 +302,13 @@ namespace zmath
 				for (int y = 0; y < cfg.bounds.Y; y++)
 				{
 					Vec coord = scaleVec * Vec(x, y);
-					Vec base = coord.Floor();
+					VecInt base = coord.Floor();
 					Vec itl = coord - base;
 
 					// Get the distances to each point
 					for (unsigned i = 0; i < distanceLen; i++)
 					{
-						Vec test = base + coordList[i];
+						VecInt test = base + coordList[i];
 						if (hash.find(test) == hash.end())
 						{
 							hash.emplace(test, Vec(uniformRNG(eng), uniformRNG(eng)));
@@ -346,7 +349,11 @@ namespace zmath
 					map.At(x, y) += Z * octInfluence;
 				}
 			}
+
+			// Notify octave completion
+			std::cout << " -> Octave \033[1;32m" << oct + 1 << "\033[0m Finished.\r" << std::flush;
 		}
+		std::cout << " -> All done!                       \n";
 
 		if (cfg.normalize) map.Interpolate(0, 1);
 
@@ -370,10 +377,10 @@ namespace zmath
 		std::default_random_engine eng(cfg.seed);
 		std::uniform_real_distribution<double> uniformRNG(0, 1);
 
-		std::cout << "Generating new Worleyplex map:\n";
-		std::cout << " -> Width:  " << cfg.bounds.X << "\n";
-		std::cout << " -> Height: " << cfg.bounds.Y << "\n";
-		std::cout << " -> Seed:   " << cfg.seed << "\n";
+		std::cout << "Generating new Worleyplex map:\n"
+				  << " -> Width:  " << cfg.bounds.X << "\n"
+				  << " -> Height: " << cfg.bounds.Y << "\n"
+				  << " -> Seed:   " << cfg.seed << "\n";
 
 		Map map(cfg.bounds);
 
@@ -441,7 +448,11 @@ namespace zmath
 					map.At(x, y) += Z * octInfluence;
 				}
 			}
+			
+			// Notify octave completion
+			std::cout << " -> Octave \033[1;32m" << oct + 1 << "\033[0m Finished.\r" << std::flush;
 		}
+		std::cout << " -> All done!                       \n";
 
 		if (cfg.normalize) map.Interpolate(0, 1);
 
