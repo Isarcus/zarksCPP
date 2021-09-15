@@ -8,7 +8,7 @@ namespace zmath
 {
 
 NoiseHash::NoiseHash(uint64_t seed)
-    : eng(seed ? seed : std::chrono::system_clock::now().time_since_epoch().count())
+    : eng(seed == RANDOM_SEED ? std::chrono::system_clock::now().time_since_epoch().count() : seed)
     , angleRNG(0, 2.0*PI)
 {}
 
@@ -26,6 +26,11 @@ Vec& NoiseHash::Create(VecInt key, Vec val)
 Vec& NoiseHash::Create(VecInt key)
 {
     return Create(key, Vec::UnitVector(angleRNG(eng)));
+}
+
+void NoiseHash::Clear()
+{
+    hash.clear();
 }
 
 Vec& NoiseHash::operator[](VecInt key)

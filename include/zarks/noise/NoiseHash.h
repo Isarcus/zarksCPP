@@ -16,10 +16,14 @@ namespace zmath
         Vec& Create(VecInt key, Vec val);
         Vec& Create(VecInt key);
 
+        void Clear();
+
         Vec& operator[](VecInt key);
 
         Vec& At(VecInt key);
         const Vec& At(VecInt key) const;
+
+        static constexpr uint64_t RANDOM_SEED = 0;
 
     private:
         std::unordered_map<VecInt, Vec> hash;

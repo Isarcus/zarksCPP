@@ -11,6 +11,7 @@
  */
 
 #include <zarks/noise/noise2D.h>
+#include <zarks/noise/Noiser.h>
 #include <zarks/image/Image.h>
 
 using namespace zmath;
@@ -21,9 +22,9 @@ void worley();
 
 int main()
 {
-    simplex();
-    perlin();
-    worley();
+    ::simplex();
+    ::perlin();
+    ::worley();
 
     return 0;
 }
@@ -33,6 +34,11 @@ void simplex()
     Map map = Simplex(NoiseConfig());
     Image image(map);
     image.Save("simplex.png");
+
+    Noiser noiser(&SimplexPoint, 1);
+    map = noiser(VecInt(1000, 1000), 8);
+    image = Image(map);
+    image.Save("simplex_noiser.png");
 }
 
 void perlin()
@@ -40,6 +46,11 @@ void perlin()
     Map map = Perlin(NoiseConfig());
     Image image(map);
     image.Save("perlin.png");
+
+    Noiser noiser(&PerlinPoint, 1);
+    map = noiser(VecInt(1000, 1000), 8);
+    image = Image(map);
+    image.Save("perlin_noiser.png");
 }
 
 void worley()
