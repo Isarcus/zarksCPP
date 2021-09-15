@@ -75,6 +75,7 @@ namespace zmath
 
 		static VecT Min(VecT v1, VecT v2);
 		static VecT Max(VecT v1, VecT v2);
+		static VecT UnitVector(double angle, double magnitude = 1.0);
 
 		template <typename W>
 		operator VecT<W>() const;
@@ -87,80 +88,80 @@ namespace zmath
 namespace zmath
 {
 
-template<class T>
+template <typename T>
 inline VecT<T>::VecT()
 	: X(0)
 	, Y(0)
 {}
 
-template<class T>
+template <typename T>
 inline VecT<T>::VecT(T x, T y)
 	: X(x)
 	, Y(y)
 {}
 
-template<class T>
+template <typename T>
 inline VecT<T>::VecT(const VecT& vec)
 	: X(vec.X)
 	, Y(vec.Y)
 {}
 
-template<class T>
+template <typename T>
 inline VecT<T>::VecT(VecT&& vec)
 	: X(vec.X)
 	, Y(vec.Y)
 {}
 
-template<class T>
+template <typename T>
 inline T VecT<T>::Min() const
 {
 	return std::min(X, Y);
 }
 
-template<class T>
+template <typename T>
 inline T VecT<T>::Max() const
 {
 	return std::max(X, Y);
 }
 
-template<class T>
+template <typename T>
 inline T VecT<T>::Sum() const
 {
 	return X + Y;
 }
 
-template<class T>
+template <typename T>
 inline T VecT<T>::Area() const
 {
 	return X * Y;
 }
 
-template<class T>
+template <typename T>
 inline T VecT<T>::Dot(VecT v) const
 {
 	return X * v.X + Y * v.Y;
 }
 
-template<class T>
+template <typename T>
 inline T VecT<T>::DistForm(VecT v) const
 {
 	return std::sqrt(std::pow(X - v.X, 2) +
 		             std::pow(Y - v.Y, 2));
 }
 
-template<class T>
+template <typename T>
 inline T VecT<T>::DistForm() const
 {
 	return DistForm(VecT<T>());
 }
 
-template<class T>
+template <typename T>
 inline T VecT<T>::DistManhattan(VecT v) const
 {
 	return std::abs(X - v.X) + std::abs(Y - v.Y);
 }
 
-template<class T>
+template <typename T>
 inline T VecT<T>::LNorm(double L) const
 {
 	if (L == 1) return std::abs(X) + std::abs(Y);
@@ -169,13 +170,13 @@ inline T VecT<T>::LNorm(double L) const
 	return std::pow(std::pow(std::abs(X), L) + std::pow(std::abs(Y), L), 1.0 / L);
 }
 
-template<class T>
+template <typename T>
 inline double VecT<T>::Angle() const
 {
 	return std::atan2(Y, X);
 }
 
-template<class T>
+template <typename T>
 inline VecT<T> VecT<T>::Mod(VecT denom) const
 {
 	return VecT(
@@ -184,28 +185,28 @@ inline VecT<T> VecT<T>::Mod(VecT denom) const
 	);
 }
 
-template<class T>
+template <typename T>
 inline VecT<T> VecT<T>::Floor() const
 {
 	return VecT<T>(std::floor(X),
 		std::floor(Y));
 }
 
-template<class T>
+template <typename T>
 inline VecT<T> VecT<T>::Ceil() const
 {
 	return VecT<T>(std::ceil(X),
 		std::ceil(Y));
 }
 
-template<class T>
+template <typename T>
 inline VecT<T> VecT<T>::Abs() const
 {
 	return VecT<T>(std::abs(X),
 		std::abs(Y));
 }
 
-template<class T>
+template <typename T>
 inline VecT<T>& VecT<T>::operator=(const VecT& v)
 {
 	X = v.X;
@@ -214,47 +215,47 @@ inline VecT<T>& VecT<T>::operator=(const VecT& v)
 	return *this;
 }
 
-template<class T>
+template <typename T>
 inline VecT<T>& VecT<T>::operator=(VecT&& v)
 {
 	return *this = v;
 }
 
-template<class T>
+template <typename T>
 inline bool VecT<T>::operator!() const
 {
 	return !(X || Y);
 }
 
-template<class T>
+template <typename T>
 inline VecT<T> VecT<T>::operator+(VecT v) const
 {
 	return VecT(X + v.X,
 		Y + v.Y);
 }
 
-template<class T>
+template <typename T>
 inline VecT<T> VecT<T>::operator-(VecT v) const
 {
 	return VecT(X - v.X,
 		Y - v.Y);
 }
 
-template<class T>
+template <typename T>
 inline VecT<T> VecT<T>::operator*(VecT v) const
 {
 	return VecT(X * v.X,
 		Y * v.Y);
 }
 
-template<class T>
+template <typename T>
 inline VecT<T> VecT<T>::operator/(VecT v) const
 {
 	return VecT(X / v.X,
 		Y / v.Y);
 }
 
-template<class T>
+template <typename T>
 inline VecT<T>& VecT<T>::operator+=(VecT v)
 {
 	X += v.X;
@@ -262,7 +263,7 @@ inline VecT<T>& VecT<T>::operator+=(VecT v)
 	return *this;
 }
 
-template<class T>
+template <typename T>
 inline VecT<T>& VecT<T>::operator-=(VecT v)
 {
 	X -= v.X;
@@ -270,7 +271,7 @@ inline VecT<T>& VecT<T>::operator-=(VecT v)
 	return *this;
 }
 
-template<class T>
+template <typename T>
 inline VecT<T>& VecT<T>::operator*=(VecT v)
 {
 	X *= v.X;
@@ -278,7 +279,7 @@ inline VecT<T>& VecT<T>::operator*=(VecT v)
 	return *this;
 }
 
-template<class T>
+template <typename T>
 inline VecT<T>& VecT<T>::operator/=(VecT v)
 {
 	X /= v.X;
@@ -286,49 +287,49 @@ inline VecT<T>& VecT<T>::operator/=(VecT v)
 	return *this;
 }
 
-template<class T>
+template <typename T>
 inline VecT<T> VecT<T>::operator+(T val) const { return *this + VecT(val, val); }
 
-template<class T>
+template <typename T>
 inline VecT<T> VecT<T>::operator-(T val) const { return *this - VecT(val, val); }
 
-template<class T>
+template <typename T>
 inline VecT<T> VecT<T>::operator*(T val) const { return *this * VecT(val, val); }
 
-template<class T>
+template <typename T>
 inline VecT<T> VecT<T>::operator/(T val) const { return *this / VecT(val, val); }
 
-template<class T>
+template <typename T>
 inline VecT<T>& VecT<T>::operator+=(T val) { return *this += VecT(val, val); }
 
-template<class T>
+template <typename T>
 inline VecT<T>& VecT<T>::operator-=(T val) { return *this -= VecT(val, val); }
 
-template<class T>
+template <typename T>
 inline VecT<T>& VecT<T>::operator*=(T val) { return *this *= VecT(val, val); }
 
-template<class T>
+template <typename T>
 inline VecT<T>& VecT<T>::operator/=(T val) { return *this /= VecT(val, val); }
 
-template<class T>
+template <typename T>
 inline bool VecT<T>::operator==(VecT v) const { return X == v.X && Y == v.Y; }
 
-template<class T>
+template <typename T>
 inline bool VecT<T>::operator!=(VecT v) const { return X != v.X || Y != v.Y; }
 
-template<class T>
+template <typename T>
 inline bool VecT<T>::operator<(VecT v) const { return X < v.X && Y < v.Y; }
 
-template<class T>
+template <typename T>
 inline bool VecT<T>::operator>(VecT v) const { return X > v.X && Y > v.Y; }
 
-template<class T>
+template <typename T>
 inline bool VecT<T>::operator<=(VecT v) const { return X <= v.X && Y <= v.Y; }
 
-template<class T>
+template <typename T>
 inline bool VecT<T>::operator>=(VecT v) const { return X >= v.X && Y >= v.Y; }
 
-template<class T>
+template <typename T>
 inline VecT<T> VecT<T>::Min(VecT v1, VecT v2)
 {
 	return VecT(
@@ -337,7 +338,7 @@ inline VecT<T> VecT<T>::Min(VecT v1, VecT v2)
 	);
 }
 
-template<class T>
+template <typename T>
 inline VecT<T> VecT<T>::Max(VecT v1, VecT v2)
 {
 	return VecT(
@@ -346,7 +347,16 @@ inline VecT<T> VecT<T>::Max(VecT v1, VecT v2)
 	);
 }
 
-template<class T>
+template <typename T>
+inline VecT<T> VecT<T>::UnitVector(double angle, double magnitude)
+{
+	return VecT (
+		std::cos(angle),
+		std::sin(angle)
+	) * magnitude;
+}
+
+template <typename T>
 template<typename W>
 inline VecT<T>::operator VecT<W>() const
 {
