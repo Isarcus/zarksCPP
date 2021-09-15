@@ -43,11 +43,7 @@ namespace zmath
 
 	Map Simplex(const NoiseConfig& cfg)
 	{
-		// Helpful constants
-		static constexpr double F2D = 0.3660254037844386467637231707529361834714026;
-		static constexpr double G2D = 0.2113248654051871177454256097490212721761991;
-		auto skew =   [](Vec pt) { return Vec(pt.X + pt.Sum() * F2D, pt.Y + pt.Sum() * F2D); };
-		auto unskew = [](Vec pt) { return Vec(pt.X - pt.Sum() * G2D, pt.Y - pt.Sum() * G2D); };
+		// Helpful constant
 		const double r2 = cfg.r * cfg.r;
 
 		// RNG
@@ -83,7 +79,7 @@ namespace zmath
 					// Compute input coordinate
 					Vec ipt = scaleVec * Vec(x, y);
 					// Compute skewed coordinate
-					Vec skewed = skew(ipt);
+					Vec skewed = simplex::skew(ipt);
 					// Compute internal simplex coordinate
 					Vec itl = skewed - skewed.Floor();
 
@@ -119,7 +115,7 @@ namespace zmath
 					double Z = 0;
 					for (int i = 0; i < 3; i++)
 					{
-						Vec displacement = ipt - unskew(corners[i]);
+						Vec displacement = ipt - simplex::unskew(corners[i]);
 						double distance = displacement.LNorm(cfg.lNorm); // Distance formula
 
 						double influence = std::pow(std::max(0.0, r2 - distance * distance), cfg.rMinus);
