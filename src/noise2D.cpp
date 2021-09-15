@@ -1,5 +1,6 @@
 #include <zarks/noise/noise2D.h>
 #include <zarks/internal/zmath_internals.h>
+#include <zarks/internal/noise_internals.h>
 
 #include <chrono>
 #include <cmath>
@@ -7,23 +8,6 @@
 #include <unordered_map>
 #include <iostream>
 #include <utility>
-
-namespace std
-{
-	// Necessary in order to use Vec as a key in an std::unordered_map
-	template <typename T>
-	struct hash<zmath::VecT<T>>
-	{
-		size_t operator()(const zmath::VecT<T>& k) const
-		{
-			static constexpr size_t multBy = 73; // 31 
-			size_t res = 17;
-			res = res * multBy + hash<T>()(k.X);
-			res = res * multBy + hash<T>()(k.Y);
-			return res;
-		}
-	};
-}
 
 namespace zmath
 {
@@ -457,6 +441,4 @@ namespace zmath
 
 		return map;
 	}
-
-
 }
