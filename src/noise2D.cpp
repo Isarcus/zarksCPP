@@ -1,4 +1,5 @@
 #include <zarks/noise/noise2D.h>
+#include <zarks/noise/NoiseHash.h>
 #include <zarks/internal/zmath_internals.h>
 #include <zarks/internal/noise_internals.h>
 
@@ -47,8 +48,7 @@ namespace zmath
 		const double r2 = cfg.r * cfg.r;
 
 		// RNG
-		std::default_random_engine eng(cfg.seed);
-		std::uniform_real_distribution<double> angleRNG(0, 2.0*PI);
+		NoiseHash hash(cfg.seed);
 
 		// Map setup
 		Map map(cfg.bounds);
@@ -61,15 +61,15 @@ namespace zmath
 		// Dive in
 		for (int oct = 0; oct < cfg.octaves; oct++)
 		{
+			// Empty the vector hashmap for a new octave
+			hash.Clear();
+
 			// Calculate the influence of this octave on the overall noise map.
 			// Influence most commonly decreases by a factor of 2 each octave.
 			double octInfluence = std::pow(cfg.octDecrease, oct);
 
 			// Calculate vector with which to scale coordinates ths octave.
 			Vec scaleVec = (Vec(1.0, 1.0) / cfg.boxSize) / std::pow(0.5, oct);
-
-			// Create hashmap from coordinates to unit vectors to reuse randomly generated angles
-			std::unordered_map<VecInt, Vec> hash;
 
 			// Iterate through the whole map
 			for (int x = 0; x < cfg.bounds.X; x++)
@@ -97,18 +97,7 @@ namespace zmath
 
 					for (int i = 0; i < 3; i++)
 					{
-						if (hash.count(corners[i]))
-						{
-							// Use the already assigned angle vector if it exists
-							vectors[i] = hash.at(corners[i]);
-						}
-						else
-						{
-							// Otherwise, generate and assign a new one
-							double angle = angleRNG(eng);
-							vectors[i] = Vec(std::cos(angle), std::sin(angle));
-							hash.emplace(corners[i], vectors[i]);
-						}
+						vectors[i] = hash[corners[i]];
 					}
 
 					// Perform final summation for this coordinate
@@ -140,10 +129,6 @@ namespace zmath
 
 	Map Perlin(const NoiseConfig& cfg)
 	{
-		// RNG
-		std::default_random_engine eng(cfg.seed);
-		std::uniform_real_distribution<double> angleRNG(0, 2.0*PI);
-
 		// Initialize map
 		Map map(cfg.bounds);
 
@@ -152,11 +137,14 @@ namespace zmath
 		          << " -> Height: " << cfg.bounds.Y << "\n"
 		          << " -> Seed:   " << cfg.seed << "\n";
 
+		// RNG
+		NoiseHash hash(cfg.seed);
+
 		// Beep beep so let's ride
 		for (int oct = 0; oct < cfg.octaves; oct++)
 		{
-			// Create hashmap from coordinates to unit vectors to reuse randomly generated angles
-			std::unordered_map<VecInt, Vec> hash;
+			// Empty the vector hashmap for a new octave
+			hash.Clear();
 
 			// Determine influence of this octave
 			double octInfluence = std::pow(cfg.octDecrease, oct);
@@ -179,18 +167,7 @@ namespace zmath
 						{
 							// Randomly generate new vectors if not already present
 							VecInt test = VecInt(bnx + cx, bny + cy);
-							if (hash.count(test))
-							{
-								corners[cx][cy] = hash.at(test);
-							}
-							else
-							{
-								double angle = angleRNG(eng);
-								Vec value = Vec(std::cos(angle), std::sin(angle));
-								hash.emplace(test, value);
-
-								corners[cx][cy] = value;
-							}
+							corners[cx][cy] = hash[test];
 						}
 					}
 
@@ -256,8 +233,7 @@ namespace zmath
 				coordList.push_back(Vec(x, y));
 
 		// RNG
-		std::default_random_engine eng(cfg.seed);
-		std::uniform_real_distribution<double> uniformRNG(0, 1);
+		NoiseHash hash(cfg.seed);
 
 		std::cout << "Generating new Worley map:\n"
 		          << " -> Width:  " << cfg.bounds.X << "\n"
@@ -272,10 +248,11 @@ namespace zmath
 
 		for (int oct = 0; oct < cfg.octaves; oct++)
 		{
+			// Empty the vector hashmap for a new octave
+			hash.Clear();
+
 			double octInfluence = std::pow(cfg.octDecrease, oct);
 			Vec scaleVec = (Vec(1.0, 1.0) / cfg.boxSize) / std::pow(0.5, oct);
-
-			std::unordered_map<Vec, Vec> hash;
 
 			for (int x = 0; x < cfg.bounds.X; x++)
 			{
@@ -289,12 +266,8 @@ namespace zmath
 					for (unsigned i = 0; i < distanceLen; i++)
 					{
 						VecInt test = base + coordList[i];
-						if (hash.find(test) == hash.end())
-						{
-							hash.emplace(test, Vec(uniformRNG(eng), uniformRNG(eng)));
-						}
 
-						distances[i] = (hash.at(test) + coordList[i] - itl).LNorm(cfg.lNorm);
+						distances[i] = (hash[test] + coordList[i] - itl).LNorm(cfg.lNorm);
 
 						// uncomment for quantized distance; looks best with lnorm = 2
 						// distances[i] = ((int)(distances[i] * 20.0)) / 20.0;
@@ -357,8 +330,7 @@ namespace zmath
 				coordList.push_back(Vec(x, y));
 
 		// RNG
-		std::default_random_engine eng(cfg.seed);
-		std::uniform_real_distribution<double> uniformRNG(0, 1);
+		NoiseHash hash(cfg.seed);
 
 		std::cout << "Generating new Worleyplex map:\n"
 				  << " -> Width:  " << cfg.bounds.X << "\n"
@@ -373,10 +345,11 @@ namespace zmath
 
 		for (int oct = 0; oct < cfg.octaves; oct++)
 		{
+			// Empty the vector hashmap for a new octave
+			hash.Clear();
+
 			double octInfluence = std::pow(cfg.octDecrease, oct);
 			Vec scaleVec = (Vec(1.0, 1.0) / cfg.boxSize) / std::pow(0.5, oct);
-
-			std::unordered_map<Vec, Vec> hash;
 
 			for (int x = 0; x < cfg.bounds.X; x++)
 			{
@@ -390,13 +363,9 @@ namespace zmath
 					for (unsigned i = 0; i < distanceLen; i++)
 					{
 						Vec test = base + coordList[i];
-						if (hash.find(test) == hash.end())
-						{
-							hash.emplace(test, Vec(uniformRNG(eng), uniformRNG(eng)));
-						}
 
 						// This is where the base map is used
-						distances[i] = (hash.at(test) + coordList[i] - itl).LNorm(baseMap[x][y]);
+						distances[i] = (hash[test] + coordList[i] - itl).LNorm(baseMap[x][y]);
 					}
 
 					// Sort the distances, low to high. TODO: use a better sorting algorithm
