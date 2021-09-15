@@ -6,6 +6,7 @@ add_library(${ZARKS_LIB_NAME}
     Map.cpp
     Mat3.cpp
     noise2D.cpp
+    Noiser.cpp
     numerals.cpp
     Rect.cpp
     Shape3D.cpp
