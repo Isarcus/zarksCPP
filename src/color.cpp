@@ -147,5 +147,4 @@ namespace zmath
 	{
 		return os << "(" << (int)c.R << ", " << (int)c.G << ", " << (int)c.B << ", " << (int)c.A << ")";
 	}
-
 }

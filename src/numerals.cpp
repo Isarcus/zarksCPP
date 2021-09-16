@@ -75,5 +75,4 @@ namespace zmath
 
 		return ConvertBase(val, toBase, minWidth);
 	}
-
 }

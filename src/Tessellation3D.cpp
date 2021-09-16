@@ -573,5 +573,4 @@ namespace zmath
 
 		return tess;
 	}
-
 }
