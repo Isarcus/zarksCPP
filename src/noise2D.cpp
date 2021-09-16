@@ -1,5 +1,7 @@
 #include <zarks/noise/noise2D.h>
+#include <zarks/noise/NoiseHash.h>
 #include <zarks/internal/zmath_internals.h>
+#include <zarks/internal/noise_internals.h>
 
 #include <chrono>
 #include <cmath>
@@ -7,23 +9,6 @@
 #include <unordered_map>
 #include <iostream>
 #include <utility>
-
-namespace std
-{
-	// Necessary in order to use Vec as a key in an std::unordered_map
-	template <>
-	struct hash<zmath::Vec>
-	{
-		size_t operator()(const zmath::Vec& k) const
-		{
-			const size_t multBy = 73; // 31 
-			size_t res = 17;
-			res = res * multBy + hash<double>()(k.X);
-			res = res * multBy + hash<double>()(k.Y);
-			return res;
-		}
-	};
-}
 
 namespace zmath
 {
@@ -57,176 +42,189 @@ namespace zmath
 		seed = std::chrono::system_clock::now().time_since_epoch().count();
 	}
 
-	// Note: runs more than 2x faster than the Golang equivalent I made first. Woohoo!
-	// This might actually be my fastest implementation yet, and it's not even fully optimized
-	Map Simplex(NoiseConfig cfg)
+	Map Simplex(const NoiseConfig& cfg)
 	{
-		// Refer to https://github.com/Isarcus/zarks/blob/main/zmath/noise/simplex.go for original code.
-
-		// Constants
-		constexpr static const double F2D = 0.3660254037844386467637231707529361834714026;
-		constexpr static const double G2D = 0.2113248654051871177454256097490212721761991;
-		auto skew =   [](Vec pt) { return Vec(pt.X + pt.Sum() * F2D, pt.Y + pt.Sum() * F2D); };
-		auto unskew = [](Vec pt) { return Vec(pt.X - pt.Sum() * G2D, pt.Y - pt.Sum() * G2D); };
-		double r2 = cfg.r * cfg.r;
+		// Helpful constant
+		const double r2 = cfg.r * cfg.r;
 
 		// RNG
-		std::default_random_engine eng(cfg.seed);
-		std::uniform_real_distribution<double> angleRNG(0, 2.0*PI);
+		NoiseHash hash(cfg.seed);
 
 		// Map setup
-		cfg.bounds = cfg.bounds.Floor();
 		Map map(cfg.bounds);
 
-		std::cout << "Creating new Simplex Map:\n";
-		std::cout << " -> Width:  " << cfg.bounds.X << "\n";
-		std::cout << " -> Height: " << cfg.bounds.Y << "\n";
-		std::cout << " -> Seed:   " << cfg.seed << "\n";
+		std::cout << "Creating new Simplex Map:\n"
+		          << " -> Width:  " << cfg.bounds.X << "\n"
+		          << " -> Height: " << cfg.bounds.Y << "\n"
+		          << " -> Seed:   " << cfg.seed << "\n";
 		
 		// Dive in
 		for (int oct = 0; oct < cfg.octaves; oct++)
 		{
+			// Empty the vector hashmap for a new octave
+			hash.Clear();
+
+			// Calculate the influence of this octave on the overall noise map.
+			// Influence most commonly decreases by a factor of 2 each octave.
 			double octInfluence = std::pow(cfg.octDecrease, oct);
+
+			// Calculate vector with which to scale coordinates ths octave.
 			Vec scaleVec = (Vec(1.0, 1.0) / cfg.boxSize) / std::pow(0.5, oct);
 
-			std::unordered_map<Vec, Vec> hash;
-
+			// Iterate through the whole map
 			for (int x = 0; x < cfg.bounds.X; x++)
 			{
 				for (int y = 0; y < cfg.bounds.Y; y++)
 				{
+					// Compute input coordinate
 					Vec ipt = scaleVec * Vec(x, y);
-					Vec skewed = skew(ipt);
-					Vec itl = skewed - skewed.Floor(); // internal simplex coordinate
+					// Compute skewed coordinate
+					Vec skewed = simplex::skew(ipt);
+					// Compute internal simplex coordinate
+					Vec itl = skewed - skewed.Floor();
 
-					Vec corners[3];
+					// Corners of this simplex
+					VecInt corners[3];
+					// Angle vectors of this simplex's corners
 					Vec vectors[3];
 
+					// Base corner is just lowest point in this simplex
 					corners[0] = skewed.Floor();
-					corners[1] = (itl.X > itl.Y) ? corners[0] + Vec(1, 0) : corners[0] + Vec(0, 1);
+					// "Middle" corner depends on internal X and Y
+					corners[1] = (itl.X > itl.Y) ? corners[0] + VecInt(1, 0) : corners[0] + VecInt(0, 1);
+					// High corner is just highers point in this simplex
 					corners[2] = corners[0] + Vec(1, 1);
 
 					for (int i = 0; i < 3; i++)
 					{
-						if (hash.find(corners[i]) == hash.end())
-						{
-							// if the current key does not exist, generate a new key-value pair
-							double angle = angleRNG(eng);
-							vectors[i] = Vec(std::cos(angle), std::sin(angle));
-
-							hash.emplace(corners[i], vectors[i]);
-						}
-						else
-						{
-							// otherwise just use the existing value
-							vectors[i] = hash.at(corners[i]);
-						}
+						vectors[i] = hash[corners[i]];
 					}
 
-					// Final summation
+					// Perform final summation for this coordinate
 					double Z = 0;
 					for (int i = 0; i < 3; i++)
 					{
-						Vec displacement = ipt - unskew(corners[i]);
+						Vec displacement = ipt - simplex::unskew(corners[i]);
 						double distance = displacement.LNorm(cfg.lNorm); // Distance formula
 
-						// change 4.0 value for cool effects!
 						double influence = std::pow(std::max(0.0, r2 - distance * distance), cfg.rMinus);
 						Z += influence * displacement.Dot(vectors[i]);
 					}
 
+					// Add this coordinate to the map, weighted appropriately
 					map.At(x, y) += Z * octInfluence;
 				}
 			} 
 
-			std::cout << " -> Octave " << oct+1 << " Finished.\n";
+			// Notify octave completion
+			std::cout << " -> Octave \033[1;32m" << oct + 1 << "\033[0m Finished.\r" << std::flush;
 		}
+		std::cout << " -> All done!                       \n";
 
+		// Perform final normalization, if applicable
 		if (cfg.normalize) map.Interpolate(0, 1);
 
 		return map;
 	}
 
-	// Note to self: it seems like hash maps are a solid way to go for storing RNG noise vectors. This isn't as fast,
-	// however, as the Golang implementation at https://github.com/Isarcus/zarks/blob/main/zmath/noise/perlin.go because
-	// that one goes box-by-box rather than iterating across the image column-by-column. Still, this one is respectable!
-	Map Perlin(NoiseConfig cfg)
+	Map Perlin(const NoiseConfig& cfg)
 	{
-		// RNG
-		std::default_random_engine eng(cfg.seed);
-		std::uniform_real_distribution<double> angleRNG(0, 2.0*PI);
-
 		// Initialize map
 		Map map(cfg.bounds);
 
-		std::cout << "Generating new Perlin map:\n";
-		std::cout << " -> Width:  " << cfg.bounds.X << "\n";
-		std::cout << " -> Height: " << cfg.bounds.Y << "\n";
-		std::cout << " -> Seed:   " << cfg.seed << "\n";
+		std::cout << "Generating new Perlin map:\n"
+		          << " -> Width:  " << cfg.bounds.X << "\n"
+		          << " -> Height: " << cfg.bounds.Y << "\n"
+		          << " -> Seed:   " << cfg.seed << "\n";
+
+		// RNG
+		NoiseHash hash(cfg.seed);
 
 		// Beep beep so let's ride
 		for (int oct = 0; oct < cfg.octaves; oct++)
 		{
+			// Empty the vector hashmap for a new octave
+			hash.Clear();
+
+			// Determine influence of this octave
 			double octInfluence = std::pow(cfg.octDecrease, oct);
-			Vec scaleVec = (Vec(1.0, 1.0) / cfg.boxSize) / std::pow(0.5, oct);
 
-			std::unordered_map<Vec, Vec> hash;
+			// Determine size of each Perlin box in this octave
+			Vec octaveBoxSize = cfg.boxSize * octInfluence;
 
-			for (int x = 0; x < cfg.bounds.X; x++)
+			// Loop box-by-box through the map
+			for (double bx = 0, bnx = 0; bx < cfg.bounds.X; bx += octaveBoxSize.X, bnx++)
 			{
-				for (int y = 0; y < cfg.bounds.Y; y++)
+				for (double by = 0, bny = 0; by < cfg.bounds.Y; by += octaveBoxSize.Y, bny++)
 				{
-					Vec coord = scaleVec * Vec(x, y);
-					Vec base = coord.Floor();
-					Vec itl = coord - base;
-					
-					double dots[2][2]; // Making El Truco proud
-					for (int vx = 0; vx <= 1; vx++)
+					// We are now operating within a single Perlin box.
+					// Here, determine the random vectors of this box's four corners.
+					VecInt base = Vec(bx, by).Floor();
+					Vec corners[2][2];
+					for (int cx = 0; cx <= 1; cx++)
 					{
-						for (int vy = 0; vy <= 1; vy++)
+						for (int cy = 0; cy <= 1; cy++)
 						{
-							// declaring vector here (instead of *always* using the hash) slightly improves
-							// performance in high-octave passes
-							Vec vector;
-
 							// Randomly generate new vectors if not already present
-							Vec test = base + Vec(vx, vy);
-							if (hash.find(test) == hash.end())
-							{
-								double angle = angleRNG(eng);
-								Vec value = Vec(std::cos(angle), std::sin(angle));
-								hash.emplace(test, value);
-
-								vector = value;
-							}
-							else
-							{
-								vector = hash.at(test);
-							}
-
-							// Get dot product
-							dots[vx][vy] = (itl - Vec(vx, vy)).Dot(vector);
+							VecInt test = VecInt(bnx + cx, bny + cy);
+							corners[cx][cy] = hash[test];
 						}
 					}
 
-					double y0, y1, Z;
-					y0 = interp5(dots[0][0], dots[1][0], itl.X);
-					y1 = interp5(dots[0][1], dots[1][1], itl.X);
-					Z = interp5(y0, y1, itl.Y);
+					// With this box's corner vector's determined, we can now loop through
+					// each point within the box to determine how much to add to the heightmap.
 
-					map.At(x, y) += Z * octInfluence;
+					// The size of this particular box. This can vary by 1 if octaveBoxSize is
+					// not a whole number, which is quite common.
+					VecInt thisBoxSize = (Vec(bx, by) + octaveBoxSize).Floor() - Vec(bx, by).Floor();
+					double dots[2][2];
+					for (int ix = 0; ix < thisBoxSize.X; ix++)
+					{
+						// X Bound check
+						if (base.X + ix > cfg.bounds.X) continue;
+
+						for (int iy = 0; iy < thisBoxSize.Y; iy++)
+						{
+							// Y bound check
+							if (base.Y + iy > cfg.bounds.Y) continue;
+
+							// Internal coordinate within this box; ranging from (0, 0) to (1, 1)
+							Vec itl = Vec(ix, iy) / Vec(thisBoxSize);
+
+							// Absolute coordinate within the larger map
+							VecInt absolute = base + VecInt(ix, iy);
+
+							// For each corner, determine the dot product of its random
+							// directional vector with the distance vector from that corner
+							// to the current internal coordinate
+							dots[0][0] = (itl - Vec(0, 0)).Dot(corners[0][0]);
+							dots[0][1] = (itl - Vec(0, 1)).Dot(corners[0][1]);
+							dots[1][0] = (itl - Vec(1, 0)).Dot(corners[1][0]);
+							dots[1][1] = (itl - Vec(1, 1)).Dot(corners[1][1]);
+
+							// Interpolate dot product results
+							double y0, y1, Z;
+							y0 = interp5(dots[0][0], dots[1][0], itl.X);
+							y1 = interp5(dots[0][1], dots[1][1], itl.X);
+							Z = interp5(y0, y1, itl.Y);
+
+							map.At(absolute) += Z * octInfluence;
+						}
+					}
 				}
 			}
 
-			std::cout << " -> Octave " << oct+1 << " finished.\n";
+			// Notify octave completion
+			std::cout << " -> Octave \033[1;32m" << oct + 1 << "\033[0m Finished.\r" << std::flush;
 		}
+		std::cout << " -> All done!                       \n";
 
 		if (cfg.normalize) map.Interpolate(0, 1);
 
 		return map;
 	}
 
-	Map Worley(NoiseConfig cfg)
+	Map Worley(const NoiseConfig& cfg)
 	{
 		// this coordList works for simpler algorithms that use fewer than ~5 points
 		std::vector<Vec> coordList;
@@ -235,45 +233,41 @@ namespace zmath
 				coordList.push_back(Vec(x, y));
 
 		// RNG
-		std::default_random_engine eng(cfg.seed);
-		std::uniform_real_distribution<double> uniformRNG(0, 1);
+		NoiseHash hash(cfg.seed);
 
-		std::cout << "Generating new Worley map:\n";
-		std::cout << " -> Width:  " << cfg.bounds.X << "\n";
-		std::cout << " -> Height: " << cfg.bounds.Y << "\n";
-		std::cout << " -> Seed:   " << cfg.seed << "\n";
+		std::cout << "Generating new Worley map:\n"
+		          << " -> Width:  " << cfg.bounds.X << "\n"
+		          << " -> Height: " << cfg.bounds.Y << "\n"
+		          << " -> Seed:   " << cfg.seed << "\n";
 
+		// Initialize map
 		Map map(cfg.bounds);
 
-		// Allocate this here, no point in constantly de- and re-allocating it in the loop
-		int distanceLen = coordList.size(); // TODO: multiply by config.N once implemented
-		double* distances = new double[distanceLen];
+		unsigned distanceLen = coordList.size();
+		std::vector<double> distances(distanceLen);
 
 		for (int oct = 0; oct < cfg.octaves; oct++)
 		{
+			// Empty the vector hashmap for a new octave
+			hash.Clear();
+
 			double octInfluence = std::pow(cfg.octDecrease, oct);
 			Vec scaleVec = (Vec(1.0, 1.0) / cfg.boxSize) / std::pow(0.5, oct);
-
-			std::unordered_map<Vec, Vec> hash;
 
 			for (int x = 0; x < cfg.bounds.X; x++)
 			{
 				for (int y = 0; y < cfg.bounds.Y; y++)
 				{
 					Vec coord = scaleVec * Vec(x, y);
-					Vec base = coord.Floor();
+					VecInt base = coord.Floor();
 					Vec itl = coord - base;
 
 					// Get the distances to each point
-					for (int i = 0; i < distanceLen; i++)
+					for (unsigned i = 0; i < distanceLen; i++)
 					{
-						Vec test = base + coordList[i];
-						if (hash.find(test) == hash.end())
-						{
-							hash.emplace(test, Vec(uniformRNG(eng), uniformRNG(eng)));
-						}
+						VecInt test = base + coordList[i];
 
-						distances[i] = (hash.at(test) + coordList[i] - itl).LNorm(cfg.lNorm);
+						distances[i] = (hash[test] + coordList[i] - itl).LNorm(cfg.lNorm);
 
 						// uncomment for quantized distance; looks best with lnorm = 2
 						// distances[i] = ((int)(distances[i] * 20.0)) / 20.0;
@@ -283,7 +277,7 @@ namespace zmath
 					while (true)
 					{
 						bool done = true;
-						for (int i = 1; i < distanceLen; i++)
+						for (unsigned i = 1; i < distanceLen; i++)
 						{
 							if (distances[i - 1] > distances[i])
 							{
@@ -308,16 +302,21 @@ namespace zmath
 					map.At(x, y) += Z * octInfluence;
 				}
 			}
-		}
 
-		delete[] distances;
+			// Notify octave completion
+			std::cout << " -> Octave \033[1;32m" << oct + 1 << "\033[0m Finished.\r" << std::flush;
+		}
+		std::cout << " -> All done!                       \n";
 
 		if (cfg.normalize) map.Interpolate(0, 1);
 
 		return map;
 	}
 
-	Map WorleyPlex(NoiseConfig cfg, Map& baseMap)
+	// WorleyPlex is identical to Worley in almost every way, with the main exception
+	// being that the vector LNorm used to compute distances between points depends on
+	// the values of a passed-in heightmap. This can create some cool effects!
+	Map WorleyPlex(const NoiseConfig& cfg, const Map& baseMap)
 	{
 		if (cfg.bounds != baseMap.Bounds())
 		{
@@ -325,34 +324,32 @@ namespace zmath
 			return Map(baseMap.Bounds());
 		}
 
-		const int coordLen = 25;
-		Vec* coordList = new Vec[coordLen];
-		int idx = 0;
+		std::vector<Vec> coordList;
 		for (int x = -2; x <= 2; x++)
 			for (int y = -2; y <= 2; y++)
-				coordList[idx++] = Vec(x, y);
+				coordList.push_back(Vec(x, y));
 
 		// RNG
-		std::default_random_engine eng(cfg.seed);
-		std::uniform_real_distribution<double> uniformRNG(0, 1);
+		NoiseHash hash(cfg.seed);
 
-		std::cout << "Generating new Worleyplex map:\n";
-		std::cout << " -> Width:  " << cfg.bounds.X << "\n";
-		std::cout << " -> Height: " << cfg.bounds.Y << "\n";
-		std::cout << " -> Seed:   " << cfg.seed << "\n";
+		std::cout << "Generating new Worleyplex map:\n"
+				  << " -> Width:  " << cfg.bounds.X << "\n"
+				  << " -> Height: " << cfg.bounds.Y << "\n"
+				  << " -> Seed:   " << cfg.seed << "\n";
 
 		Map map(cfg.bounds);
 
 		// Allocate this here, no point in constantly de- and re-allocating it in the loop
-		int distanceLen = coordLen; // TODO: multiply by config.N once implemented
-		double* distances = new double[distanceLen];
+		unsigned distanceLen = coordList.size(); // TODO: multiply by config.N once implemented
+		std::vector<double> distances(distanceLen);
 
 		for (int oct = 0; oct < cfg.octaves; oct++)
 		{
+			// Empty the vector hashmap for a new octave
+			hash.Clear();
+
 			double octInfluence = std::pow(cfg.octDecrease, oct);
 			Vec scaleVec = (Vec(1.0, 1.0) / cfg.boxSize) / std::pow(0.5, oct);
-
-			std::unordered_map<Vec, Vec> hash;
 
 			for (int x = 0; x < cfg.bounds.X; x++)
 			{
@@ -363,26 +360,19 @@ namespace zmath
 					Vec itl = coord - base;
 
 					// Get the distances to each point
-					for (int i = 0; i < coordLen; i++)
+					for (unsigned i = 0; i < distanceLen; i++)
 					{
 						Vec test = base + coordList[i];
-						if (hash.find(test) == hash.end())
-						{
-							hash.emplace(test, Vec(uniformRNG(eng), uniformRNG(eng)));
-						}
 
 						// This is where the base map is used
-						distances[i] = (hash.at(test) + coordList[i] - itl).LNorm(baseMap[x][y]);
-
-						// uncomment for quantized distance; looks best with lnorm = 2
-						// distances[i] = ((int)(distances[i] * 20.0)) / 20.0;
+						distances[i] = (hash[test] + coordList[i] - itl).LNorm(baseMap[x][y]);
 					}
 
 					// Sort the distances, low to high. TODO: use a better sorting algorithm
 					while (true)
 					{
 						bool done = true;
-						for (int i = 1; i < distanceLen; i++)
+						for (unsigned i = 1; i < distanceLen; i++)
 						{
 							if (distances[i - 1] > distances[i])
 							{
@@ -401,20 +391,19 @@ namespace zmath
 					{
 						Z *= distances[i];
 					}
-					//std::cout << distances[1] << "\n";
 
 					// Final summation
 					map.At(x, y) += Z * octInfluence;
 				}
 			}
-		}
 
-		delete[] distances;
+			// Notify octave completion
+			std::cout << " -> Octave \033[1;32m" << oct + 1 << "\033[0m Finished.\r" << std::flush;
+		}
+		std::cout << " -> All done!                       \n";
 
 		if (cfg.normalize) map.Interpolate(0, 1);
 
 		return map;
 	}
-
-
 }

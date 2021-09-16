@@ -197,8 +197,8 @@ namespace zmath
 
 		const char headerBytes[80]{ "ZarkLib STL file, generated from a Shape3D!" };
 
-		uint8_t attribBytes[2]{};
-		uint8_t normBytes[12]{};
+		char attribBytes[2]{};
+		char normBytes[12]{};
 
 		// bounds checking
 		end = end ? std::min(end, (int)data.size()) : data.size();
@@ -208,7 +208,7 @@ namespace zmath
 		f.write(headerBytes, 80);
 
 		// Write number of triangles to file
-		uint8_t triCt[4];
+		char triCt[4];
 		ToBytes(triCt, (uint32_t)(end - beginning), Endian::Little);
 		f.write((char*)triCt, 4);
 
@@ -505,7 +505,7 @@ namespace zmath
 
 	void Tessellation3D::WriteVertex(std::ofstream& f, const Vec3& v)
 	{
-		uint8_t buf[4];
+		char buf[4];
 
 		ToBytes(buf, (float)v.X, Endian::Little);
 		f.write((char*)buf, 4);
@@ -530,7 +530,7 @@ namespace zmath
 		// Load the triangle count
 		char triCtBytes[4];
 		f.read(triCtBytes, 4);
-		uint32_t triCt = ToU32(triCtBytes, Endian::Little);
+		uint32_t triCt = FromBytes<uint32_t>(triCtBytes, Endian::Little);
 		std::cout << " -> Triangles: " << triCt << "\n";
 
 		// Load triangles
@@ -548,13 +548,13 @@ namespace zmath
 			for (int j = 0; j < 3; j++)
 			{
 				f.read(floatBytes, 4);
-				vertices[j].X = ToF32(floatBytes, Endian::Little);
+				vertices[j].X = FromBytes<float>(floatBytes, Endian::Little);
 
 				f.read(floatBytes, 4);
-				vertices[j].Y = ToF32(floatBytes, Endian::Little);
+				vertices[j].Y = FromBytes<float>(floatBytes, Endian::Little);
 
 				f.read(floatBytes, 4);
-				vertices[j].Z = ToF32(floatBytes, Endian::Little);
+				vertices[j].Z = FromBytes<float>(floatBytes, Endian::Little);
 			}
 			tess.data.push_back(Triangle3D(
 				vertices[0],
@@ -564,9 +564,13 @@ namespace zmath
 
 			// Short of attributes (discard)
 			f.read(floatBytes, 2);
+
+			if (!f)
+			{
+				throw std::runtime_error("Invalid stream while reading STL!");
+			}
 		}
 
 		return tess;
 	}
-
 }

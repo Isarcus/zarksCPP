@@ -11,7 +11,7 @@ namespace zmath
 		GridConfig();
 		GridConfig(Vec bounds, Vec boxSize);
 
-		Vec	bounds;
+		VecInt bounds;
 		Vec boxSize;
 	} GridConfig;
 
@@ -35,9 +35,9 @@ namespace zmath
 		std::pair<int, int> nearest;
 	} NoiseConfig;
 
-	Map Simplex(NoiseConfig cfg);
-	Map Perlin(NoiseConfig cfg);
-	Map Worley(NoiseConfig cfg);
+	Map Simplex(const NoiseConfig& cfg);
+	Map Perlin(const NoiseConfig& cfg);
+	Map Worley(const NoiseConfig& cfg);
 
-	Map WorleyPlex(NoiseConfig cfg, Map& baseMap);
+	Map WorleyPlex(const NoiseConfig& cfg, const Map& baseMap);
 }

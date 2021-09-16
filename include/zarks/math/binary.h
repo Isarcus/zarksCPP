@@ -1,6 +1,8 @@
 #pragma once
 
-#include <cstdint>
+#include <type_traits>
+#include <algorithm>
+#include <cstring>
 
 namespace zmath
 {
@@ -9,17 +11,30 @@ namespace zmath
 		Big,
 	};
 
-	void ToBytes(uint8_t* buf, uint16_t val, Endian byteOrder);
-	void ToBytes(uint8_t* buf, uint32_t val, Endian byteOrder);
-	void ToBytes(uint8_t* buf, uint64_t val, Endian byteOrder);
+	// CPU Endianness trick from Stack Overflow post:
+	// https://stackoverflow.com/questions/20451688/c-serialize-double-to-binary-file-in-little-endian
+	static const int __one__ = 1;
+	static const Endian CPU_ENDIANNESS = (1 == *(char*)(&__one__)) ? Endian::Little : Endian::Big;
 
-	void ToBytes(uint8_t* buf, float  val, Endian byteOrder);
-	void ToBytes(uint8_t* buf, double val, Endian byteOrder);
+	template <typename T> 
+	void ToBytes(char* buf, const T val, Endian byteOrder)
+	{
+		memcpy(buf, (const char*)(&val), sizeof(T));
+		if (CPU_ENDIANNESS != byteOrder)
+		{
+			std::reverse(buf, buf);
+		}
+	}
 
-	uint16_t ToU16(char* buf, Endian byteOrder);
-	uint32_t ToU32(char* buf, Endian byteOrder);
-	uint64_t ToU64(char* buf, Endian byteOrder);
-
-	float ToF32(char* buf, Endian byteOrder);
-	float ToF64(char* buf, Endian byteOrder);
+	template <typename T>
+	T FromBytes(const char* buf, Endian bufByteOrder)
+	{
+		T var;
+		memcpy(&var, buf, sizeof(T));
+		if (CPU_ENDIANNESS != bufByteOrder)
+		{
+			std::reverse(&var, &var);
+		}
+		return var;
+	}
 }

@@ -468,7 +468,4 @@ namespace zmath
 
         return map;
     }
-
-
-
 }

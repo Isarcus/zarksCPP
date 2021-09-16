@@ -1,11 +1,12 @@
 add_library(${ZARKS_LIB_NAME}
-    binary.cpp
     color.cpp
     GaussField.cpp
     Image.cpp
     Map.cpp
     Mat3.cpp
     noise2D.cpp
+    NoiseHash.cpp
+    Noiser.cpp
     numerals.cpp
     Rect.cpp
     Shape3D.cpp

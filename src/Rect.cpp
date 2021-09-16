@@ -217,5 +217,4 @@ namespace zmath
 	{
 		return os << "{" << rect.min << " " << rect.max << "}";
 	}
-
 }
