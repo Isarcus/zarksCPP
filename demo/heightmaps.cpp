@@ -27,7 +27,7 @@ Map example_archipelago();
 int main()
 {
     // Generate a heightmap using one of the examples
-    Map map = example_rivers();
+    Map map = example_pine_bark();
 
     // Create a 3D triangle tessellation from the heightmap
     Tessellation3D tess(map, Vec3(0.5, 0.5, 0.5));
@@ -38,6 +38,11 @@ int main()
     // Note: If your computer does not have software capable of
     // opening STL files, I recommend uploading the generated file
     // to https://www.viewstl.com/ to visualize it.
+
+    // Load the just-saved STL file and re-save it to show that they are identical
+    std::ifstream fin("shape.stl", std::ios_base::binary);
+    Tessellation3D loadTess = Tessellation3D::LoadSTL(fin);
+    loadTess.WriteSTL("shape_copy.stl", false);
 
     return 0;
 }
