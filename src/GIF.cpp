@@ -1,5 +1,5 @@
 #include <zarks/image/GIF.h>
-#include <zarks/math/binary.h>
+#include <zarks/io/binary.h>
 
 #include <fstream>
 #include <cstring>
