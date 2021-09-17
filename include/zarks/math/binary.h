@@ -16,21 +16,29 @@ namespace zmath
 	static const int __one__ = 1;
 	static const Endian CPU_ENDIANNESS = (1 == *(char*)(&__one__)) ? Endian::Little : Endian::Big;
 
-	template <typename T> 
-	void ToBytes(char* buf, const T val, Endian byteOrder)
+    template <typename var_T, typename buf_T,
+              typename std::enable_if<
+                 std::is_same<buf_T, char>::value ||
+                 std::is_same<buf_T, unsigned char>::value
+			  >::type* = nullptr>
+	void ToBytes(buf_T* buf, const var_T val, Endian byteOrder)
 	{
-		memcpy(buf, (const char*)(&val), sizeof(T));
+		memcpy(buf, (const char*)(&val), sizeof(var_T));
 		if (CPU_ENDIANNESS != byteOrder)
 		{
 			std::reverse(buf, buf);
 		}
 	}
 
-	template <typename T>
-	T FromBytes(const char* buf, Endian bufByteOrder)
+	template <typename var_T, typename buf_T = char,
+              typename std::enable_if<
+                 std::is_same<buf_T, char>::value ||
+                 std::is_same<buf_T, unsigned char>::value
+			  >::type* = nullptr>
+	var_T FromBytes(const buf_T* buf, Endian bufByteOrder)
 	{
-		T var;
-		memcpy(&var, buf, sizeof(T));
+		var_T var;
+		memcpy(&var, buf, sizeof(var_T));
 		if (CPU_ENDIANNESS != bufByteOrder)
 		{
 			std::reverse(&var, &var);
