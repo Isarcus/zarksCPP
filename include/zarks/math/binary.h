@@ -42,7 +42,7 @@ namespace zmath
 		memcpy(buf, (const char*)(&val), sizeof(var_T));
 		if (CPU_ENDIANNESS != byteOrder)
 		{
-			std::reverse(buf, buf);
+			std::reverse(buf, buf + sizeof(var_T));
 		}
 	}
 
@@ -62,7 +62,7 @@ namespace zmath
 		memcpy(&var, buf, sizeof(var_T));
 		if (CPU_ENDIANNESS != bufByteOrder)
 		{
-			std::reverse(&var, &var);
+			std::reverse((char*)(&var), (char*)(&var) + sizeof(var_T));
 		}
 		return var;
 	}
