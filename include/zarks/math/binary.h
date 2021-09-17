@@ -37,4 +37,13 @@ namespace zmath
 		}
 		return var;
 	}
+
+	// Returns the original value of the pointer when passed in
+	// after incrementing the pointer by 'bytesForward'.
+	template <typename T, typename std::enable_if<sizeof(T) == 1>::type* = nullptr>
+	T* AdvancePtr(T*& ptr, int bytesForward)
+	{
+		ptr += bytesForward;
+		return ptr - bytesForward;
+	}
 }
