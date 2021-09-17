@@ -280,7 +280,7 @@ GIF::LZWFrame GIF::loadImageData(std::istream& is)
     for (auto thisBlockSize : subBlockSizes)
     {
         uint8_t checkThisBlockSize;
-        is.read((char*)checkThisBlockSize, 1);
+        is.read((char*)&checkThisBlockSize, 1);
 
         if (checkThisBlockSize == thisBlockSize) {
             is.read(ptr, thisBlockSize);
