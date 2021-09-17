@@ -1,6 +1,7 @@
 add_library(${ZARKS_LIB_NAME}
     color.cpp
     GaussField.cpp
+    GIF.cpp
     Image.cpp
     Map.cpp
     Mat3.cpp
