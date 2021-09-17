@@ -4,6 +4,7 @@
 #include <fstream>
 #include <cstring>
 #include <sstream>
+#include <iomanip>
 
 namespace zmath
 {
@@ -223,8 +224,8 @@ std::pair<Image, uint16_t> GIF::loadNextFrame(std::istream& is, const std::vecto
 
     default: {
         std::ostringstream errstr;
-        errstr << "Unrecognized first byte of block: "
-               << std::hex << (int)identityByte;
+        errstr << "Unrecognized first byte of block: 0x" << std::hex
+               << std::setw(2) << std::setfill('0') << (int)identityByte;
         throw gif::BadBlockException(errstr.str());
     } // default
 
@@ -233,16 +234,74 @@ std::pair<Image, uint16_t> GIF::loadNextFrame(std::istream& is, const std::vecto
     return std::pair<Image, uint16_t>(image, duration);
 }
 
-std::vector<uint8_t> GIF::loadImageData(std::istream& is)
+GIF::LZWFrame GIF::loadImageData(std::istream& is)
 {
-    std::vector<uint8_t> data;
+    LZWFrame frame;
 
-    // TODO
+    // Read LZW Minimum Code Size
+    is.read((char*)&frame.minCodeSize, 1);
+    if (!is)
+    {
+        throw gif::BadBlockException("No image data to load following image separator!");
+    }
 
-    return data;
+    // Before actually reading in all of the sub-blocks, seek through the stream
+    // to determine how many blocks need to be read (and how big they are)
+
+    // totalSeeked counts bytes seeked relative to the very first byte of the
+    // first image sub-block (i.e. header[2] up above)
+    uint8_t nextBlockSize = 1;
+    long totalSeeked = 1; 
+    std::vector<short> subBlockSizes;
+    while (nextBlockSize)
+    {
+        // Get size of the next block
+        is.read((char*)&nextBlockSize, 1);
+        is.seekg(nextBlockSize, std::ios_base::cur);
+
+        if (is) {
+            totalSeeked += short(nextBlockSize) + 1;
+            subBlockSizes.push_back(nextBlockSize);
+        } else {
+            throw gif::BadBlockException("Bad image data!");
+        }
+    }
+
+    // With the length of all sub-blocks determined, reset the stream back
+    // to the beginning of the image data
+    is.seekg(-totalSeeked, std::ios_base::cur);
+
+    // The final number of bytes of all sub-blocks put together, after
+    // removing separators, should be totalSeeked - subBlockSizes.size()
+    frame.data.resize(totalSeeked - subBlockSizes.size());
+
+    // Read all LZW data into frame.data, ignoring separators
+    char* ptr = (char*)frame.data.data();
+    for (auto thisBlockSize : subBlockSizes)
+    {
+        uint8_t checkThisBlockSize;
+        is.read((char*)checkThisBlockSize, 1);
+
+        if (checkThisBlockSize == thisBlockSize) {
+            is.read(ptr, thisBlockSize);
+            ptr += thisBlockSize;
+        } else {
+            throw gif::BadBlockException("GIF block size mismatch!");
+        }
+    }
+
+    // Make sure final byte is null as a sanity check
+    uint8_t shouldBeNull = 1;
+    is.read((char*)&shouldBeNull, 1);
+    if (shouldBeNull)
+    {
+        throw gif::BadBlockException("Putative final byte of LZW data was not null!");
+    }
+
+    return frame;
 }
 
-std::vector<uint16_t> GIF::decompressLZW(const std::vector<uint8_t>& data)
+std::vector<uint16_t> GIF::decompressLZW(const LZWFrame& data)
 {
     std::vector<uint16_t> codes;
 

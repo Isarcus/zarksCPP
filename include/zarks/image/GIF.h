@@ -123,7 +123,13 @@ namespace zmath
             /* D */ static constexpr uint8_t INTERLACE_FLAG         = 0b01000000;
             /* E */ static constexpr uint8_t LOCAL_COLOR_TABLE_FLAG = 0b10000000;
         } IDFlags;
-        
+
+        typedef struct LZWFrame
+        {
+            uint8_t minCodeSize;
+            std::vector<uint8_t> data;
+        } LZWFrame;
+
         typedef struct ImageDescriptor
         {
             // Requires that the stream has *just* read the first byte
@@ -149,19 +155,19 @@ namespace zmath
         // @return An std::pair containing an image and the duration of that
         //         image. the duration will be 0 if not specified by a graphics
         //         extension block preceding the loaded image.
-        static std::pair<Image, uint16_t> loadNextFrame(std::istream& is, const std::vector<RGBA>& globalColorTable);
+        std::pair<Image, uint16_t> loadNextFrame(std::istream& is, const std::vector<RGBA>& globalColorTable);
 
         // Load an image from the GIF input stream, starting immediately after 
         //  the Image Descriptor bytes
         // @param is the input stream to read from.
         // @return the raw LZW-compressed image data of one image frame,
         //         without the separator byte in between blocks.
-        static std::vector<uint8_t> loadImageData(std::istream& is);
+        static LZWFrame loadImageData(std::istream& is);
 
         // Decode raw LZW data into individual LZW codes.
         // @param data the raw LZW-compressed image data of one image frame
         // @return a vector of 16-bit LZW codes
-        static std::vector<uint16_t> decompressLZW(const std::vector<uint8_t>& data);
+        static std::vector<uint16_t> decompressLZW(const LZWFrame& data);
 
         // Decode a series of LZW image codes given a color table.
         //  If any LZW codes reference a color beyond the length of the
