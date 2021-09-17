@@ -3,6 +3,7 @@
 
 #include <fstream>
 #include <cstring>
+#include <sstream>
 
 namespace zmath
 {
@@ -60,12 +61,14 @@ GIF::GIF(std::istream& is)
         try {
             auto pair = loadNextFrame(is, globalColorTable);
             frames.push_back(pair.first);
-        } catch (const gif::ColorTableException& ncte) {
-            std::cerr << ncte << "\n";
-        } catch (const gif::InterruptedStreamException& ise) {
-            std::cerr << ise << "\n";
-        } catch (const gif::EndOfStreamException& eose) {
-            std::cout << eose << "\n";
+        } catch (const gif::ColorTableException& e) {
+            std::cerr << e << "\n";
+            break;
+        } catch (const gif::BadBlockException& e) {
+            std::cerr << e << "\n";
+            break;
+        } catch (const gif::EndOfStreamException& e) {
+            std::cout << e << "\n";
             break;
         }
     }
@@ -186,7 +189,7 @@ std::pair<Image, uint16_t> GIF::loadNextFrame(std::istream& is, const std::vecto
 
     // Declarations
     Image image;
-    uint16_t duration;
+    uint16_t duration = 0;
 
     // Based on the type of this block, attempt to either load in a new
     // frame or interpret an extension block
@@ -217,6 +220,13 @@ std::pair<Image, uint16_t> GIF::loadNextFrame(std::istream& is, const std::vecto
         }
         break;
     } // case IMAGE_SEPARATOR
+
+    default: {
+        std::ostringstream errstr;
+        errstr << "Unrecognized first byte of block: "
+               << std::hex << (int)identityByte;
+        throw gif::BadBlockException(errstr.str());
+    } // default
 
     } // switch
 
@@ -304,14 +314,14 @@ std::string EndOfStreamException::getErrorName() const
     return "[EndOfStreamException]";
 }
 
-// InterruptedStreamException
-InterruptedStreamException::InterruptedStreamException(std::string error)
+// BadBlockException
+BadBlockException::BadBlockException(std::string error)
     : GifLoadingException(error)
 {}
 
-std::string InterruptedStreamException::getErrorName() const
+std::string BadBlockException::getErrorName() const
 {
-    return "[InterruptedStreamException]";
+    return "[BadBlockException]";
 }
 
 // ColorTableException

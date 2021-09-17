@@ -84,15 +84,19 @@ namespace zmath
             // Requires the fifth byte of the Logical Screen Descriptor
             LSDFlags(uint8_t flagByte);
 
-            unsigned colorTableSize : 3;
-            unsigned sortFlag : 1;
-            unsigned colorResolution : 3;
-            unsigned globalTableFlag : 1;
+            /* * * * * * * * * */
+            /* D C C C B A A A */
+            /* * * * * * * * * */
 
-            static constexpr uint8_t COLOR_TABLE_SIZE        = 0b00000111;
-            static constexpr uint8_t SORT_FLAG               = 0b00001000;
-            static constexpr uint8_t COLOR_RESOLUTION        = 0b01110000;
-            static constexpr uint8_t GLOBAL_COLOR_TABLE_FLAG = 0b10000000;
+            /* A */ unsigned colorTableSize : 3;
+            /* B */ unsigned sortFlag : 1;
+            /* C */ unsigned colorResolution : 3;
+            /* D */ unsigned globalTableFlag : 1;
+
+            /* A */ static constexpr uint8_t COLOR_TABLE_SIZE        = 0b00000111;
+            /* B */ static constexpr uint8_t SORT_FLAG               = 0b00001000;
+            /* C */ static constexpr uint8_t COLOR_RESOLUTION        = 0b01110000;
+            /* D */ static constexpr uint8_t GLOBAL_COLOR_TABLE_FLAG = 0b10000000;
         } LSDFlags;
 
         // Struct for Image Descriptor bit flags
@@ -103,17 +107,21 @@ namespace zmath
             // Requires the tenth byte of an Image Descriptor
             IDFlags(uint8_t flagByte);
 
-            unsigned colorTableSize : 3;
-            unsigned __reservedBits : 2;
-            unsigned sortFlag : 1;
-            unsigned interlaceFlag : 1;
-            unsigned localTableFlag : 1;
+            /* * * * * * * * * */
+            /* E D C B B A A A */
+            /* * * * * * * * * */
 
-            static constexpr uint8_t COLOR_TABLE_SIZE       = 0b00000111;
-            static constexpr uint8_t RESERVED_BITS          = 0b00011000;
-            static constexpr uint8_t SORT_FLAG              = 0b00100000;
-            static constexpr uint8_t INTERLACE_FLAG         = 0b01000000;
-            static constexpr uint8_t LOCAL_COLOR_TABLE_FLAG = 0b10000000;
+            /* A */ unsigned colorTableSize : 3;
+            /* B */ unsigned __reservedBits : 2;
+            /* C */ unsigned sortFlag : 1;
+            /* D */ unsigned interlaceFlag : 1;
+            /* E */ unsigned localTableFlag : 1;
+
+            /* A */ static constexpr uint8_t COLOR_TABLE_SIZE       = 0b00000111;
+            /* B */ static constexpr uint8_t RESERVED_BITS          = 0b00011000;
+            /* C */ static constexpr uint8_t SORT_FLAG              = 0b00100000;
+            /* D */ static constexpr uint8_t INTERLACE_FLAG         = 0b01000000;
+            /* E */ static constexpr uint8_t LOCAL_COLOR_TABLE_FLAG = 0b10000000;
         } IDFlags;
         
         typedef struct ImageDescriptor
@@ -202,10 +210,10 @@ namespace zmath
             virtual std::string getErrorName() const override;
         };
 
-        class InterruptedStreamException : public GifLoadingException
+        class BadBlockException : public GifLoadingException
         {
         public:
-            InterruptedStreamException(std::string error);
+            BadBlockException(std::string error);
             virtual std::string getErrorName() const override;
         };
 
