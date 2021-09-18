@@ -4,6 +4,7 @@
 
 namespace zmath
 {
+    constexpr size_t BITS_IN_SIZE = 8 * sizeof(size_t);
 
     // BITS[n] = 2^n
     static constexpr size_t BITS[64]
