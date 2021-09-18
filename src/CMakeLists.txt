@@ -1,4 +1,5 @@
 add_library(${ZARKS_LIB_NAME}
+    BitBuffer.cpp
     color.cpp
     GaussField.cpp
     GIF.cpp
