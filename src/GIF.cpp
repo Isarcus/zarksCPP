@@ -250,25 +250,40 @@ GIF::LZWFrame GIF::loadImageData(std::istream& is)
         throw gif::BadBlockException("No image data to load following image separator!");
     }
 
+    if (frame.minCodeSize > 11)
+    {
+        throw gif::BadBlockException("LZW minimum code size is too big: " +
+                                     std::to_string(frame.minCodeSize));
+    } else if (frame.minCodeSize < 2) {
+        throw gif::BadBlockException("LZW minimum code size is too small: " +
+                                     std::to_string(frame.minCodeSize));
+    }
+
+    // Note:
     // Before actually reading in all of the sub-blocks, seek through the stream
     // to determine how many blocks need to be read (and how big they are)
 
     // totalSeeked counts bytes seeked relative to the very first byte of the
-    // first image sub-block (i.e. header[2] up above)
+    // first image sub-block
     uint8_t nextBlockSize = 1;
     long totalSeeked = 1; 
     std::vector<short> subBlockSizes;
-    while (nextBlockSize)
+    while (true)
     {
         // Get size of the next block
         is.read((char*)&nextBlockSize, 1);
+
+        if (nextBlockSize) {
         is.seekg(nextBlockSize, std::ios_base::cur);
+        } else {
+            break;
+        }
 
         if (is) {
-            totalSeeked += short(nextBlockSize) + 1;
+            totalSeeked += long(nextBlockSize) + 1;
             subBlockSizes.push_back(nextBlockSize);
         } else {
-            throw gif::BadBlockException("Bad image data!");
+            throw gif::BadBlockException("Bad image data while reading sub-blocks!");
         }
     }
 
@@ -291,7 +306,14 @@ GIF::LZWFrame GIF::loadImageData(std::istream& is)
             is.read(ptr, thisBlockSize);
             ptr += thisBlockSize;
         } else {
-            throw gif::BadBlockException("GIF block size mismatch!");
+            std::ostringstream os;
+            os << std::hex << std::setfill('0')
+               << "GIF block size mismatch: Expected 0x" << std::setw(2)
+               << (int)thisBlockSize << " but got 0x" << std::setw(2)
+               << (int)checkThisBlockSize << std::dec << " (is.tellg() == "
+               << is.tellg() << ")";
+
+            throw gif::BadBlockException(os.str());
         }
     }
 
@@ -300,7 +322,11 @@ GIF::LZWFrame GIF::loadImageData(std::istream& is)
     is.read((char*)&shouldBeNull, 1);
     if (shouldBeNull)
     {
-        throw gif::BadBlockException("Putative final byte of LZW data was not null!");
+        std::ostringstream os;
+        os << "Putative final byte of LZW data was not null: 0x"
+           << std::hex << std::setw(2) << std::setfill('0')
+           << (int)shouldBeNull;
+        throw gif::BadBlockException(os.str());
     }
 
     return frame;
