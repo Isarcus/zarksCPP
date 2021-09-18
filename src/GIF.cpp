@@ -197,8 +197,13 @@ std::pair<Image, uint16_t> GIF::loadNextFrame(std::istream& is, const std::vecto
     switch (identityByte)
     {
     case EXTENSION_INTRODUCER: {
-        // TODO
-        break;
+        uint8_t extensionType, extensionBytes, packedField;
+        is.read((char*)&extensionType, 1);
+        is.read((char*)&extensionBytes, 1);
+        is.read((char*)&packedField, 1);
+        // TODO: Interpret extension block bytes
+        is.seekg(extensionBytes, std::ios_base::cur);
+        return loadNextFrame(is, globalColorTable);
     } // case EXTENSION_INTRODUCER
 
     case IMAGE_SEPARATOR: {
