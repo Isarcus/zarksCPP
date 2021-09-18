@@ -15,19 +15,27 @@ namespace zmath
 				{0, 1, 0},
 				{0, 0, 1} } {}
 
-	Mat3::Mat3(double arr[3][3])
+	Mat3::Mat3(const double arr[3][3])
 		: data{ {arr[0][0], arr[0][1], arr[0][2]},
 				{arr[1][0], arr[1][1], arr[1][2]},
 				{arr[2][0], arr[2][1], arr[2][2]} } {}
 
-	Mat3 Mat3::operator=(Mat3 mat3)
+	Mat3::Mat3(const Mat3& mat3)
+		: Mat3(mat3.data)
+	{}
+
+	Mat3::Mat3(const Mat3 &&mat3)
+		: Mat3(mat3.data)
+	{}
+
+	Mat3& Mat3::operator=(const Mat3& mat3)
 	{
 		LOOP data[row][col] = mat3.data[row][col];
 
 		return *this;
 	}
 
-	Mat3 Mat3::operator=(double** arr)
+	Mat3& Mat3::operator=(const double** arr)
 	{
 		LOOP data[row][col] = arr[row][col];
 
@@ -39,7 +47,12 @@ namespace zmath
 		return data[row];
 	}
 
-	Mat3 Mat3::operator+(Mat3 mat3) const
+	const double* Mat3::operator[](int row) const
+	{
+		return data[row];
+	}
+
+	Mat3 Mat3::operator+(const Mat3& mat3) const
 	{
 		Mat3 ret;
 		LOOP ret[row][col] = data[row][col] + mat3[row][col];
@@ -47,7 +60,7 @@ namespace zmath
 		return ret;
 	}
 
-	Mat3 Mat3::operator-(Mat3 mat3) const
+	Mat3 Mat3::operator-(const Mat3& mat3) const
 	{
 		Mat3 ret;
 		LOOP ret[row][col] = data[row][col] - mat3[row][col];
@@ -55,7 +68,7 @@ namespace zmath
 		return ret;
 	}
 
-	Mat3 Mat3::operator*(Mat3 mat3) const
+	Mat3 Mat3::operator*(const Mat3& mat3) const
 	{
 		double ret[3][3];
 		LOOP
@@ -65,19 +78,19 @@ namespace zmath
 		return ret;
 	}
 
-	Mat3& Mat3::operator+=(Mat3 mat3)
+	Mat3& Mat3::operator+=(const Mat3& mat3)
 	{
 		LOOP data[row][col] += mat3[row][col];
 		return *this;
 	}
 
-	Mat3& Mat3::operator-=(Mat3 mat3)
+	Mat3& Mat3::operator-=(const Mat3& mat3)
 	{
 		LOOP data[row][col] -= mat3[row][col];
 		return *this;
 	}
 
-	Mat3& Mat3::operator*=(Mat3 mat3)
+	Mat3& Mat3::operator*=(const Mat3& mat3)
 	{
 		double result[3][3];
 		LOOP
@@ -155,7 +168,7 @@ namespace zmath
 		return Mat3(rotData);
 	}
 
-	std::ostream& operator<<(std::ostream& out, Mat3 mat3)
+	std::ostream& operator<<(std::ostream& out, const Mat3& mat3)
 	{
 		for (int row = 0; row < 3; row++)
 		{

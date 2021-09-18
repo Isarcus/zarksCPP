@@ -5,7 +5,7 @@ project(zarks VERSION 0.0)
 # C++ options
 set(CMAKE_CXX_STANDARD 14)
 set(CMAKE_CXX_STANDARD_REQUIRED True)
-add_compile_options(-Werror -Wall -Wpedantic)
+add_compile_options(-Werror -Wall -Wextra -Wno-unused-parameter -Wpedantic)
 
 # Name of the library to be created
 set(ZARKS_LIB_NAME ZarkLib)

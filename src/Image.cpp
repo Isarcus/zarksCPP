@@ -3,12 +3,15 @@
 #include <zarks/math/MapT.h>
 #include <zarks/math/GaussField.h>
 
+#pragma GCC diagnostic push
+#pragma GCC diagnostic ignored "-Wmissing-field-initializers"
 #define STB_IMAGE_IMPLEMENTATION
 #include <stb/stb_image.h>
 
 #define STBI_MSC_SECURE_CRT // apparently necessary for Visual Studio
 #define STB_IMAGE_WRITE_IMPLEMENTATION
 #include <stb/stb_image_write.h>
+#pragma GCC diagnostic pop
 
 #include <iostream>
 #include <fstream>
@@ -140,6 +143,7 @@ Image::Image(std::string path)
 }
 
 Image::Image(const Image& img)
+	: Sampleable2D<RGBA>() // Avoid -Wextra warning
 {
 	(*this) = img;
 }

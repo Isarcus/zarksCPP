@@ -12,7 +12,7 @@ namespace zmath
 		return *this;
 	}
 
-	Triangle3D Triangle3D::operator=(Triangle3D tri)
+	Triangle3D Triangle3D::operator=(const Triangle3D& tri)
 	{
 		vertices[0] = tri.vertices[0];
 		vertices[1] = tri.vertices[1];
@@ -110,7 +110,7 @@ namespace zmath
 		);
 	}
 
-	std::ostream& operator<<(std::ostream& out, Triangle3D tri)
+	std::ostream& operator<<(std::ostream& out, const Triangle3D& tri)
 	{
 		return out
 			<< "{ " << tri.vertices[0]

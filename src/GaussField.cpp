@@ -31,7 +31,7 @@ void GaussField::SetSigma(const double& val)
 
 void GaussField::SetSigma(const Vec& val)
 {
-	sigma = Vec::Max(Vec(), sigma);
+	sigma = Vec::Max(Vec(), val);
 }
 
 void GaussField::SetCenter(const Vec& val)
