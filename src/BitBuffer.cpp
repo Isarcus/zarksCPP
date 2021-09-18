@@ -31,11 +31,6 @@ BitBuffer::BitBuffer()
     : BitBuffer(8 * DEFAULT_BYTE_CAPACITY)
 {}
 
-BitBuffer::BitBuffer(size_t bitCapacity)
-    : capacityBytes(BitAddress(bitCapacity).Bytes())
-    , data(new uint8_t[capacityBytes])
-{}
-
 BitBuffer::BitBuffer(const BitBuffer& bbuf)
     : data(nullptr)
 {
@@ -45,6 +40,27 @@ BitBuffer::BitBuffer(const BitBuffer& bbuf)
 BitBuffer::BitBuffer(BitBuffer&& bbuf)
 {
     *this = std::move(bbuf);
+}
+
+BitBuffer::BitBuffer(size_t bitCapacity)
+    : capacityBytes(BitAddress(bitCapacity).Bytes())
+    , data(new uint8_t[capacityBytes])
+{}
+
+BitBuffer::BitBuffer(const void* bytes, size_t sizeBytes)
+    : capacityBytes(sizeBytes)
+    , data(new uint8_t[capacityBytes])
+    , next(sizeBytes)
+{
+    memcpy(data, bytes, sizeBytes);
+}
+
+BitBuffer::BitBuffer(const void* bytes, const BitAddress& size)
+    : capacityBytes(size.Bytes())
+    , data(new uint8_t[capacityBytes])
+    , next(size)
+{
+    memcpy(data, bytes, size.Bytes());
 }
 
 BitBuffer::~BitBuffer()

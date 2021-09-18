@@ -25,17 +25,22 @@ namespace zmath
     private:
         // Forward declaration of BitPointer
         struct BitPointer;
+        struct BitAddress;
 
     public:
         // Instantiate an empty BitBuffer.
         BitBuffer();
-        // Instantiate an empty BitBuffer.
-        // @param bitCapacity the minimum number of bits to reserve space for.
-        BitBuffer(size_t bitCapacity);
         // Copy constructor
         BitBuffer(const BitBuffer& bbuf);
         // Move constructor
         BitBuffer(BitBuffer&& bbuf);
+        // Instantiate an empty BitBuffer.
+        // @param bitCapacity the minimum number of bits to reserve space for.
+        BitBuffer(size_t bitCapacity);
+        // Instantiate a BitBuffer with data in it
+        BitBuffer(const void* bytes, size_t sizeBytes);
+        // Instantiate a BitBuffer with data in it
+        BitBuffer(const void* bytes, const BitAddress& size);
 
         ~BitBuffer();
 
