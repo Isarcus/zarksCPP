@@ -18,7 +18,7 @@ BitField::BitField(size_t value, uint8_t size)
 {
     if (size > 8 * sizeof(size_t)) {
         throw std::runtime_error("`size` in BitField is beyond maximum allowable value!");
-    } else if (value > std::pow(2, size - 1)) {
+    } else if (value > std::pow(2, size) - 1) {
         throw std::runtime_error("Invalid size-value pair in BitField");
     }
 }
@@ -111,7 +111,7 @@ void BitBuffer::Push(bool bit)
         reallocArray();
     }
 
-    At(++next) = bit;
+    At(next++) = bit;
 }
 
 void BitBuffer::Pop()

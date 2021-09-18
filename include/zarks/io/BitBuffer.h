@@ -47,12 +47,9 @@ namespace zmath
         // BitAddress represents the location of a single bit in a BitBuffer.
         typedef struct BitAddress
         {
-            // Create a zeroed-out BitAddress.
-            BitAddress();
-
             // @param globalBitIdx the global bit that this address
             //        should refer to.
-            BitAddress(size_t globalBitIdx);
+            BitAddress(size_t globalBitIdx = 0);
 
             // @param byteIdx the index of the byte that the desired
             //        bit is a part of.
