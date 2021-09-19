@@ -50,7 +50,7 @@ BitBuffer::BitBuffer(size_t bitCapacity)
 BitBuffer::BitBuffer(const void* bytes, size_t sizeBytes)
     : capacityBytes(sizeBytes)
     , data(new uint8_t[capacityBytes])
-    , next(sizeBytes)
+    , next(sizeBytes, 0)
 {
     memcpy(data, bytes, sizeBytes);
 }
