@@ -1,10 +1,13 @@
 #include <zarks/image/GIF.h>
 #include <zarks/io/binary.h>
+#include <zarks/io/BitBuffer.h>
 
 #include <fstream>
 #include <cstring>
 #include <sstream>
 #include <iomanip>
+#include <vector>
+#include <cmath>
 
 namespace zmath
 {
@@ -69,7 +72,7 @@ GIF::GIF(std::istream& is)
             std::cerr << e << "\n";
             break;
         } catch (const gif::EndOfStreamException& e) {
-            std::cout << e << "\n";
+            //std::cout << e << "\n";
             break;
         }
     }
@@ -173,6 +176,22 @@ GIF::ImageDescriptor::ImageDescriptor(std::istream& is)
     flags = IDFlags(*ptr);
 }
 
+std::ostream& operator<<(std::ostream& os, const GIF::ImageDescriptor& desc)
+{
+    return os
+        << "Image descriptor data:\n"
+        << " -> offsetWidth:  " << desc.offsetWidth << "\n"
+        << " -> offsetHeight: " << desc.offsetHeight << "\n"
+        << " -> width:  " << desc.width << "\n"
+        << " -> height: " << desc.height << "\n"
+        << " -> flags:\n"
+        << "   -> colorTableSize: " << desc.flags.colorTableSize << "\n"
+        << "   -> __reservedBits: " << desc.flags.__reservedBits << "\n"
+        << "   -> sortFlag:       " << desc.flags.sortFlag << "\n"
+        << "   -> interlaceFlag:  " << desc.flags.interlaceFlag << "\n"
+        << "   -> localTableFlag: " << desc.flags.localTableFlag << "\n";
+}
+
 //                 //
 // Private Methods //
 //                 //
@@ -185,7 +204,7 @@ std::pair<Image, uint16_t> GIF::loadNextFrame(std::istream& is, const std::vecto
     // Make sure stream is still valid. If not, assume EOF has been reached
     if (!is)
     {
-        throw gif::EndOfStreamException("Failed to read first byte of block");
+        throw gif::BadBlockException("Failed to read first byte of block");
     }
 
     // Declarations
@@ -218,14 +237,17 @@ std::pair<Image, uint16_t> GIF::loadNextFrame(std::istream& is, const std::vecto
         // Read color codes and create image
         if (desc.flags.localTableFlag) {
             std::vector<RGBA> localColorTable = loadColorTable(is, getColorTableSize(desc.flags.colorTableSize));
-            image = decodeImage(lzwCodes, localColorTable);
+            image = decodeImage(VecInt(desc.width, desc.height), lzwCodes, localColorTable);
         } else if (globalColorTable.size()) {
-            image = decodeImage(lzwCodes, globalColorTable);
+            image = decodeImage(VecInt(desc.width, desc.height), lzwCodes, globalColorTable);
         } else {
             throw gif::ColorTableException("Missing global and local color table!");
         }
         break;
     } // case IMAGE_SEPARATOR
+
+    case END_OF_FILE:
+        throw gif::EndOfStreamException("End of file block reached!");
 
     default: {
         std::ostringstream errstr;
@@ -274,7 +296,7 @@ GIF::LZWFrame GIF::loadImageData(std::istream& is)
         is.read((char*)&nextBlockSize, 1);
 
         if (nextBlockSize) {
-        is.seekg(nextBlockSize, std::ios_base::cur);
+            is.seekg(nextBlockSize, std::ios_base::cur);
         } else {
             break;
         }
@@ -332,20 +354,150 @@ GIF::LZWFrame GIF::loadImageData(std::istream& is)
     return frame;
 }
 
-std::vector<uint16_t> GIF::decompressLZW(const LZWFrame& data)
+std::vector<uint8_t> GIF::decompressLZW(const LZWFrame& data)
 {
-    std::vector<uint16_t> codes;
+    // LZW codes with special meanings
+    const uint16_t clearCode = std::pow(2, data.minCodeSize);
+    const uint16_t EOICode = clearCode + 1;
+    const uint16_t baseSize = std::min(256, (int)std::pow(2, data.minCodeSize)) + 2;
+ 
+    // Stream of all codes retrieved so far
+    std::vector<uint8_t> indexStream;
+    // LZW code table
+    std::vector<std::vector<uint8_t>> codeTableBase;
+    for (uint8_t i = 0; i < baseSize - 2; i++)
+        codeTableBase.push_back({i});
+    codeTableBase.push_back({}); // clear code
+    codeTableBase.push_back({}); // EOI code
+    std::vector<std::vector<uint8_t>> codeTableCurrent = codeTableBase;
 
-    // TODO
+    // Current size in bits of each LZW code
+    uint8_t thisCodeSize = data.minCodeSize + 1;
 
-    return codes;
+    // Buffer to read codes from
+    const BitBuffer bbuf(data.data.data(), data.data.size());
+    // Next bit to read from in the BitBuffer
+    size_t bitIdx = 0;
+    // Maximum code allowed by thisCodeSize
+    size_t maxCodeThisSize = std::pow(2, thisCodeSize) - 1;
+
+    // Read the first code of the code stream; this should be clearCode
+    uint16_t prevCode = 0;
+    for (int i = 0; i < thisCodeSize; i++)
+    {
+        prevCode |= uint16_t(bbuf.At(bitIdx++)) << i;
+    }
+    if (prevCode != clearCode)
+    {
+        throw gif::BadBlockException("Expected clearCode to be first code of LZW stream!");
+    }
+
+    // Read the first actual color code and write its value to the index stream
+    prevCode = 0;
+    for (int i = 0; i < thisCodeSize; i++)
+    {
+        prevCode |= uint16_t(bbuf.At(bitIdx++)) << i;
+    }
+    indexStream.push_back(codeTableCurrent.at(prevCode).at(0));
+    std::cout << " -> LZW code #" << prevCode << " (code size == "
+              << (int)thisCodeSize << "; table size == " << codeTableCurrent.size()
+              << ")" << std::endl;
+
+    while (true)
+    {
+        // Read the next code
+        uint16_t thisCode = 0;
+        for (int i = 0; i < thisCodeSize; i++)
+        {
+            thisCode |= uint16_t(bbuf.At(bitIdx++)) << i;
+        }
+
+        // Notify of this code
+        std::cout << " -> LZW code #" << thisCode << " (code size == "
+                  << (int)thisCodeSize << "; table size == " << codeTableCurrent.size()
+                  << ")" << std::endl;
+
+        // Decide what to do with this code
+        if (thisCode == clearCode) {
+            std::cout << " -> CC\n";
+            codeTableCurrent = codeTableBase;
+        } else if (thisCode == EOICode) {
+            std::cout << " -> EOI\n";
+            break;
+        } else if (thisCode < codeTableCurrent.size()) {
+            // output {CODE} to index stream
+            for (auto idx : codeTableCurrent.at(thisCode)) indexStream.push_back(idx);
+
+            // let K be the first index in {CODE}
+            uint8_t K = codeTableCurrent.at(thisCode).at(0);
+
+            // add {CODE-1}+K to the code table
+            std::vector<uint8_t> newCode = codeTableCurrent.at(prevCode);
+            newCode.push_back(K);
+            codeTableCurrent.push_back(newCode);
+
+        } else {
+            const auto& prevCodeVal = codeTableCurrent.at(prevCode);
+            // let K be the first index of {CODE-1}
+            uint8_t K = prevCodeVal.at(0);
+
+            // add {CODE-1}+K to code table
+            std::vector<uint8_t> newCode = prevCodeVal;
+            newCode.push_back(K);
+            codeTableCurrent.push_back(newCode);
+
+            // output {CODE-1}+K to index stream
+            for (auto idx : newCode) indexStream.push_back(idx);
+
+        }
+
+        // Print out the last code in the code table
+        std::cout << "Last code (#" << codeTableCurrent.size() - 1
+                  << " in the code table: ";
+        for (auto c : codeTableCurrent.back()) std::cout << (int)c << " ";
+        std::cout << std::endl;
+
+        // So we know what CODE-1 is
+        prevCode = thisCode;
+
+        // Check if code size needs to be updated
+        if (codeTableCurrent.size() > maxCodeThisSize)
+        {
+            maxCodeThisSize = std::pow(2, ++thisCodeSize) - 1;
+        }
+
+        // thisCodeSize should not exceed 12 bits
+        if (thisCodeSize > 12)
+        {
+            throw std::runtime_error("Exceeded maximum code size!");
+        }
+    }
+
+    return indexStream;
 }
 
-Image GIF::decodeImage(const std::vector<uint16_t>& codes, const std::vector<RGBA>& colorTable)
+Image GIF::decodeImage(VecInt bounds, const std::vector<uint8_t>& indices, const std::vector<RGBA>& colorTable)
 {
-    Image image;
+    Image image(bounds);
 
-    // TODO
+    size_t idx = 0;
+    for (int y = 0; y < bounds.Y; y++)
+    {
+        for (int x = 0; x < bounds.X; x++)
+        {
+            if (idx >= indices.size()) break;
+
+            try {
+                image[x][y] = colorTable.at(indices[idx]);
+            } catch(const std::exception& e) {
+                throw gif::ColorTableException("Index " + std::to_string(indices[idx]) +
+                                               " exceeds the color table of size:" +
+                                               std::to_string(colorTable.size()));
+            }
+
+            idx++;
+        }
+    }
 
     return image;
 }

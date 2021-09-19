@@ -75,6 +75,7 @@ namespace zmath
         static constexpr uint8_t EXTENSION_INTRODUCER = 0x21;
         static constexpr uint8_t GRAPHICS_CONTROL_LABEL = 0xF9;
         static constexpr uint8_t APPLICATION_CONTROL_LABEL = 0xFF;
+        static constexpr uint8_t END_OF_FILE = 0x3B;
 
         // Struct for Logical Screen Descriptor bit flags
         typedef struct LSDFlags
@@ -141,6 +142,8 @@ namespace zmath
             IDFlags flags;
         } ImageDescriptor;
 
+        friend std::ostream& operator<<(std::ostream& os, const ImageDescriptor& desc);
+
         //                 //
         // Helpful Methods //
         //                 //
@@ -164,19 +167,22 @@ namespace zmath
         //         without the separator byte in between blocks.
         static LZWFrame loadImageData(std::istream& is);
 
-        // Decode raw LZW data into individual LZW codes.
-        // @param data the raw LZW-compressed image data of one image frame
-        // @return a vector of 16-bit LZW codes
-        static std::vector<uint16_t> decompressLZW(const LZWFrame& data);
+        // Decode raw LZW data into color indices.
+        // @param data the raw LZW-compressed image data of one image frame.
+        // @return a vector of 8-bit color indices.
+        static std::vector<uint8_t> decompressLZW(const LZWFrame& data);
 
         // Decode a series of LZW image codes given a color table.
         //  If any LZW codes reference a color beyond the length of the
         //  color table, then ColorTableOutOfBoundsException will be
         //  thrown.
-        // @param codes LZW codes
-        // @param colorTable a colorTable
-        // @return an LZW-decoded GIF frame
-        static Image decodeImage(const std::vector<uint16_t>& codes, const std::vector<RGBA>& colorTable);
+        // @param bounds the bounds of the image to be created.
+        // @param indices color indices.
+        // @param colorTable a colorTable. This function will throw a
+        //        gif::ColorTableException if anyindex exceeds the size
+        //        of the colorTable.
+        // @return A fully decoded image.
+        static Image decodeImage(VecInt bounds, const std::vector<uint8_t>& indices, const std::vector<RGBA>& colorTable);
 
         // @param is the input stream to read from.
         // @param numColors this should refer to the total number of colors in
