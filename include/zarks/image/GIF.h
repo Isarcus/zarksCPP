@@ -167,6 +167,11 @@ namespace zmath
         //         without the separator byte in between blocks.
         static LZWFrame loadImageData(std::istream& is);
 
+        // Load raw sub-block data with separator bytes removed, starting
+        //  at the first byte (i.e. the size indicator byte) of the first
+        //  sub-block.
+        static std::vector<uint8_t> readSubBlocks(std::istream& is);
+
         // Decode raw LZW data into color indices.
         // @param data the raw LZW-compressed image data of one image frame.
         // @return a vector of 8-bit color indices.
