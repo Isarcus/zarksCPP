@@ -198,8 +198,8 @@ std::ostream& operator<<(std::ostream& os, const GIF::ImageDescriptor& desc)
 
 std::pair<Image, uint16_t> GIF::loadNextFrame(std::istream& is, const std::vector<RGBA>& globalColorTable)
 {
-    uint8_t identityByte;
-    is.read((char*)(&identityByte), 1);
+    BlockType blockType;
+    is.read((char*)(&blockType), 1);
 
     // Make sure stream is still valid. If not, assume EOF has been reached
     if (!is)
@@ -213,19 +213,14 @@ std::pair<Image, uint16_t> GIF::loadNextFrame(std::istream& is, const std::vecto
 
     // Based on the type of this block, attempt to either load in a new
     // frame or interpret an extension block
-    switch (identityByte)
+    switch (blockType)
     {
-    case EXTENSION_INTRODUCER: {
-        uint8_t extensionType, extensionBytes, packedField;
-        is.read((char*)&extensionType, 1);
-        is.read((char*)&extensionBytes, 1);
-        is.read((char*)&packedField, 1);
-        // TODO: Interpret extension block bytes
-        is.seekg(extensionBytes, std::ios_base::cur);
+    case BlockType::EXTENSION: {
+        readExtensionBlock(is);
         return loadNextFrame(is, globalColorTable);
     } // case EXTENSION_INTRODUCER
 
-    case IMAGE_SEPARATOR: {
+    case BlockType::IMAGE: {
         // Get the image descriptor
         ImageDescriptor desc(is);
 
@@ -246,19 +241,59 @@ std::pair<Image, uint16_t> GIF::loadNextFrame(std::istream& is, const std::vecto
         break;
     } // case IMAGE_SEPARATOR
 
-    case END_OF_FILE:
+    case BlockType::END_OF_FILE:
         throw gif::EndOfStreamException("End of file block reached!");
 
     default: {
         std::ostringstream errstr;
         errstr << "Unrecognized first byte of block: 0x" << std::hex
-               << std::setw(2) << std::setfill('0') << (int)identityByte;
+               << std::setw(2) << std::setfill('0') << (int)blockType;
         throw gif::BadBlockException(errstr.str());
     } // default
 
     } // switch
 
     return std::pair<Image, uint16_t>(image, duration);
+}
+
+void GIF::readExtensionBlock(std::istream& is)
+{
+    ExtensionType type;
+    is.read((char*)&type, 1);
+
+    if (!is)
+    {
+        throw gif::BadBlockException("Could not read extension type after extension introducer!");
+    }
+
+    switch (type)
+    {
+    // Plaintext and application extension blocks each have a brief section of
+    // beginning data that can be skipped over. The rest of their data consists
+    // of sub-blocks, which can be read just like raw image data.
+    case ExtensionType::PLAINTEXT:
+    case ExtensionType::APPLICATION:
+        uint8_t canSkip;
+        is.read((char*)&canSkip, 1);
+        is.seekg(canSkip, is.cur);
+        [[fallthrough]];
+    // TODO: Actually parse a graphics control block!
+    // For now, though, it's safe to treat it like sub-block data.
+    case ExtensionType::GRAPHICS:
+
+    // Comment blocks consist solely of sub-blocks
+    case ExtensionType::COMMENT:
+        loadSubBlocks(is);
+        break;
+    
+    default: {
+        std::ostringstream os;
+        os << "Unknown extension type following extension introducer: 0x"
+           << std::hex << std::setfill('0') << std::setw(2) << (int)type;
+        throw gif::BadBlockException(os.str());
+    } // default
+
+    } // switch
 }
 
 GIF::LZWFrame GIF::loadImageData(std::istream& is)
@@ -282,12 +317,12 @@ GIF::LZWFrame GIF::loadImageData(std::istream& is)
     }
 
     // Read sub-block data from input stream
-    frame.data = readSubBlocks(is);
+    frame.data = loadSubBlocks(is);
 
     return frame;
 }
 
-std::vector<uint8_t> GIF::readSubBlocks(std::istream& is)
+std::vector<uint8_t> GIF::loadSubBlocks(std::istream& is)
 {
     // Determine the size of each sub-block in the sequence
     uint8_t nextBlockSize = 1;
@@ -299,7 +334,7 @@ std::vector<uint8_t> GIF::readSubBlocks(std::istream& is)
         is.read((char*)&nextBlockSize, 1);
 
         if (nextBlockSize) {
-            is.seekg(nextBlockSize, std::ios_base::cur);
+            is.seekg(nextBlockSize, is.cur);
         } else {
             break;
         }
@@ -314,7 +349,7 @@ std::vector<uint8_t> GIF::readSubBlocks(std::istream& is)
 
     // With the length of all sub-blocks determined, reset the stream back
     // to the beginning of the image data
-    is.seekg(-totalSeeked, std::ios_base::cur);
+    is.seekg(-totalSeeked, is.cur);
 
     // Allocate data vector to hold subBlock data
     std::vector<uint8_t> data(totalSeeked - subBlockSizes.size());
@@ -505,6 +540,7 @@ Image GIF::decodeImage(VecInt bounds, const std::vector<uint8_t>& indices, const
 
 std::vector<RGBA> GIF::loadColorTable(std::istream& is, uint8_t numColors)
 {
+    std::cout << "Loading color table\n";
     const unsigned bytesToRead = (unsigned)numColors * 3;
     uint8_t* buf = new uint8_t[bytesToRead], *ptr = buf;
     is.read((char*)buf, bytesToRead);

@@ -71,11 +71,26 @@ namespace zmath
         static constexpr const char* HEADER_89a = "GIF89a";
         static constexpr const char* HEADER_87a = "GIF87a";
 
-        static constexpr uint8_t IMAGE_SEPARATOR = 0x2C;
-        static constexpr uint8_t EXTENSION_INTRODUCER = 0x21;
-        static constexpr uint8_t GRAPHICS_CONTROL_LABEL = 0xF9;
-        static constexpr uint8_t APPLICATION_CONTROL_LABEL = 0xFF;
-        static constexpr uint8_t END_OF_FILE = 0x3B;
+        // Enum of all possible block types in a GIF.
+        // The first byte of any new block *must* be one of these
+        // values, or the GIF is unreadable.
+        enum class BlockType : uint8_t
+        {
+            EXTENSION   = 0x21,
+            IMAGE       = 0x2C,
+            END_OF_FILE = 0x3B
+        };
+
+        // Enum of all possible extension block sub-types in a GIF.
+        // Any extension block *must* have one of these values as
+        // the second byte, or the GIF is unreadable.
+        enum class ExtensionType : uint8_t
+        {
+            APPLICATION = 0xFF,
+            GRAPHICS    = 0xF9,
+            PLAINTEXT   = 0x01,
+            COMMENT     = 0xFE
+        };
 
         // Struct for Logical Screen Descriptor bit flags
         typedef struct LSDFlags
@@ -160,6 +175,13 @@ namespace zmath
         //         extension block preceding the loaded image.
         std::pair<Image, uint16_t> loadNextFrame(std::istream& is, const std::vector<RGBA>& globalColorTable);
 
+        // Process an extension block, starting at the byte immediately following
+        //  the EXTENSION_INTRODUCER byte. If the first byte that this function
+        //  reads does not match any of the types enumerated in ExtensionTypes,
+        //  then BadBlockException will be thrown.
+        // @param is the input stream to read from.
+        void readExtensionBlock(std::istream& is);
+
         // Load an image from the GIF input stream, starting immediately after 
         //  the Image Descriptor bytes
         // @param is the input stream to read from.
@@ -170,7 +192,7 @@ namespace zmath
         // Load raw sub-block data with separator bytes removed, starting
         //  at the first byte (i.e. the size indicator byte) of the first
         //  sub-block.
-        static std::vector<uint8_t> readSubBlocks(std::istream& is);
+        static std::vector<uint8_t> loadSubBlocks(std::istream& is);
 
         // Decode raw LZW data into color indices.
         // @param data the raw LZW-compressed image data of one image frame.
