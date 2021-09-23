@@ -540,10 +540,10 @@ Image GIF::decodeImage(VecInt bounds, const std::vector<uint8_t>& indices, const
     return image;
 }
 
-std::vector<RGBA> GIF::loadColorTable(std::istream& is, uint8_t numColors)
+std::vector<RGBA> GIF::loadColorTable(std::istream& is, unsigned numColors)
 {
-    std::cout << "Loading color table\n";
-    const unsigned bytesToRead = (unsigned)numColors * 3;
+    std::cout << "Loading color table of length " << numColors << "\n";
+    const unsigned bytesToRead = numColors * 3;
     uint8_t* buf = new uint8_t[bytesToRead], *ptr = buf;
     is.read((char*)buf, bytesToRead);
     

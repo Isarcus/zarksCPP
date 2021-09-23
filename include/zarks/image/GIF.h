@@ -215,7 +215,7 @@ namespace zmath
         // @param numColors this should refer to the total number of colors in
         //                  the table, i.e. 2^(1 + LSDFlags::colorTableSize).
         // @return An RGB color table of size `numColors`
-        static std::vector<RGBA> loadColorTable(std::istream& is, uint8_t numColors);
+        static std::vector<RGBA> loadColorTable(std::istream& is, unsigned numColors);
 
         // @param bitField a value from 0-7; the last three bits of
         //        the fifth byte of the Logical Screen Descriptor or
