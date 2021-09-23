@@ -66,10 +66,12 @@ GIF::GIF(std::istream& is)
             auto pair = loadNextFrame(is, globalColorTable);
             frames.push_back(pair.first);
         } catch (const gif::ColorTableException& e) {
-            std::cerr << e << "\n";
+            std::cerr << e << '\n';
+            std::cerr << " -> Stream position: " << is.tellg() << '\n';
             break;
         } catch (const gif::BadBlockException& e) {
-            std::cerr << e << "\n";
+            std::cerr << e << '\n';
+            std::cerr << " -> Stream position: " << is.tellg() << '\n';
             break;
         } catch (const gif::EndOfStreamException& e) {
             //std::cout << e << "\n";
