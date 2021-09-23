@@ -41,11 +41,11 @@ GIF::GIF(std::istream& is)
     }
     
     // Read the 7-byte logical screen descriptor
-    char descriptor[7], *ptr = descriptor;
-    is.read(descriptor, 7);
+    uint8_t descriptor[7], *ptr = descriptor;
+    is.read((char*)descriptor, 7);
     __attribute__((unused)) uint16_t canvasWidth = FromBytes<uint16_t>(AdvancePtr(ptr, 2), Endian::Little);
     __attribute__((unused)) uint16_t canvasHeight = FromBytes<uint16_t>(AdvancePtr(ptr, 2), Endian::Little);
-    LSDFlags flags(*AdvancePtr(ptr, 1));
+    LSDFlags flags(*ptr);
     // Ignore the last two bytes of the descriptor. The following link
     // explains why the 6th and 7th bytes, which represent the background
     // color index and the pixel aspect ratio, respectively, have no use
@@ -141,9 +141,9 @@ GIF::LSDFlags::LSDFlags()
 
 GIF::LSDFlags::LSDFlags(uint8_t flagByte)
     : colorTableSize  ( flagByte & COLOR_TABLE_SIZE)
-    , sortFlag        ((flagByte & SORT_FLAG)              >> 3)
-    , colorResolution ((flagByte & COLOR_RESOLUTION)       >> 4)
-    , globalTableFlag ((flagByte & GLOBAL_COLOR_TABLE_FLAG >> 7))
+    , sortFlag        ((flagByte & SORT_FLAG)               >> 3)
+    , colorResolution ((flagByte & COLOR_RESOLUTION)        >> 4)
+    , globalTableFlag ((flagByte & GLOBAL_COLOR_TABLE_FLAG) >> 7)
 {}
 
 GIF::IDFlags::IDFlags()
