@@ -71,6 +71,8 @@ namespace zmath
         static constexpr const char* HEADER_89a = "GIF89a";
         static constexpr const char* HEADER_87a = "GIF87a";
 
+        static constexpr uint16_t MAX_CODE_TABLE_SIZE = 0xFFF;
+
         // Enum of all possible block types in a GIF.
         // The first byte of any new block *must* be one of these
         // values, or the GIF is unreadable.

@@ -1,6 +1,7 @@
 #include <zarks/image/GIF.h>
 #include <zarks/io/binary.h>
 #include <zarks/io/BitBuffer.h>
+#include <zarks/io/logdefs.h>
 
 #include <fstream>
 #include <cstring>
@@ -65,16 +66,16 @@ GIF::GIF(std::istream& is)
         try {
             auto pair = loadNextFrame(is, globalColorTable);
             frames.push_back(pair.first);
+            LOG_DEBUG("Loaded frame #" << frames.size());
         } catch (const gif::ColorTableException& e) {
-            std::cerr << e << '\n';
-            std::cerr << " -> Stream position: " << is.tellg() << '\n';
+            std::cerr << e << std::endl;
+            std::cerr << " -> Stream position: " << is.tellg() << std::endl;
             break;
         } catch (const gif::BadBlockException& e) {
-            std::cerr << e << '\n';
-            std::cerr << " -> Stream position: " << is.tellg() << '\n';
+            std::cerr << e << std::endl;
+            std::cerr << " -> Stream position: " << is.tellg() << std::endl;
             break;
         } catch (const gif::EndOfStreamException& e) {
-            //std::cout << e << "\n";
             break;
         }
     }
@@ -218,11 +219,13 @@ std::pair<Image, uint16_t> GIF::loadNextFrame(std::istream& is, const std::vecto
     switch (blockType)
     {
     case BlockType::EXTENSION: {
+        LOG_DEBUG("EXTENSION BLOCK " << is.tellg());
         readExtensionBlock(is);
         return loadNextFrame(is, globalColorTable);
     } // case EXTENSION_INTRODUCER
 
     case BlockType::IMAGE: {
+        LOG_DEBUG("IMAGE BLOCK " << is.tellg());
         // Get the image descriptor
         ImageDescriptor desc(is);
 
@@ -304,12 +307,13 @@ GIF::LZWFrame GIF::loadImageData(std::istream& is)
 
     // Read LZW Minimum Code Size
     is.read((char*)&frame.minCodeSize, 1);
+    LOG_DEBUG(" -> LZW minimum code size: " << (int)frame.minCodeSize);
     if (!is)
     {
         throw gif::BadBlockException("No image data to load following image separator!");
     }
 
-    if (frame.minCodeSize > 11)
+    if (frame.minCodeSize > 8)
     {
         throw gif::BadBlockException("LZW minimum code size is too big: " +
                                      std::to_string(frame.minCodeSize));
@@ -327,7 +331,7 @@ GIF::LZWFrame GIF::loadImageData(std::istream& is)
 std::vector<uint8_t> GIF::loadSubBlocks(std::istream& is)
 {
     // Determine the size of each sub-block in the sequence
-    uint8_t nextBlockSize = 1;
+    uint8_t nextBlockSize = 0;
     long totalSeeked = 1; 
     std::vector<short> subBlockSizes;
     while (true)
@@ -336,8 +340,10 @@ std::vector<uint8_t> GIF::loadSubBlocks(std::istream& is)
         is.read((char*)&nextBlockSize, 1);
 
         if (nextBlockSize) {
+            LOG_DEBUG(" -> Encountered sub-block of size " << (int)nextBlockSize << " at " << is.tellg());
             is.seekg(nextBlockSize, is.cur);
         } else {
+            LOG_DEBUG(" -> Final sub-block encountered; next block begins at " << is.tellg());
             break;
         }
 
@@ -345,13 +351,14 @@ std::vector<uint8_t> GIF::loadSubBlocks(std::istream& is)
             totalSeeked += long(nextBlockSize) + 1;
             subBlockSizes.push_back(nextBlockSize);
         } else {
-            throw gif::BadBlockException("Bad image data while reading sub-blocks!");
+            throw gif::BadBlockException("Couldn't read sub-block");
         }
     }
 
     // With the length of all sub-blocks determined, reset the stream back
     // to the beginning of the image data
     is.seekg(-totalSeeked, is.cur);
+    LOG_DEBUG(" -> Stream returned to position " << is.tellg());
 
     // Allocate data vector to hold subBlock data
     std::vector<uint8_t> data(totalSeeked - subBlockSizes.size());
@@ -360,6 +367,7 @@ std::vector<uint8_t> GIF::loadSubBlocks(std::istream& is)
     char* ptr = (char*)data.data();
     for (auto thisBlockSize : subBlockSizes)
     {
+        // Sanity check: make sure sub-block sizes match recorded sizes
         uint8_t checkThisBlockSize;
         is.read((char*)&checkThisBlockSize, 1);
 
@@ -389,6 +397,8 @@ std::vector<uint8_t> GIF::loadSubBlocks(std::istream& is)
         throw gif::BadBlockException(os.str());
     }
 
+    LOG_DEBUG(" -> Done reading sub-blocks; stream is now at " << is.tellg());
+
     return data;
 }
 
@@ -397,70 +407,74 @@ std::vector<uint8_t> GIF::decompressLZW(const LZWFrame& data)
     // LZW codes with special meanings
     const uint16_t clearCode = std::pow(2, data.minCodeSize);
     const uint16_t EOICode = clearCode + 1;
-    const uint16_t baseSize = std::min(256, (int)std::pow(2, data.minCodeSize)) + 2;
+    const uint16_t numSingleCodes = std::min(256, (int)std::pow(2, data.minCodeSize));
  
     // Stream of all codes retrieved so far
     std::vector<uint8_t> indexStream;
+
     // LZW code table
     std::vector<std::vector<uint8_t>> codeTableBase;
-    for (uint8_t i = 0; i < baseSize - 2; i++)
-        codeTableBase.push_back({i});
+    codeTableBase.reserve(MAX_CODE_TABLE_SIZE);
+    for (uint16_t c = 0; c < numSingleCodes; c++)
+        codeTableBase.push_back({(uint8_t)c});
     codeTableBase.push_back({}); // clear code
     codeTableBase.push_back({}); // EOI code
     std::vector<std::vector<uint8_t>> codeTableCurrent = codeTableBase;
 
     // Current size in bits of each LZW code
-    uint8_t thisCodeSize = data.minCodeSize + 1;
+    const uint8_t codeSizeBase = data.minCodeSize + 1;
+    uint8_t codeSize = codeSizeBase;
 
     // Buffer to read codes from
     const BitBuffer bbuf(data.data.data(), data.data.size());
     // Next bit to read from in the BitBuffer
     size_t bitIdx = 0;
-    // Maximum code allowed by thisCodeSize
-    size_t maxCodeThisSize = std::pow(2, thisCodeSize) - 1;
+    // Maximum code allowed by codeSize
+    size_t maxCodeThisSize = std::pow(2, codeSize) - 1;
 
     // Read the first code of the code stream; this should be clearCode
-    uint16_t prevCode = 0;
-    for (int i = 0; i < thisCodeSize; i++)
-    {
-        prevCode |= uint16_t(bbuf.At(bitIdx++)) << i;
-    }
+    uint16_t prevCode = bbuf.Read(bitIdx, codeSize);
+    bitIdx += codeSize;
     if (prevCode != clearCode)
     {
         throw gif::BadBlockException("Expected clearCode to be first code of LZW stream!");
     }
 
-    // Read the first actual color code and write its value to the index stream
-    prevCode = 0;
-    for (int i = 0; i < thisCodeSize; i++)
-    {
-        prevCode |= uint16_t(bbuf.At(bitIdx++)) << i;
-    }
-    indexStream.push_back(codeTableCurrent.at(prevCode).at(0));
-    std::cout << " -> LZW code #" << prevCode << " (code size == "
-              << (int)thisCodeSize << "; table size == " << codeTableCurrent.size()
-              << ")" << std::endl;
-
     while (true)
     {
-        // Read the next code
-        uint16_t thisCode = 0;
-        for (int i = 0; i < thisCodeSize; i++)
+        // If a clear code has just been received, load the very
+        // first actual color code of the new code stream
+        if (prevCode == clearCode)
         {
-            thisCode |= uint16_t(bbuf.At(bitIdx++)) << i;
+            LOG_DEBUG("Beginning new stream after clear code!");
+            prevCode = bbuf.Read(bitIdx, codeSize);
+            bitIdx += codeSize;
+            indexStream.push_back(codeTableCurrent.at(prevCode).at(0));
+            LOG_DEBUG(" -> LZW code #" << prevCode << " (code size == "
+                      << (int)codeSize << "; table size == " << codeTableCurrent.size()
+                      << ")");
         }
 
+        // Read the next code
+        uint16_t thisCode = bbuf.Read(bitIdx, codeSize);
+        bitIdx += codeSize;
+
         // Notify of this code
-        std::cout << " -> LZW code #" << thisCode << " (code size == "
-                  << (int)thisCodeSize << "; table size == " << codeTableCurrent.size()
-                  << ")" << std::endl;
+        LOG_DEBUG(" -> LZW code #" << thisCode << " (code size == "
+                  << (int)codeSize << "; table size == " << codeTableCurrent.size()
+                  << ")");
 
         // Decide what to do with this code
         if (thisCode == clearCode) {
-            std::cout << " -> CC\n";
+            LOG_DEBUG(" -> CC");
+            // Reset the code table and code size
             codeTableCurrent = codeTableBase;
+            codeSize = codeSizeBase;
+            // Set prevCode to CC
+            prevCode = thisCode;
+            continue;
         } else if (thisCode == EOICode) {
-            std::cout << " -> EOI\n";
+            LOG_DEBUG(" -> EOI");
             break;
         } else if (thisCode < codeTableCurrent.size()) {
             // output {CODE} to index stream
@@ -490,8 +504,8 @@ std::vector<uint8_t> GIF::decompressLZW(const LZWFrame& data)
         }
 
         // Print out the last code in the code table
-        std::cout << "Last code (#" << codeTableCurrent.size() - 1
-                  << " in the code table: ";
+        LOG_DEBUG("Last code (#" << codeTableCurrent.size() - 1
+                  << " in the code table: ");
         for (auto c : codeTableCurrent.back()) std::cout << (int)c << " ";
         std::cout << std::endl;
 
@@ -501,11 +515,11 @@ std::vector<uint8_t> GIF::decompressLZW(const LZWFrame& data)
         // Check if code size needs to be updated
         if (codeTableCurrent.size() > maxCodeThisSize)
         {
-            maxCodeThisSize = std::pow(2, ++thisCodeSize) - 1;
+            maxCodeThisSize = std::pow(2, ++codeSize) - 1;
         }
 
-        // thisCodeSize should not exceed 12 bits
-        if (thisCodeSize > 12)
+        // codeSize should not exceed 12 bits
+        if (codeSize > 12)
         {
             throw std::runtime_error("Exceeded maximum code size!");
         }
@@ -542,7 +556,7 @@ Image GIF::decodeImage(VecInt bounds, const std::vector<uint8_t>& indices, const
 
 std::vector<RGBA> GIF::loadColorTable(std::istream& is, unsigned numColors)
 {
-    std::cout << "Loading color table of length " << numColors << "\n";
+    LOG_DEBUG("Loading color table of length " << numColors);
     const unsigned bytesToRead = numColors * 3;
     uint8_t* buf = new uint8_t[bytesToRead], *ptr = buf;
     is.read((char*)buf, bytesToRead);
@@ -560,6 +574,9 @@ std::vector<RGBA> GIF::loadColorTable(std::istream& is, unsigned numColors)
     }
 
     delete[] buf;
+
+    LOG_DEBUG("Finished loading color table of length " << numColors);
+
     return table;
 }
 
