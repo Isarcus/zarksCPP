@@ -49,6 +49,74 @@ namespace zmath
         // Move assignment
         BitBuffer& operator=(BitBuffer&& bbuf);
 
+        // Append a BitField to the BitBuffer.
+        friend BitBuffer& operator<<(BitBuffer& bbuf, const BitField& bits);
+
+        // Read a sequence of characters into the BitBuffer.
+        // @param c_str a c-style (null-terminated) string.
+        friend BitBuffer& operator<<(BitBuffer& bbuf, const char* c_str);
+
+        // Appends a bit to the end of the BitBuffer
+        void Push(bool bit);
+        // Shrinks the BitBuffer at the end by one bit
+        void Pop();
+
+        // Access a bit, with bound-checking
+        BitPointer At(size_t bitNum);
+        // Access a bit, with bound-checking
+        BitPointer At(BitAddress addr);
+        // Access a bit, with bound-checking
+        bool At(size_t bitNum) const;
+        // Access a bit, with bound-checking
+        bool At(BitAddress addr) const;
+
+        // Access a bit, without bound-checking
+        BitPointer operator[](size_t bitNum);
+        // Access a bit, without bound-checking
+        BitPointer operator[](BitAddress addr);
+        // Access a bit, without bound-checking
+        bool operator[](size_t bitNum) const;
+        // Access a bit, without bound-checking
+        bool operator[](BitAddress addr) const;
+
+        // Read an unsigned value of several bits
+        // @param startBit the bit at which to begin reading.
+        // @param readBits the number of bits to read. This function will
+        //        throw std::runtime_error if this value is greater than
+        //        BITS_IN_SIZE.
+        // @param leastToGreatest true if the least significant bit comes
+        //        first, false if the most significant but comes first.
+        size_t Read(size_t startBit, uint8_t readBits, bool leastToGreatest = true) const;
+        // Read an unsigned value of several bits
+        // @param start the address at which to begin reading.
+        // @param readBits the number of bits to read. This function will
+        //        throw std::runtime_error if this value is greater than
+        //        BITS_IN_SIZE.
+        // @param leastToGreatest true if the least significant bit comes
+        //        first, false if the most significant but comes first.
+        size_t Read(BitAddress start, uint8_t readBits, bool leastToGreatest = true) const;
+
+        // @return the current size of the buffer in bits. This is
+        //         not guaranteed to be accurate when there are more
+        //         bits in the buffer than can be represented by
+        //         size_t.
+        size_t Size() const;
+        // @return the current size of the buffer in bytes, rounded up.
+        size_t SizeBytes() const;
+        // @return whether the underlying array is currently utilizing
+        //         the entire capacity
+        bool Full() const;
+        // @return true if underlying array is empty
+        bool Empty() const;
+
+        // Reserve at least `bits` bits' worth of space.
+        void Reserve(size_t bits);
+        // Reserve at least `bytes` bytes` worth of space.
+        void ReserveBytes(size_t bytes);
+
+        // Clear the bit buffer.
+        void Clear();
+
         // BitAddress represents the location of a single bit in a BitBuffer.
         typedef struct BitAddress
         {
@@ -85,57 +153,6 @@ namespace zmath
             size_t byteIdx;
             unsigned bitIdx : 3;
         } BitAddress;
-
-        // Append a BitField to the BitBuffer.
-        friend BitBuffer& operator<<(BitBuffer& bbuf, const BitField& bits);
-
-        // Read a sequence of characters into the BitBuffer.
-        // @param c_str a c-style (null-terminated) string.
-        friend BitBuffer& operator<<(BitBuffer& bbuf, const char* c_str);
-
-        // Appends a bit to the end of the BitBuffer
-        void Push(bool bit);
-        // Shrinks the BitBuffer at the end by one bit
-        void Pop();
-
-        // Access a bit, with bound-checking
-        BitPointer At(size_t bitNum);
-        // Access a bit, with bound-checking
-        BitPointer At(BitAddress addr);
-        // Access a bit, with bound-checking
-        bool At(size_t bitNum) const;
-        // Access a bit, with bound-checking
-        bool At(BitAddress addr) const;
-
-        // Access a bit, without bound-checking
-        BitPointer operator[](size_t bitNum);
-        // Access a bit, without bound-checking
-        BitPointer operator[](BitAddress addr);
-        // Access a bit, without bound-checking
-        bool operator[](size_t bitNum) const;
-        // Access a bit, without bound-checking
-        bool operator[](BitAddress addr) const;
-
-        // @return the current size of the buffer in bits. This is
-        //         not guaranteed to be accurate when there are more
-        //         bits in the buffer than can be represented by
-        //         size_t.
-        size_t Size() const;
-        // @return the current size of the buffer in bytes, rounded up.
-        size_t SizeBytes() const;
-        // @return whether the underlying array is currently utilizing
-        //         the entire capacity
-        bool Full() const;
-        // @return true if underlying array is empty
-        bool Empty() const;
-
-        // Reserve at least `bits` bits' worth of space.
-        void Reserve(size_t bits);
-        // Reserve at least `bytes` bytes` worth of space.
-        void ReserveBytes(size_t bytes);
-
-        // Clear the bit buffer.
-        void Clear();
 
     private:
         size_t capacityBytes;

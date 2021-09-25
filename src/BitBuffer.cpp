@@ -195,6 +195,42 @@ bool BitBuffer::operator[](BitAddress addr) const
     return data[addr.byteIdx] & BITS[addr.bitIdx];
 }
 
+size_t BitBuffer::Read(size_t startBit, uint8_t readBits, bool leastToGreatest) const
+{
+    if (readBits > BITS_IN_SIZE)
+    {
+        throw std::runtime_error("Cannot execute bit read exceeding BITS_IN_SIZE");
+    }
+
+    if (startBit + readBits > next.Bit())
+    {
+        throw std::runtime_error("Requested bit read exceeds buffer size!");
+    }
+
+    size_t ret = 0;
+    if (leastToGreatest)
+    {
+        for (uint8_t b = 0; b < readBits; b++)
+        {
+            ret |= (size_t)operator[](startBit + b) << b;
+        }
+    }
+    else
+    {
+        for (uint8_t b = 0; b < readBits; b++)
+        {
+            ret |= (size_t)operator[](startBit + b) << (readBits - b - 1);
+        }
+    }
+
+    return ret;
+}
+
+size_t BitBuffer::Read(BitAddress start, uint8_t readBits, bool leastToGreatest) const
+{
+    return Read(start.Bit(), readBits, leastToGreatest);
+}
+
 size_t BitBuffer::Size() const
 {
     return next.Bit();
