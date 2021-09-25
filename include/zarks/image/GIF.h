@@ -167,8 +167,8 @@ namespace zmath
 
         // Load a frame from the GIF input stream, or throw EndOfStreamException 
         //  if there are no more frames to be loaded. If `globalColorTable` is 
-        //  empty and the loaded frame is missing a local color table, then an 
-        //  instance of NoColorTableException will be thrown.
+        //  empty and the loaded frame is missing a local color table, then
+        //  FormatException will be thrown.
         // @param is the input stream to read from.
         // @param globalColorTable the global color table. This should be left
         //        empty if there is no global color table.
@@ -180,7 +180,7 @@ namespace zmath
         // Process an extension block, starting at the byte immediately following
         //  the EXTENSION_INTRODUCER byte. If the first byte that this function
         //  reads does not match any of the types enumerated in ExtensionTypes,
-        //  then BadBlockException will be thrown.
+        //  then FormatException will be thrown.
         // @param is the input stream to read from.
         void readExtensionBlock(std::istream& is);
 
@@ -203,8 +203,7 @@ namespace zmath
 
         // Decode a series of LZW image codes given a color table.
         //  If any LZW codes reference a color beyond the length of the
-        //  color table, then ColorTableOutOfBoundsException will be
-        //  thrown.
+        //  color table, then FormatException will be thrown.
         // @param bounds the bounds of the image to be created.
         // @param indices color indices.
         // @param colorTable a colorTable. This function will throw a
@@ -251,17 +250,17 @@ namespace zmath
             virtual std::string getErrorName() const override;
         };
 
-        class BadBlockException : public GifLoadingException
+        class BadStreamException : public GifLoadingException
         {
         public:
-            BadBlockException(std::string error);
+            BadStreamException(std::string error);
             virtual std::string getErrorName() const override;
         };
 
-        class ColorTableException : public GifLoadingException
+        class FormatException : public GifLoadingException
         {
         public:
-            ColorTableException(std::string error);
+            FormatException(std::string error);
             virtual std::string getErrorName() const override;
         };
 

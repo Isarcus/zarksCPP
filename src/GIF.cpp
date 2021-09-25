@@ -67,15 +67,11 @@ GIF::GIF(std::istream& is)
             auto pair = loadNextFrame(is, globalColorTable);
             frames.push_back(pair.first);
             LOG_DEBUG("Loaded frame #" << frames.size());
-        } catch (const gif::ColorTableException& e) {
-            std::cerr << e << std::endl;
-            std::cerr << " -> Stream position: " << is.tellg() << std::endl;
-            break;
-        } catch (const gif::BadBlockException& e) {
-            std::cerr << e << std::endl;
-            std::cerr << " -> Stream position: " << is.tellg() << std::endl;
-            break;
         } catch (const gif::EndOfStreamException& e) {
+            break;
+        } catch (const gif::GifLoadingException& e) {
+            std::cerr << e << std::endl;
+            std::cerr << " -> Stream position: " << is.tellg() << std::endl;
             break;
         }
     }
@@ -207,7 +203,7 @@ std::pair<Image, uint16_t> GIF::loadNextFrame(std::istream& is, const std::vecto
     // Make sure stream is still valid. If not, assume EOF has been reached
     if (!is)
     {
-        throw gif::BadBlockException("Failed to read first byte of block");
+        throw gif::BadStreamException("Failed to read first byte of block");
     }
 
     // Declarations
@@ -241,19 +237,19 @@ std::pair<Image, uint16_t> GIF::loadNextFrame(std::istream& is, const std::vecto
         } else if (globalColorTable.size()) {
             image = decodeImage(VecInt(desc.width, desc.height), lzwCodes, globalColorTable);
         } else {
-            throw gif::ColorTableException("Missing global and local color table!");
+            throw gif::FormatException("Missing global and local color table!");
         }
         break;
     } // case IMAGE_SEPARATOR
 
     case BlockType::END_OF_FILE:
-        throw gif::EndOfStreamException("End of file block reached!");
+        throw gif::EndOfStreamException("Encountered end of file byte");
 
     default: {
         std::ostringstream errstr;
         errstr << "Unrecognized first byte of block: 0x" << std::hex
                << std::setw(2) << std::setfill('0') << (int)blockType;
-        throw gif::BadBlockException(errstr.str());
+        throw gif::FormatException(errstr.str());
     } // default
 
     } // switch
@@ -268,7 +264,7 @@ void GIF::readExtensionBlock(std::istream& is)
 
     if (!is)
     {
-        throw gif::BadBlockException("Could not read extension type after extension introducer!");
+        throw gif::FormatException("Could not read extension type after extension introducer!");
     }
 
     switch (type)
@@ -295,7 +291,7 @@ void GIF::readExtensionBlock(std::istream& is)
         std::ostringstream os;
         os << "Unknown extension type following extension introducer: 0x"
            << std::hex << std::setfill('0') << std::setw(2) << (int)type;
-        throw gif::BadBlockException(os.str());
+        throw gif::FormatException(os.str());
     } // default
 
     } // switch
@@ -310,16 +306,16 @@ GIF::LZWFrame GIF::loadImageData(std::istream& is)
     LOG_DEBUG(" -> LZW minimum code size: " << (int)frame.minCodeSize);
     if (!is)
     {
-        throw gif::BadBlockException("No image data to load following image separator!");
+        throw gif::BadStreamException("No image data to load following image separator!");
     }
 
     if (frame.minCodeSize > 8)
     {
-        throw gif::BadBlockException("LZW minimum code size is too big: " +
-                                     std::to_string(frame.minCodeSize));
+        throw gif::FormatException("LZW minimum code size is too big: " +
+                                   std::to_string(frame.minCodeSize));
     } else if (frame.minCodeSize < 2) {
-        throw gif::BadBlockException("LZW minimum code size is too small: " +
-                                     std::to_string(frame.minCodeSize));
+        throw gif::FormatException("LZW minimum code size is too small: " +
+                                   std::to_string(frame.minCodeSize));
     }
 
     // Read sub-block data from input stream
@@ -351,7 +347,7 @@ std::vector<uint8_t> GIF::loadSubBlocks(std::istream& is)
             totalSeeked += long(nextBlockSize) + 1;
             subBlockSizes.push_back(nextBlockSize);
         } else {
-            throw gif::BadBlockException("Couldn't read sub-block");
+            throw gif::BadStreamException("Couldn't read sub-block");
         }
     }
 
@@ -381,7 +377,7 @@ std::vector<uint8_t> GIF::loadSubBlocks(std::istream& is)
                << (int)thisBlockSize << " but got 0x" << std::setw(2)
                << (int)checkThisBlockSize << std::dec << " (is.tellg() == "
                << is.tellg() << ")";
-            throw gif::BadBlockException(os.str());
+            throw gif::FormatException(os.str());
         }
     }
 
@@ -394,7 +390,7 @@ std::vector<uint8_t> GIF::loadSubBlocks(std::istream& is)
         os << "Putative final byte of sub-block data was not null: 0x"
            << std::hex << std::setw(2) << std::setfill('0')
            << (int)shouldBeNull;
-        throw gif::BadBlockException(os.str());
+        throw gif::FormatException(os.str());
     }
 
     LOG_DEBUG(" -> Done reading sub-blocks; stream is now at " << is.tellg());
@@ -437,7 +433,7 @@ std::vector<uint8_t> GIF::decompressLZW(const LZWFrame& data)
     bitIdx += codeSize;
     if (prevCode != clearCode)
     {
-        throw gif::BadBlockException("Expected clearCode to be first code of LZW stream!");
+        throw gif::FormatException("Expected clearCode to be first code of LZW stream!");
     }
 
     while (true)
@@ -521,7 +517,7 @@ std::vector<uint8_t> GIF::decompressLZW(const LZWFrame& data)
         // codeSize should not exceed 12 bits
         if (codeSize > 12)
         {
-            throw std::runtime_error("Exceeded maximum code size!");
+            throw gif::FormatException("Exceeded maximum code size!");
         }
     }
 
@@ -542,9 +538,9 @@ Image GIF::decodeImage(VecInt bounds, const std::vector<uint8_t>& indices, const
             try {
                 image[x][y] = colorTable.at(indices[idx]);
             } catch(const std::exception& e) {
-                throw gif::ColorTableException("Index " + std::to_string(indices[idx]) +
-                                               " exceeds the color table of size:" +
-                                               std::to_string(colorTable.size()));
+                throw gif::FormatException("Index " + std::to_string(indices[idx]) +
+                                           " exceeds the color table of size:" +
+                                           std::to_string(colorTable.size()));
             }
 
             idx++;
@@ -612,24 +608,24 @@ std::string EndOfStreamException::getErrorName() const
     return "[EndOfStreamException]";
 }
 
-// BadBlockException
-BadBlockException::BadBlockException(std::string error)
+// BadStreamException
+BadStreamException::BadStreamException(std::string error)
     : GifLoadingException(error)
 {}
 
-std::string BadBlockException::getErrorName() const
+std::string BadStreamException::getErrorName() const
 {
-    return "[BadBlockException]";
+    return "[BadStreamException]";
 }
 
-// ColorTableException
-ColorTableException::ColorTableException(std::string error)
+// FormatException
+FormatException::FormatException(std::string error)
     : GifLoadingException(error)
 {}
 
-std::string ColorTableException::getErrorName() const
+std::string FormatException::getErrorName() const
 {
-    return "[ColorTableException]";
+    return "[FormatException]";
 }
 
 } // namespace gif
