@@ -474,6 +474,12 @@ std::vector<uint8_t> GIF::decompressLZW(const LZWFrame& data)
             LOG_DEBUG(" -> LZW code #" << prevCode << " (code size == "
                       << (int)codeSize << "; table size == " << codeTableCurrent.size()
                       << ")");
+            
+            // Special cases that *shouldn't* happen, but technically
+            // can, because you can do whatever the heck you want if
+            // you're writing a GIF encoder
+            if (prevCode == clearCode) continue;
+            if (prevCode == EOICode) break;
         }
 
         // Read the next code
@@ -485,26 +491,41 @@ std::vector<uint8_t> GIF::decompressLZW(const LZWFrame& data)
                   << (int)codeSize << "; table size == " << codeTableCurrent.size()
                   << ")");
 
-        // Decide what to do with this code
+        // If this code is a clear code, reset the code table, code size,
+        // and the maximum allowable code value for this code size
         if (thisCode == clearCode)
         {
             LOG_DEBUG(" -> CC");
             // Reset the code table and code size
             codeTableCurrent = codeTableBase;
             codeSize = codeSizeBase;
+            maxCodeThisSize = std::pow(2, codeSize) - 1;
             // Set prevCode to CC
             prevCode = thisCode;
             continue;
         }
+        // If this code is an EOI code, we're all done!
         else if (thisCode == EOICode)
         {
             LOG_DEBUG(" -> EOI");
             break;
         }
-        else if (thisCode < codeTableCurrent.size())
+
+        // If the current size of the code table is maxed out, then
+        // just add the indices of this code to the index stream
+        if (codeTableCurrent.size() == MAX_CODE_TABLE_SIZE)
+        {
+            for (auto idx : codeTableCurrent.at(thisCode))
+                indexStream.push_back(idx);
+            continue;
+        }
+
+        // If this code is in the color table
+        if (thisCode < codeTableCurrent.size())
         {
             // output {CODE} to index stream
-            for (auto idx : codeTableCurrent.at(thisCode)) indexStream.push_back(idx);
+            for (auto idx : codeTableCurrent.at(thisCode))
+                indexStream.push_back(idx);
 
             // let K be the first index in {CODE}
             uint8_t K = codeTableCurrent.at(thisCode).at(0);
@@ -513,7 +534,6 @@ std::vector<uint8_t> GIF::decompressLZW(const LZWFrame& data)
             std::vector<uint8_t> newCode = codeTableCurrent.at(prevCode);
             newCode.push_back(K);
             codeTableCurrent.push_back(newCode);
-
         }
         else
         {
@@ -527,15 +547,9 @@ std::vector<uint8_t> GIF::decompressLZW(const LZWFrame& data)
             codeTableCurrent.push_back(newCode);
 
             // output {CODE-1}+K to index stream
-            for (auto idx : newCode) indexStream.push_back(idx);
-
+            for (auto idx : newCode)
+                indexStream.push_back(idx);
         }
-
-        // Print out the last code in the code table
-        LOG_DEBUG("Last code (#" << codeTableCurrent.size() - 1
-                  << " in the code table: ");
-        for (auto c : codeTableCurrent.back()) std::cout << (int)c << " ";
-        std::cout << std::endl;
 
         // So we know what CODE-1 is
         prevCode = thisCode;
@@ -546,7 +560,7 @@ std::vector<uint8_t> GIF::decompressLZW(const LZWFrame& data)
             maxCodeThisSize = std::pow(2, ++codeSize) - 1;
         }
 
-        // codeSize should not exceed 12 bits
+        // codeSize must not exceed 12 bits
         if (codeSize > 12)
         {
             throw gif::FormatException("Exceeded maximum code size!");
