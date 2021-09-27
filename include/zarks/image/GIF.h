@@ -226,6 +226,10 @@ namespace zmath
         // @return 2^(1 + bitField)
         static int getColorTableSize(int bitField);
 
+        // Return an LZW code table containing only the basic color codes,
+        // clear code, and EOI code.
+        // @param minCodeSize the minimum size of a *color* code, in bits.
+        static std::vector<std::vector<uint8_t>> getBaseCodeTable(int minCodeSize);
     };
 
     namespace gif

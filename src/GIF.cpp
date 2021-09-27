@@ -403,19 +403,16 @@ std::vector<uint8_t> GIF::decompressLZW(const LZWFrame& data)
     // LZW codes with special meanings
     const uint16_t clearCode = std::pow(2, data.minCodeSize);
     const uint16_t EOICode = clearCode + 1;
-    const uint16_t numSingleCodes = std::min(256, (int)std::pow(2, data.minCodeSize));
  
     // Stream of all codes retrieved so far
     std::vector<uint8_t> indexStream;
 
-    // LZW code table
-    std::vector<std::vector<uint8_t>> codeTableBase;
-    codeTableBase.reserve(MAX_CODE_TABLE_SIZE);
-    for (uint16_t c = 0; c < numSingleCodes; c++)
-        codeTableBase.push_back({(uint8_t)c});
-    codeTableBase.push_back({}); // clear code
-    codeTableBase.push_back({}); // EOI code
+    // Create the base color table
+    const std::vector<std::vector<uint8_t>> codeTableBase = getBaseCodeTable(data.minCodeSize);
+
+    // Create the current code table
     std::vector<std::vector<uint8_t>> codeTableCurrent = codeTableBase;
+    codeTableCurrent.reserve(MAX_CODE_TABLE_SIZE);
 
     // Current size in bits of each LZW code
     const uint8_t codeSizeBase = data.minCodeSize + 1;
@@ -579,6 +576,20 @@ std::vector<RGBA> GIF::loadColorTable(std::istream& is, unsigned numColors)
 int GIF::getColorTableSize(int bitField)
 {
     return std::pow(2, 1 + bitField);
+}
+
+std::vector<std::vector<uint8_t>> GIF::getBaseCodeTable(int minCodeSize)
+{
+    const uint16_t numColorCodes = std::min(256, (int)std::pow(2, minCodeSize));
+
+    std::vector<std::vector<uint8_t>> table;
+    table.reserve(numColorCodes + 2);
+    for (uint16_t c = 0; c < numColorCodes; c++)
+        table.push_back({(uint8_t)c});
+    table.push_back({}); // clear code
+    table.push_back({}); // EOI code
+
+    return table;
 }
 
 namespace gif
