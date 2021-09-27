@@ -63,13 +63,18 @@ GIF::GIF(std::istream& is)
     // Process blocks for as long as needed
     while (true)
     {
-        try {
+        try
+        {
             auto pair = loadNextFrame(is, globalColorTable);
             frames.push_back(pair.first);
             LOG_DEBUG("Loaded frame #" << frames.size());
-        } catch (const gif::EndOfStreamException& e) {
+        }
+        catch (const gif::EndOfStreamException& e)
+        {
             break;
-        } catch (const gif::GifLoadingException& e) {
+        }
+        catch (const gif::GifLoadingException& e)
+        {
             std::cerr << e << std::endl;
             std::cerr << " -> Stream position: " << is.tellg() << std::endl;
             break;
@@ -89,9 +94,12 @@ void GIF::Save(std::string path, const std::vector<RGBA>& palette, VecInt bounds
 
 void GIF::Add(const Image& img, bool adjustBounds, int idx)
 {
-    if (idx == -1) {
+    if (idx == -1)
+    {
         frames.push_back(img);
-    } else {
+    }
+    else
+    {
         auto iter = frames.begin();
         std::advance(iter, idx);
         frames.insert(iter, img);
@@ -214,13 +222,16 @@ std::pair<Image, uint16_t> GIF::loadNextFrame(std::istream& is, const std::vecto
     // frame or interpret an extension block
     switch (blockType)
     {
-    case BlockType::EXTENSION: {
+    
+    case BlockType::EXTENSION:
+    {
         LOG_DEBUG("EXTENSION BLOCK " << is.tellg());
         readExtensionBlock(is);
         return loadNextFrame(is, globalColorTable);
-    } // case EXTENSION_INTRODUCER
+    } // case BlockType::EXTENSION
 
-    case BlockType::IMAGE: {
+    case BlockType::IMAGE:
+    {
         LOG_DEBUG("IMAGE BLOCK " << is.tellg());
         // Get the image descriptor
         ImageDescriptor desc(is);
@@ -231,21 +242,27 @@ std::pair<Image, uint16_t> GIF::loadNextFrame(std::istream& is, const std::vecto
         auto lzwCodes = decompressLZW(rawData);
 
         // Read color codes and create image
-        if (desc.flags.localTableFlag) {
+        if (desc.flags.localTableFlag)
+        {
             std::vector<RGBA> localColorTable = loadColorTable(is, getColorTableSize(desc.flags.colorTableSize));
             image = decodeImage(VecInt(desc.width, desc.height), lzwCodes, localColorTable);
-        } else if (globalColorTable.size()) {
+        }
+        else if (globalColorTable.size())
+        {
             image = decodeImage(VecInt(desc.width, desc.height), lzwCodes, globalColorTable);
-        } else {
+        }
+        else
+        {
             throw gif::FormatException("Missing global and local color table!");
         }
         break;
-    } // case IMAGE_SEPARATOR
+    } // case BlockType::IMAGE
 
     case BlockType::END_OF_FILE:
         throw gif::EndOfStreamException("Encountered end of file byte");
 
-    default: {
+    default:
+    {
         std::ostringstream errstr;
         errstr << "Unrecognized first byte of block: 0x" << std::hex
                << std::setw(2) << std::setfill('0') << (int)blockType;
@@ -313,7 +330,9 @@ GIF::LZWFrame GIF::loadImageData(std::istream& is)
     {
         throw gif::FormatException("LZW minimum code size is too big: " +
                                    std::to_string(frame.minCodeSize));
-    } else if (frame.minCodeSize < 2) {
+    }
+    else if (frame.minCodeSize < 2)
+    {
         throw gif::FormatException("LZW minimum code size is too small: " +
                                    std::to_string(frame.minCodeSize));
     }
@@ -335,18 +354,24 @@ std::vector<uint8_t> GIF::loadSubBlocks(std::istream& is)
         // Get size of the next block
         is.read((char*)&nextBlockSize, 1);
 
-        if (nextBlockSize) {
+        if (nextBlockSize)
+        {
             LOG_DEBUG(" -> Encountered sub-block of size " << (int)nextBlockSize << " at " << is.tellg());
             is.seekg(nextBlockSize, is.cur);
-        } else {
+        }
+        else
+        {
             LOG_DEBUG(" -> Final sub-block encountered; next block begins at " << is.tellg());
             break;
         }
 
-        if (is) {
+        if (is)
+        {
             totalSeeked += long(nextBlockSize) + 1;
             subBlockSizes.push_back(nextBlockSize);
-        } else {
+        }
+        else
+        {
             throw gif::BadStreamException("Couldn't read sub-block");
         }
     }
@@ -367,10 +392,13 @@ std::vector<uint8_t> GIF::loadSubBlocks(std::istream& is)
         uint8_t checkThisBlockSize;
         is.read((char*)&checkThisBlockSize, 1);
 
-        if (checkThisBlockSize == thisBlockSize) {
+        if (checkThisBlockSize == thisBlockSize)
+        {
             is.read(ptr, thisBlockSize);
             ptr += thisBlockSize;
-        } else {
+        }
+        else
+        {
             std::ostringstream os;
             os << std::hex << std::setfill('0')
                << "Sub-block size mismatch: Expected 0x" << std::setw(2)
@@ -458,7 +486,8 @@ std::vector<uint8_t> GIF::decompressLZW(const LZWFrame& data)
                   << ")");
 
         // Decide what to do with this code
-        if (thisCode == clearCode) {
+        if (thisCode == clearCode)
+        {
             LOG_DEBUG(" -> CC");
             // Reset the code table and code size
             codeTableCurrent = codeTableBase;
@@ -466,10 +495,14 @@ std::vector<uint8_t> GIF::decompressLZW(const LZWFrame& data)
             // Set prevCode to CC
             prevCode = thisCode;
             continue;
-        } else if (thisCode == EOICode) {
+        }
+        else if (thisCode == EOICode)
+        {
             LOG_DEBUG(" -> EOI");
             break;
-        } else if (thisCode < codeTableCurrent.size()) {
+        }
+        else if (thisCode < codeTableCurrent.size())
+        {
             // output {CODE} to index stream
             for (auto idx : codeTableCurrent.at(thisCode)) indexStream.push_back(idx);
 
@@ -481,7 +514,9 @@ std::vector<uint8_t> GIF::decompressLZW(const LZWFrame& data)
             newCode.push_back(K);
             codeTableCurrent.push_back(newCode);
 
-        } else {
+        }
+        else
+        {
             const auto& prevCodeVal = codeTableCurrent.at(prevCode);
             // let K be the first index of {CODE-1}
             uint8_t K = prevCodeVal.at(0);
@@ -532,9 +567,12 @@ Image GIF::decodeImage(VecInt bounds, const std::vector<uint8_t>& indices, const
         {
             if (idx >= indices.size()) break;
 
-            try {
+            try
+            {
                 image[x][y] = colorTable.at(indices[idx]);
-            } catch(const std::exception& e) {
+            }
+            catch(const std::exception& e)
+            {
                 throw gif::FormatException("Index " + std::to_string(indices[idx]) +
                                            " exceeds the color table of size:" +
                                            std::to_string(colorTable.size()));
