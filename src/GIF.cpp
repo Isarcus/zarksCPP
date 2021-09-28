@@ -13,6 +13,9 @@
 namespace zmath
 {
 
+// For structs and exceptions in GIFStructs.h
+using namespace gif;
+
 GIF::GIF()
 {}
 
@@ -135,70 +138,6 @@ VecInt GIF::Bounds() const
         return VecInt(0, 0);
 }
 
-//                //
-// Struct Methods //
-//                //
-
-GIF::LSDFlags::LSDFlags()
-    : colorTableSize(0)
-    , sortFlag(0)
-    , colorResolution(0)
-    , globalTableFlag(0)
-{}
-
-GIF::LSDFlags::LSDFlags(uint8_t flagByte)
-    : colorTableSize  ( flagByte & COLOR_TABLE_SIZE)
-    , sortFlag        ((flagByte & SORT_FLAG)               >> 3)
-    , colorResolution ((flagByte & COLOR_RESOLUTION)        >> 4)
-    , globalTableFlag ((flagByte & GLOBAL_COLOR_TABLE_FLAG) >> 7)
-{}
-
-GIF::IDFlags::IDFlags()
-    : colorTableSize(0)
-    , __reservedBits(0)
-    , sortFlag(0)
-    , interlaceFlag(0)
-    , localTableFlag(0)
-{}
-
-GIF::IDFlags::IDFlags(uint8_t flagByte)
-    : colorTableSize ( flagByte & COLOR_TABLE_SIZE)
-    , __reservedBits ((flagByte & RESERVED_BITS)          >> 3)
-    , sortFlag       ((flagByte & SORT_FLAG)              >> 5)
-    , interlaceFlag  ((flagByte & INTERLACE_FLAG)         >> 6)
-    , localTableFlag ((flagByte & LOCAL_COLOR_TABLE_FLAG) >> 7)
-{}
-
-GIF::ImageDescriptor::ImageDescriptor(std::istream& is)
-{
-    uint8_t buf[9];
-    const uint8_t *ptr = buf;
-
-    is.read((char*)buf, 9);
-
-    offsetWidth = ReadBuf<uint16_t>(ptr, Endian::Little);
-    offsetHeight = ReadBuf<uint16_t>(ptr, Endian::Little);
-    width = ReadBuf<uint16_t>(ptr, Endian::Little);
-    height = ReadBuf<uint16_t>(ptr, Endian::Little);
-    flags = IDFlags(*ptr);
-}
-
-std::ostream& operator<<(std::ostream& os, const GIF::ImageDescriptor& desc)
-{
-    return os
-        << "Image descriptor data:\n"
-        << " -> offsetWidth:  " << desc.offsetWidth << "\n"
-        << " -> offsetHeight: " << desc.offsetHeight << "\n"
-        << " -> width:  " << desc.width << "\n"
-        << " -> height: " << desc.height << "\n"
-        << " -> flags:\n"
-        << "   -> colorTableSize: " << desc.flags.colorTableSize << "\n"
-        << "   -> __reservedBits: " << desc.flags.__reservedBits << "\n"
-        << "   -> sortFlag:       " << desc.flags.sortFlag << "\n"
-        << "   -> interlaceFlag:  " << desc.flags.interlaceFlag << "\n"
-        << "   -> localTableFlag: " << desc.flags.localTableFlag << "\n";
-}
-
 //                 //
 // Private Methods //
 //                 //
@@ -314,7 +253,7 @@ void GIF::readExtensionBlock(std::istream& is)
     } // switch
 }
 
-GIF::LZWFrame GIF::loadImageData(std::istream& is)
+LZWFrame GIF::loadImageData(std::istream& is)
 {
     LZWFrame frame;
 
@@ -643,54 +582,5 @@ std::vector<std::vector<uint8_t>> GIF::getBaseCodeTable(int minCodeSize)
 
     return table;
 }
-
-namespace gif
-{
-
-//                    //
-// Helpful Exceptions //
-//                    //
-
-// GifLoadingException
-GifLoadingException::GifLoadingException(std::string error)
-    : std::runtime_error(error)
-{}
-
-std::ostream& operator<<(std::ostream& os, const GifLoadingException& e)
-{
-    return os << e.getErrorName() << ": " << e.what();
-}
-
-// EndOfStreamException
-EndOfStreamException::EndOfStreamException(std::string error)
-    : GifLoadingException(error)
-{}
-
-std::string EndOfStreamException::getErrorName() const
-{
-    return "[EndOfStreamException]";
-}
-
-// BadStreamException
-BadStreamException::BadStreamException(std::string error)
-    : GifLoadingException(error)
-{}
-
-std::string BadStreamException::getErrorName() const
-{
-    return "[BadStreamException]";
-}
-
-// FormatException
-FormatException::FormatException(std::string error)
-    : GifLoadingException(error)
-{}
-
-std::string FormatException::getErrorName() const
-{
-    return "[FormatException]";
-}
-
-} // namespace gif
 
 } // namespace zmath
