@@ -1,5 +1,6 @@
 #include <zarks/math/Map.h>
 #include <zarks/internal/zmath_internals.h>
+#include <zarks/io/binary.h>
 
 #include <cmath>
 #include <fstream>
@@ -472,18 +473,8 @@ void Map::Save(std::string path)
 	// Write the actual map data, little-endian
 	LOOP_MAP
 	{
-		double valDouble = data[x][y];
-		uint64_t val = *reinterpret_cast<uint64_t*>(&valDouble);
-
-		uint8_t arr[8];
-		arr[0] = val;
-		arr[1] = val >> 8;
-		arr[2] = val >> 16;
-		arr[3] = val >> 24;
-		arr[4] = val >> 32;
-		arr[5] = val >> 40;
-		arr[6] = val >> 48;
-		arr[7] = val >> 56;
+		uint8_t arr[sizeof(double)];
+		ToBytes(arr, data[x][y], Endian::Little);
 
 		file.write((char*)arr, sizeof(arr));
 	}

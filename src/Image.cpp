@@ -407,7 +407,7 @@ Image& zmath::Image::BlurGaussian(double sigma, bool blurAlpha)
 		VecInt imgPos(x,y);
 
 		double influence = 0;
-		std::array<double, 4> rgba;
+		std::array<double, 4> rgba{};
 		for (const auto& point : points)
 		{
 			const VecInt pointPos = point.first + imgPos;

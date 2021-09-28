@@ -3,7 +3,6 @@
 #include <cmath>
 #include <exception>
 #include <iostream>
-#include <cassert>
 
 namespace zmath
 {
@@ -68,7 +67,7 @@ namespace zmath
 		case 3:  return A;
 		}
 
-		assert(false);
+		throw std::runtime_error("Invalid RGBA subscript: " + std::to_string(i));
 	}
 
 	const uint8& RGBA::operator[](int i) const
@@ -81,7 +80,7 @@ namespace zmath
 		case 3:  return A;
 		}
 
-		assert(false);
+		throw std::runtime_error("Invalid RGBA subscript: " + std::to_string(i));
 	}
 
 	bool RGBA::operator==(RGBA c) const
