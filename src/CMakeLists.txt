@@ -13,6 +13,7 @@ add_library(${ZARKS_LIB_NAME}
     numerals.cpp
     Rect.cpp
     Shape3D.cpp
+    StreamKeeper.cpp
     Tessellation3D.cpp
     Triangle3D.cpp
     Vec3.cpp
