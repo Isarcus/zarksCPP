@@ -4,6 +4,12 @@
 #include <algorithm>
 #include <cstring>
 
+#define ENABLE_IF_CHAR( char_t )                             \
+			  typename std::enable_if<                       \
+				  std::is_same<char_t, char>::value ||       \
+				  std::is_same<char_t, unsigned char>::value \
+		      >::type * = nullptr
+
 namespace zmath
 {
 	enum class Endian {
@@ -32,12 +38,8 @@ namespace zmath
 	// @param val the variable to serialize.
 	// @param byteOrder the desired endianness with which to
 	//        serialize `val`.
-	template <typename var_T, typename buf_T,
-              typename std::enable_if<
-                 std::is_same<buf_T, char>::value ||
-                 std::is_same<buf_T, unsigned char>::value
-			  >::type* = nullptr>
-	void ToBytes(buf_T* buf, const var_T val, Endian byteOrder)
+	template <typename var_T, typename buf_T, ENABLE_IF_CHAR(buf_T)>
+	void ToBytes(buf_T *buf, const var_T val, Endian byteOrder)
 	{
 		memcpy(buf, (const char*)(&val), sizeof(var_T));
 		if (CPU_ENDIANNESS != byteOrder)
@@ -51,11 +53,7 @@ namespace zmath
 	// @param bufByteOrder the endianness with which
 	//        the buffer was originally written to.
 	// @return A deserialized variable of type var_T.
-	template <typename var_T, typename buf_T = char,
-              typename std::enable_if<
-                 std::is_same<buf_T, char>::value ||
-                 std::is_same<buf_T, unsigned char>::value
-			  >::type* = nullptr>
+	template <typename var_T, typename buf_T = char, ENABLE_IF_CHAR(buf_T)>
 	var_T FromBytes(const buf_T* buf, Endian bufByteOrder)
 	{
 		var_T var;
@@ -75,11 +73,7 @@ namespace zmath
 	// @param val the value to write to the buffer.
 	// @param bufByteOrder the endianness with which to
 	//        serialize `val`.
-	template <typename var_T, typename buf_T,
-		typename std::enable_if<
-			std::is_same<buf_T, char>::value ||
-			std::is_same<buf_T, unsigned char>::value
-		>::type* = nullptr>
+	template <typename var_T, typename buf_T, ENABLE_IF_CHAR(buf_T)>
 	void WriteBuf(const buf_T*& buf, var_T val, Endian bufByteOrder)
 	{
 		ToBytes(AdvancePtr(buf, sizeof(var_T)), val, bufByteOrder);
@@ -93,13 +87,20 @@ namespace zmath
 	// @param bufByteOrder the endianness with which the
 	//        buffer was originally written to.
 	// @return A deserialized variable of type var_T.
-	template <typename var_T, typename buf_T = char,
-			typename std::enable_if<
-				std::is_same<buf_T, char>::value ||
-				std::is_same<buf_T, unsigned char>::value
-			>::type* = nullptr>
+	template <typename var_T, typename buf_T = char, ENABLE_IF_CHAR(buf_T)>
 	var_T ReadBuf(const buf_T*& buf, Endian bufByteOrder)
 	{
 		return FromBytes<var_T>(AdvancePtr(buf, sizeof(var_T)), bufByteOrder);
+	}
+
+	// @param buf the buffer to copy from.
+	// @param n the number of bytes to copy from `buf`.
+	// @return a dynamically allocated array with the first `n` bytes of byf.
+	template <typename ret_T = uint8_t, typename buf_T, ENABLE_IF_CHAR(ret_T), ENABLE_IF_CHAR(buf_T)>
+	ret_T* bufcpy(const buf_T* buf, size_t n)
+	{
+		ret_T* newbuf = new ret_T[n];
+		memcpy((char*)newbuf, (char*)buf, n);
+		return newbuf;
 	}
 }
