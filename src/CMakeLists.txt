@@ -7,6 +7,7 @@ add_library(${ZARKS_LIB_NAME}
     Image.cpp
     Map.cpp
     Mat3.cpp
+    MemBuffer.cpp
     noise2D.cpp
     NoiseHash.cpp
     Noiser.cpp
