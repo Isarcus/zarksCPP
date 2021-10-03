@@ -100,7 +100,7 @@ namespace zmath
 	ret_T* bufcpy(const buf_T* buf, size_t n)
 	{
 		ret_T* newbuf = new ret_T[n];
-		memcpy((char*)newbuf, (char*)buf, n);
+		memcpy(newbuf, buf, n);
 		return newbuf;
 	}
 }
