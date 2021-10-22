@@ -51,10 +51,10 @@ IDFlags::IDFlags(uint8_t flagByte)
 
 ImageDescriptor::ImageDescriptor(std::istream& is)
 {
-    uint8_t buf[9];
+    uint8_t buf[IMAGE_DESCRIPTOR_LENGTH];
     const uint8_t *ptr = buf;
 
-    is.read((char*)buf, 9);
+    is.read((char*)buf, IMAGE_DESCRIPTOR_LENGTH);
 
     offsetWidth = ReadBuf<uint16_t>(ptr, Endian::Little);
     offsetHeight = ReadBuf<uint16_t>(ptr, Endian::Little);

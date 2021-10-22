@@ -13,6 +13,7 @@ namespace gif
     static constexpr const char* HEADER_87a = "GIF87a";
 
     static constexpr uint16_t MAX_CODE_TABLE_SIZE = 0xFFF;
+    static constexpr size_t IMAGE_DESCRIPTOR_LENGTH = 9;
 
     // Enum of all possible block types in a GIF.
     // The first byte of any new block *must* be one of these
@@ -92,7 +93,7 @@ namespace gif
     typedef struct ImageDescriptor
     {
         // Requires that the stream has *just* read the first byte
-        // of an image descriptor, i.e. IMAGE_SEPARATOR.
+        // of an image descriptor, i.e. BlockType::IMAGE.
         ImageDescriptor(std::istream& is);
 
         uint16_t offsetWidth, offsetHeight;
