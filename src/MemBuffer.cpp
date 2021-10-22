@@ -14,7 +14,7 @@ MemBuffer::MemBuffer(uint8_t* buf, size_t bytes)
     , current(data)
 {}
 
-MemBuffer::MemBuffer(std::istream& buf, size_t bytes = 0)
+MemBuffer::MemBuffer(std::istream& buf, size_t bytes)
     : data(new uint8_t[bytes])
     , end(data + bytes)
     , current(data)
