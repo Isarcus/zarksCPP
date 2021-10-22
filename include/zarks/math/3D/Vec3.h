@@ -17,8 +17,6 @@ namespace zmath
 		Vec3& operator= (const Vec3& v) = default;
 		Vec3& operator= (Vec3&& v) = default;
 
-		Vec3& Set(double x, double y, double z);
-
 		double Dot(const Vec3& v) const;
 		double DistForm(const Vec3& v) const;
 		double DistForm() const;
@@ -32,8 +30,7 @@ namespace zmath
 		Vec3 RotateY(double theta, const Vec3& around) const;
 		Vec3 RotateZ(double theta, const Vec3& around) const;
 
-		Vec3 Scale(double by, const Vec3& around = Vec3()) const;
-		Vec3 Scale(double scaleX, double scaleY, double scaleZ, Vec3 around = Vec3()) const;
+		Vec3 Scale(const Vec3& by, const Vec3& around = Vec3()) const;
 
 		Vec3 operator+  (const Vec3& v) const;
 		Vec3 operator-  (const Vec3& v) const;

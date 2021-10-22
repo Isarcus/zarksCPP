@@ -23,14 +23,6 @@ namespace zmath
 		, Z(val)
 	{}
 
-	Vec3& Vec3::Set(double x, double y, double z)
-	{
-		X = x;
-		Y = y;
-		Z = z;
-		return *this;
-	}
-
 	double Vec3::Dot(const Vec3& v) const
 	{
 		return X*v.X + Y*v.Y + Z*v.Z;
@@ -86,17 +78,12 @@ namespace zmath
 		return around + (*this - around).RotateZ(theta);
 	}
 
-	Vec3 Vec3::Scale(double by, const Vec3& around) const
-	{
-		return (*this) + ((*this) - around) * (by - 1);
-	}
-
-	Vec3 Vec3::Scale(double scaleX, double scaleY, double scaleZ, Vec3 around) const
+	Vec3 Vec3::Scale(const Vec3& by, const Vec3& around) const
 	{
 		return Vec3(
-			X + (X - around.X) * (scaleX - 1),
-			Y + (Y - around.Y) * (scaleY - 1),
-			Z + (Z - around.Z) * (scaleZ - 1)
+			X + (X - around.X) * (by.X - 1),
+			Y + (Y - around.Y) * (by.Y - 1),
+			Z + (Z - around.Z) * (by.Z - 1)
 		);
 	}
 

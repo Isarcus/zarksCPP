@@ -69,7 +69,7 @@ namespace zmath
 
     Shape3D& Shape3D::Scale(double scaleX, double scaleY, double scaleZ, Vec3 around)
     {
-        for (Vec3& v : vertices) v = v.Scale(scaleX, scaleY, scaleZ, around);
+        for (Vec3& v : vertices) v = v.Scale(Vec3(scaleX, scaleY, scaleZ), around);
 
         return *this;
     }

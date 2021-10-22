@@ -184,7 +184,7 @@ namespace zmath
 		{
 			for (Vec3& vertex : tri.vertices)
 			{
-				vertex = vertex.Scale(scaleX, scaleY, scaleZ, around);
+				vertex = vertex.Scale(Vec3(scaleX, scaleY, scaleZ), around);
 			}
 		}
 
