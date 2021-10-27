@@ -14,16 +14,15 @@ namespace zmath
 	template <typename T>
 	std::ostream& operator<<(std::ostream&, const VecT<T>&);
 
-	template <class T>
-	class VecT
+	template <typename T>
+	struct VecT
 	{
-	public:
 		T X, Y;
 
 		VecT();
 		VecT(T x, T y);
-		VecT(const VecT& vec);
-		VecT(VecT&& vec);
+		VecT(const VecT& vec) = default;
+		VecT(VecT&& vec) = default;
 
 		T Min() const;
 		T Max() const;
@@ -83,7 +82,11 @@ namespace zmath
 
 	typedef VecT<int> VecInt;
 	typedef VecT<double> Vec;
-}
+} // namespace zmath
+
+//                //
+// Implementation //
+//                //
 
 namespace zmath
 {
@@ -98,18 +101,6 @@ template <typename T>
 inline VecT<T>::VecT(T x, T y)
 	: X(x)
 	, Y(y)
-{}
-
-template <typename T>
-inline VecT<T>::VecT(const VecT& vec)
-	: X(vec.X)
-	, Y(vec.Y)
-{}
-
-template <typename T>
-inline VecT<T>::VecT(VecT&& vec)
-	: X(vec.X)
-	, Y(vec.Y)
 {}
 
 template <typename T>

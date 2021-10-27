@@ -8,10 +8,10 @@ namespace zmath
 	typedef struct Triangle3D {
 		std::array<Vec3, 3> vertices;
 
+		Triangle3D() = default;
 		Triangle3D(Vec3 v1, Vec3 v2, Vec3 v3);
 
 		Triangle3D Set(Vec3 v1, Vec3 v2, Vec3 v3);
-		Triangle3D operator=(Triangle3D tri);
 		
 		Vec3 Centroid() const;
 		Vec3 Min() const;
@@ -29,6 +29,6 @@ namespace zmath
 		Triangle3D RotateY(double theta, Vec3 around = Vec3()) const;
 		Triangle3D RotateZ(double theta, Vec3 around = Vec3()) const;
 
-		friend std::ostream& operator<<(std::ostream& out, Triangle3D tri);
+		friend std::ostream& operator<<(std::ostream& out, const Triangle3D& tri);
 	} Triangle3D;
 }

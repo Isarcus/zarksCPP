@@ -13,10 +13,11 @@
 
 namespace zmath
 {
-	class Image : public Sampleable2D<RGBA> {
+	class Image : public Sampleable2D<RGBA>
+	{
 	public:
 		Image(int width, int height, RGBA col = RGBA::Black());
-		Image(zmath::VecInt bounds_in, RGBA col = RGBA::Black());
+		Image(VecInt bounds_in, RGBA col = RGBA::Black());
 		Image(const Map& m);
 		Image(const Map& m, Scheme scheme);
 		Image(std::string path);
@@ -28,12 +29,11 @@ namespace zmath
 
 		VecInt Bounds() const;
 
-		Image& operator= (const Image& img);
-		Image& operator= (Image&& img);
+		Image& operator=(const Image& img);
+		Image& operator=(Image&& img);
 
 		// Copy/paste
 
-		std::unique_ptr<Image> Copy(zmath::VecInt min, zmath::VecInt max) const;
 		Image& Paste(const Image& img, VecInt at);
 		Image& Tile(const Image& tile, VecInt tileSize, VecInt offset = VecInt(0, 0));
 
@@ -45,7 +45,7 @@ namespace zmath
 		Image& Negative();
 		Image& RestrictPalette(const std::vector<RGBA>& palette);
 		Image& Fractalify(int octaves);
-		Image& Droppify(std::array<Vec, 3> origins, std::array<double, 3> periods);
+		Image& Droppify(const std::array<Vec, 3>& origins, const std::array<double, 3>& periods);
 		Image& BlurGaussian(double sigma, bool blurAlpha = true);
 		Image& PixelateGaussian(const Map& map, double sigma);
 		Image& EnhanceContrast(double sigma);

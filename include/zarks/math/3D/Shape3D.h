@@ -9,12 +9,13 @@ namespace zmath
 	class Shape3D
 	{
 	public:
-		Shape3D() noexcept;
-		Shape3D(const Shape3D& shape) noexcept;
-		Shape3D(std::vector<Vec3> vertices, std::vector<int> indices) noexcept;
+		Shape3D();
+		Shape3D(const Shape3D&) = default;
+		Shape3D(Shape3D&&) = default;
+		Shape3D(const std::vector<Vec3>& vertices, const std::vector<int>& indices);
 
-		Shape3D& operator= (const Shape3D& shape) noexcept;
-		Shape3D& operator= (Shape3D&& shape) noexcept;
+		Shape3D& operator=(const Shape3D& shape) = default;
+		Shape3D& operator=(Shape3D&& shape) = default;
 
 		Shape3D& Add(const Shape3D& shape, bool verticesOnly = false);
 
@@ -38,7 +39,7 @@ namespace zmath
 		//         //
 
 		static Shape3D Polygon(int sides, double radius, Vec3 center);
-		static Shape3D Polygon(const std::vector<Vec3> points2D, bool ccw = true);
+		static Shape3D Polygon(const std::vector<Vec3>& points2D, bool ccw = true);
 
 		static Shape3D RectangularPrism(Vec3 min, Vec3 max);
 		static Shape3D Cube(Vec3 min, double size);
@@ -46,7 +47,7 @@ namespace zmath
 
 		/* @param acceptOrder: Should be true iff vertices are supplied such that (0, 1, 2) create a counterclockwise triangle
 		*  when viewed from the outside and (3) is behind that triangle. */
-		static Shape3D TriangularPyramid(std::array<Vec3, 4> vertices, bool acceptOrder = false);
+		static Shape3D TriangularPyramid(const std::array<Vec3, 4>& vertices, bool acceptOrder = false);
 
 		static Shape3D Sphere(int resolution, double radius, Vec3 center = Vec3());
 
