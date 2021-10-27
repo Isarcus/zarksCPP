@@ -96,7 +96,7 @@ Mat3& Mat3::operator*=(const Mat3& mat3)
 	return *this;
 }
 
-Vec3 zmath::Mat3::operator*(const Vec3& v3)
+Vec3 Mat3::operator*(const Vec3& v3)
 {
 	return Vec3(
 		v3.X*data[0][0] + v3.Y*data[0][1] + v3.Z*data[0][2],

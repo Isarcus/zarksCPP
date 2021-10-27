@@ -597,4 +597,4 @@ void Image::SaveMNIST(std::string path_images, std::string path_labels, int colu
 	std::cout << "Finished writing data for " << columns * 10 << " MNIST images\n";
 }
 
-} // namespace zimg
+} // namespace zmath
