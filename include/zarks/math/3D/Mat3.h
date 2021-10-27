@@ -1,11 +1,11 @@
 #pragma once
 
+#include <zarks/math/3D/Vec3.h>
+
 #include <iostream>
 
 namespace zmath
 {
-	typedef struct Vec3 Vec3;
-
 	class Mat3
 	{
 	public:
@@ -15,7 +15,7 @@ namespace zmath
 		Mat3(const Mat3&& mat3);
 
 		Mat3& operator=(const Mat3& mat3);
-		Mat3& operator=(const double** arr);
+		Mat3& operator=(const double* const* arr);
 
 		double* operator[](int row);
 		const double* operator[](int row) const;
@@ -28,7 +28,7 @@ namespace zmath
 		Mat3& operator-=(const Mat3& mat3);
 		Mat3& operator*=(const Mat3& mat3);
 
-		Vec3 operator*(Vec3 v3);
+		Vec3 operator*(const Vec3& v3);
 
 		static Mat3 Rotation(double thetaX, double thetaY, double thetaZ);
 		static Mat3 RotationX(double theta);

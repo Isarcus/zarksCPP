@@ -1,5 +1,4 @@
 #include <zarks/image/Image.h>
-#include <zarks/internal/zmath_internals.h>
 #include <zarks/math/MapT.h>
 #include <zarks/math/GaussField.h>
 
@@ -28,11 +27,11 @@ Image::Image(int width, int height, RGBA col)
 	: Sampleable2D(VecInt::Max(VecInt(width, height), VecInt(1, 1)), col)
 {}
 
-Image::Image(zmath::VecInt bounds_in, RGBA col)
+Image::Image(VecInt bounds_in, RGBA col)
 	: Image(bounds_in.X, bounds_in.Y, col)
 {}
 
-Image::Image(const zmath::Map& m)
+Image::Image(const Map& m)
 	: Image(m.Bounds())
 {
 	LOOP_IMAGE
@@ -42,7 +41,7 @@ Image::Image(const zmath::Map& m)
 	}
 }
 
-Image::Image(const zmath::Map& m, Scheme scheme)
+Image::Image(const Map& m, Scheme scheme)
 	: Image(m.Bounds())
 {
 	// Create an accurate thresholds array
@@ -196,24 +195,7 @@ Image& Image::operator=(Image&& img)
 	return *this;
 }
 
-std::unique_ptr<Image> Image::Copy(zmath::VecInt min_, zmath::VecInt max_) const
-{
-	VecInt min = VecInt::Max(VecInt::Min(min_, max_), VecInt());
-	VecInt max = VecInt::Min(VecInt::Max(min_, max_), bounds);
-
-	Image* img = new Image(max - min);
-	for (int x = min.X; x < max.X; x++)
-	{
-		for (int y = min.Y; y < max.Y; y++)
-		{
-			img->data[x][y] = data[x - (int)min.X][y - (int)min.Y];
-		}
-	}
-
-	return std::unique_ptr<Image>(img);
-}
-
-Image& Image::Paste(const Image& img, zmath::VecInt at)
+Image& Image::Paste(const Image& img, VecInt at)
 {
 	for (int x = 0; x < img.bounds.X; x++)
 	{
@@ -230,7 +212,7 @@ Image& Image::Paste(const Image& img, zmath::VecInt at)
 	return *this;
 }
 
-Image& zmath::Image::Tile(const Image& tile, VecInt tileSize, VecInt offset)
+Image& Image::Tile(const Image& tile, VecInt tileSize, VecInt offset)
 {
 	Image tileAdj = tile;
 	tileAdj.Resize(tileSize);
@@ -253,7 +235,7 @@ Image& zmath::Image::Tile(const Image& tile, VecInt tileSize, VecInt offset)
 	return *this;
 }
 
-Image& zmath::Image::Resize(VecInt to_bounds)
+Image& Image::Resize(VecInt to_bounds)
 {
 	Image img(to_bounds);
 
@@ -273,12 +255,12 @@ Image& zmath::Image::Resize(VecInt to_bounds)
 	return *this = img;
 }
 
-Image& zmath::Image::Resize(double scaleFactor)
+Image& Image::Resize(double scaleFactor)
 {
 	return Resize(Vec(bounds) * scaleFactor);
 }
 
-Image& zmath::Image::Clear(RGBA col)
+Image& Image::Clear(RGBA col)
 {
 	LOOP_IMAGE
 	{
@@ -364,7 +346,7 @@ Image& Image::Fractalify(int octaves)
 	return Fractalify(octaves - 1);
 }
 
-Image& zmath::Image::Droppify(std::array<Vec, 3> origins, std::array<double, 3> periods)
+Image& Image::Droppify(const std::array<Vec, 3>& origins, const std::array<double, 3>& periods)
 {
 	LOOP_IMAGE
 	{
@@ -380,7 +362,7 @@ Image& zmath::Image::Droppify(std::array<Vec, 3> origins, std::array<double, 3> 
 
 		// Adjust intensity of weights
 		double intensity = DistForm<double, 3>(weights);
-		operator/=<double, 3>(weights, intensity);
+		for (auto& w : weights) w /= intensity;
 
 		// Apply weights
 		RGBA& pix = data[x][y];
@@ -394,7 +376,7 @@ Image& zmath::Image::Droppify(std::array<Vec, 3> origins, std::array<double, 3> 
 }
 
 // Blurs an image Gaussianly!
-Image& zmath::Image::BlurGaussian(double sigma, bool blurAlpha)
+Image& Image::BlurGaussian(double sigma, bool blurAlpha)
 {
 	int radius = sigma * 2;
 	GaussField gauss(sigma, 1.0, Vec());
@@ -424,7 +406,7 @@ Image& zmath::Image::BlurGaussian(double sigma, bool blurAlpha)
 			}
 		}
 
-		operator/=<double, 4>(rgba, influence);
+		for (auto& c : rgba) c /= influence;
 
 		imgNew[x][y] = RGBA((uint8)std::min(255.0, std::round(rgba[0])),
 							(uint8)std::min(255.0, std::round(rgba[1])),
@@ -436,7 +418,7 @@ Image& zmath::Image::BlurGaussian(double sigma, bool blurAlpha)
 }
 
 // Warps an image Gaussianly-ish!
-Image& zmath::Image::PixelateGaussian(const Map& map, double sigma)
+Image& Image::PixelateGaussian(const Map& map, double sigma)
 {
 	MapT<std::pair<Vec, double>> transforms(bounds);
 
@@ -486,7 +468,7 @@ Image& zmath::Image::PixelateGaussian(const Map& map, double sigma)
 	return *this;
 }
 
-Image& zmath::Image::EnhanceContrast(double sigma)
+Image& Image::EnhanceContrast(double sigma)
 {
 	Image blurred(*this);
 	blurred.BlurGaussian(sigma);
@@ -536,7 +518,7 @@ void Image::Save(std::string path, unsigned int channels) const
 	delete[] pixels;
 }
 
-void zmath::Image::SaveMNIST(std::string path_images, std::string path_labels, int columns, int emptyBorderSize) const
+void Image::SaveMNIST(std::string path_images, std::string path_labels, int columns, int emptyBorderSize) const
 {
 	constexpr int MNIST_IMG_WIDTH = 28;
 	constexpr int MNIST_IMG_HEIGHT = 28;
@@ -619,4 +601,4 @@ void zmath::Image::SaveMNIST(std::string path_images, std::string path_labels, i
 	std::cout << "Finished writing data for " << columns * 10 << " MNIST images\n";
 }
 
-} // namespace zimg
+} // namespace zmath

@@ -21,23 +21,23 @@ namespace zmath
 		RGBA Negative() const;
 
 		uint8& operator[] (int i);
-		const uint8& operator[] (int i) const;
+		uint8 operator[] (int i) const;
 		bool operator== (RGBA c) const;
 
 		double Brightness(bool accountForAlpha = false) const;
 
 		static RGBA Black();
 		static RGBA White();
-		static RGBA Interpolate(const RGBA& c0, const RGBA& c1, double t);
+		static RGBA Interpolate(RGBA c0, RGBA c1, double t);
 
-		static double Distance(const RGBA& c0, const RGBA& c1);
+		static double Distance(RGBA c0, RGBA c1);
 
-		friend std::ostream& operator<<(std::ostream& os, const RGBA& c);
+		friend std::ostream& operator<<(std::ostream& os, RGBA c);
 	} RGBA;
 
 	typedef struct Scheme {
-		Scheme(std::vector<RGBA> colors, std::vector<double> thresholds);
-		Scheme(std::vector<RGBA> colors);
+		Scheme(const std::vector<RGBA>& colors, const std::vector<double>& thresholds);
+		Scheme(const std::vector<RGBA>& colors);
 
 		std::vector<RGBA> colors;
 		std::vector<double> thresholds; // should always be n-2

@@ -20,14 +20,12 @@ namespace zmath
 	class Tessellation3D {
 	public:
 		Tessellation3D() noexcept;
-		Tessellation3D(Triangle3D* triangles, int numTri);
-		Tessellation3D(double* vertices, int numTri);
+		Tessellation3D(const double* vertices, int numTri);
 		Tessellation3D(const Map& map, Vec3 scale = Vec3(1, 1, 1), bool fillSides = true, bool fillBase = true);
 
-		void Print() const;
 		std::array<Vec3, 2> Bounds() const;
 
-		Tessellation3D& Add(Triangle3D tri);
+		Tessellation3D& Add(const Triangle3D& tri);
 		Tessellation3D& Add(const Tessellation3D& shape);
 		Tessellation3D& Add(Vec3 v1, Vec3 v2, Vec3 v3);
 
@@ -60,7 +58,7 @@ namespace zmath
 		// STL WRITING //
 		//             //
 
-		static void WriteVertex(std::ofstream& f, const Vec3& v);
+		static void WriteVertex(std::ofstream& f, Vec3 v);
 
 		static Tessellation3D LoadSTL(std::ifstream& f);
 
