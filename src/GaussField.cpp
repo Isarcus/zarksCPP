@@ -98,7 +98,7 @@ Vec GaussField::computeDimensionalWeights(double x, double y) const
 	);
 }
 
-constexpr double GaussField::computeWeight(double distance, double sigma)
+double GaussField::computeWeight(double distance, double sigma)
 {
 	return std::pow(distance / sigma, 2) / 2.0;
 }

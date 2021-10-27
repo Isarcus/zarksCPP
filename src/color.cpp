@@ -8,14 +8,14 @@
 namespace zmath
 {
 
-	zmath::RGBA::RGBA(uint8 r, uint8 g, uint8 b, uint8 a)
+	RGBA::RGBA(uint8 r, uint8 g, uint8 b, uint8 a)
 		: R(r)
 		, G(g)
 		, B(b)
 		, A(a)
 	{ }
 
-	zmath::RGBA::RGBA(uint8 r, uint8 g, uint8 b)
+	RGBA::RGBA(uint8 r, uint8 g, uint8 b)
 		: R(r)
 		, G(g)
 		, B(b)
@@ -68,10 +68,10 @@ namespace zmath
 		case 3:  return A;
 		}
 
-		assert(false);
+		throw std::runtime_error("Invalid RGBA index: " + std::to_string(i));
 	}
 
-	const uint8& RGBA::operator[](int i) const
+	uint8 RGBA::operator[](int i) const
 	{
 		switch (i)
 		{
@@ -81,7 +81,7 @@ namespace zmath
 		case 3:  return A;
 		}
 
-		assert(false);
+		throw std::runtime_error("Invalid RGBA index: " + std::to_string(i));
 	}
 
 	bool RGBA::operator==(RGBA c) const
@@ -96,15 +96,15 @@ namespace zmath
 
 	RGBA RGBA::Black()
 	{
-		return RGBA();
+		return RGBA{0, 0, 0, 255};
 	}
 
 	RGBA RGBA::White()
 	{
-		return RGBA(255, 255, 255);
+		return RGBA{255, 255, 255, 255};
 	}
 
-	RGBA RGBA::Interpolate(const RGBA& c0, const RGBA& c1, double t)
+	RGBA RGBA::Interpolate(RGBA c0, RGBA c1, double t)
 	{
 		double t0 = 1 - t;
 		return RGBA(
@@ -115,7 +115,7 @@ namespace zmath
 		);
 	}
 
-	double RGBA::Distance(const RGBA& c0, const RGBA& c1)
+	double RGBA::Distance(RGBA c0, RGBA c1)
 	{
 		return std::sqrt(
 			std::pow((int)c0.R - (int)c1.R, 2) +
@@ -128,12 +128,12 @@ namespace zmath
 	//	SCHEME	 //
 	//			 //
 
-	Scheme::Scheme(std::vector<RGBA> colors, std::vector<double> thresholds)
+	Scheme::Scheme(const std::vector<RGBA>& colors, const std::vector<double>& thresholds)
 		: colors(colors)
 		, thresholds(thresholds)
 	{}
 
-	Scheme::Scheme(std::vector<RGBA> colors)
+	Scheme::Scheme(const std::vector<RGBA>& colors)
 		: colors(colors)
 	{
 		thresholds = std::vector<double>(std::max(0, (int)colors.size() - 2));
@@ -143,7 +143,7 @@ namespace zmath
 		}
 	}
 
-	std::ostream& operator<<(std::ostream& os, const RGBA& c)
+	std::ostream& operator<<(std::ostream& os, RGBA c)
 	{
 		return os << "(" << (int)c.R << ", " << (int)c.G << ", " << (int)c.B << ", " << (int)c.A << ")";
 	}

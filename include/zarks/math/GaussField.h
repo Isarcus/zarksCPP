@@ -29,6 +29,6 @@ namespace zmath
 		double amplitude;
 
 		Vec computeDimensionalWeights(double x, double y) const;
-		static constexpr double computeWeight(double distance, double sigma);
+		static double computeWeight(double distance, double sigma);
 	};
 }
