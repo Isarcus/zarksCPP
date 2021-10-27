@@ -4,9 +4,9 @@
 #include <zarks/internal/zmath_internals.h>
 
 #include <cmath>
-#include <exception>
+#include <stdexcept>
 
-#define LOOP_MAP for (int x = 0; x < width; x++) for (int y = 0; y < height; y++) 
+#define LOOP_MAP for (int x = 0; x < bounds.X; x++) for (int y = 0; y < bounds.Y; y++) 
 
 namespace zmath
 {
@@ -33,8 +33,8 @@ namespace zmath
 		void Set(VecInt pt, T val);
 		void Set(int x, int y, T val);
 
-		void operator= (const MapT& m);
-		void operator= (MapT&& m);
+		MapT& operator= (const MapT& m);
+		MapT& operator= (MapT&& m);
 
 		// Map characteristics
 
@@ -81,8 +81,6 @@ namespace zmath
 
 	private:
 		VecInt bounds;
-		int& width;
-		int& height;
 		T** data;
 	};
 }
@@ -97,8 +95,6 @@ namespace zmath
 template<typename T>
 inline MapT<T>::MapT(VecInt bounds)
 	: bounds(bounds)
-	, width(bounds.X)
-	, height(bounds.Y)
 	, data(alloc2d<T>(bounds.X, bounds.Y))
 {}
 
@@ -122,7 +118,7 @@ inline MapT<T>::MapT(MapT&& map)
 template<typename T>
 inline MapT<T>::~MapT()
 {
-	free2d<T>(data, width);
+	free2d<T>(data, bounds.X);
 }
 
 template<typename T>
@@ -192,19 +188,32 @@ inline void MapT<T>::Set(int x, int y, T val)
 }
 
 template<typename T>
-inline void MapT<T>::operator= (const MapT& m)
+inline MapT<T>& MapT<T>::operator= (const MapT& m)
 {
 	bounds = m.bounds;
 	LOOP_MAP
 	{
 		data[x][y] = m[x][y];
 	}
+
+	return *this;
 }
 
 template<typename T>
-inline void MapT<T>::operator= (MapT&& m)
+inline MapT<T>& MapT<T>::operator= (MapT&& m)
 {
-	*this = m;
+	if (this != &m)
+	{
+		free2d(data, bounds.X);
+
+		data = m.data;
+		bounds = m.bounds;
+
+		m.data = nullptr;
+		m.bounds = VecInt(0, 0);
+	}
+
+	return *this;
 }
 
 template<typename T>
