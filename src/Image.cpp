@@ -1,5 +1,4 @@
 #include <zarks/image/Image.h>
-#include <zarks/internal/zmath_internals.h>
 #include <zarks/math/MapT.h>
 #include <zarks/math/GaussField.h>
 
@@ -359,7 +358,7 @@ Image& Image::Droppify(const std::array<Vec, 3>& origins, const std::array<doubl
 
 		// Adjust intensity of weights
 		double intensity = DistForm<double, 3>(weights);
-		operator/=<double, 3>(weights, intensity);
+		for (auto& w : weights) w /= intensity;
 
 		// Apply weights
 		RGBA& pix = data[x][y];
@@ -403,7 +402,7 @@ Image& Image::BlurGaussian(double sigma, bool blurAlpha)
 			}
 		}
 
-		operator/=<double, 4>(rgba, influence);
+		for (auto& c : rgba) c /= influence;
 
 		imgNew[x][y] = RGBA((uint8)std::min(255.0, std::round(rgba[0])),
 							(uint8)std::min(255.0, std::round(rgba[1])),

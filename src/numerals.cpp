@@ -1,5 +1,6 @@
 #include <zarks/math/numerals.h>
-#include <zarks/internal/zmath_internals.h>
+
+#include <algorithm>
 
 using std::string;
 
@@ -26,7 +27,7 @@ namespace zmath
 		}
 
 		while ((int)result.size() < minWidth) result += '0';
-		reverse(result);
+		std::reverse(result.begin(), result.end());
 
 		return result;
 	}
