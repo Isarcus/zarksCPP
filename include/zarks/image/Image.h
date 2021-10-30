@@ -27,8 +27,6 @@ namespace zmath
 
 		~Image();
 
-		VecInt Bounds() const;
-
 		Image& operator=(const Image& img);
 		Image& operator=(Image&& img);
 

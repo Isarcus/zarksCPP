@@ -30,7 +30,6 @@ namespace zmath
 		double GetMin() const;
 		double GetMax() const;
 		std::pair<double, double> GetMinMax() const;
-		VecInt Bounds() const;
 
 		double Sum() const;
 		double Mean() const;

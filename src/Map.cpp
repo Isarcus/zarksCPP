@@ -125,11 +125,6 @@ std::pair<double, double> Map::GetMinMax() const
 	return minmax;
 }
 
-VecInt Map::Bounds() const
-{
-	return bounds;
-}
-
 double Map::Sum() const
 {
 	double sum = 0;

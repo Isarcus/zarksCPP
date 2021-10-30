@@ -61,6 +61,8 @@ namespace zmath
 		bool ContainsCoord(Vec pos) const;
 		bool ContainsCoord(VecInt pos) const;
 
+		VecInt Bounds() const;
+
 		void Set(int x, int y, const T& val);
 		void Set(int x, int y, T&& val);
 		void Set(VecInt pos, const T& val);
@@ -118,6 +120,12 @@ namespace zmath
 	inline bool Sampleable2D<T>::ContainsCoord(VecInt pos) const
 	{
 		return (pos >= VecInt(0, 0) && pos < bounds);
+	}
+
+	template<typename T>
+	inline VecInt Sampleable2D<T>::Bounds() const
+	{
+		return bounds;
 	}
 
 	template<typename T>

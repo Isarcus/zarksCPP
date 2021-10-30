@@ -161,11 +161,6 @@ Image::~Image()
 	free2d(data, bounds.X);
 }
 
-VecInt Image::Bounds() const
-{
-	return bounds;
-}
-
 Image& Image::operator=(const Image& img)
 {
 	if (bounds != img.bounds)
