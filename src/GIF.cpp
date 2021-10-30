@@ -16,6 +16,19 @@ namespace zmath
 // For structs and exceptions in GIFStructs.h
 using namespace gif;
 
+//            //
+// SaveConfig //
+//            //
+
+GIF::SaveConfig::SaveConfig()
+    : paletteSize(0)
+    , globalPalette(true)
+{}
+
+//     //
+// GIF //
+//     //
+
 GIF::GIF()
 {}
 
@@ -85,12 +98,7 @@ GIF::GIF(std::istream& is)
     }
 }
 
-void GIF::Save(std::string path, uint8_t paletteSize, VecInt bounds) const
-{
-
-}
-
-void GIF::Save(std::string path, const std::vector<RGBA>& palette, VecInt bounds) const
+void GIF::Save(std::string path, const SaveConfig& cfg) const
 {
 
 }

@@ -12,6 +12,38 @@ namespace zmath
     class GIF
     {
     public:
+        typedef struct SaveConfig
+        {
+            SaveConfig();
+
+            // The dimensions with which to save the GIF.
+            // If not set, defaults to the dimensions of the first frame in
+            // the GIF.
+            VecInt bounds;
+
+            // The duration in seconds of each frame in the GIF. 
+            // If the vector has only one element, then that element will
+            //  determine the duration of all frames in the GIF.
+            // If the vector has fewer elements than there are frames, then
+            //  frame durations will "wrap" around the vector.
+            // If the vector has more elements than there are frames, then
+            //  only the first <number of frames> elements will be used.
+            std::vector<double> durations;
+
+            // The palette to use when coloring the GIF. If set, this will 
+            // serve as the global palette for all frames.
+            std::vector<RGBA> palette;
+
+            // The number of colors to use in the final palette. This value is
+            // ignored if the `palette` vector is not empty. If this is zero
+            // and `palette` is empty, then a default size of 255 will be used.
+            int paletteSize;
+
+            // Whether the palette should be global. This value is ignored if
+            // the `palette` vector is not empty.
+            bool globalPalette;
+        } SaveConfig;
+
         // Create an empty GIF object, ready to accept new frames.
         GIF();
         // Load a GIF from a filepath. If the path does not exist,
@@ -24,24 +56,9 @@ namespace zmath
 
         // Write a GIF to file!
         // @param path the path at which to save the GIF. This should end in ".gif"
-        // @param bounds the bounds of each frame of the GIF.
-        //        You may leave this value as zeroes to default
-        //        to the size of the first frame in the GIF.
-        // @param paletteSize The number of colors to use in the GIF.
-        //        the actual number of colors used will be the passed
-        //        value plus one. Min 1 and max 255 (really 2-256).
-        void Save(std::string path, uint8_t paletteSize = 255, VecInt bounds = VecInt(0, 0)) const;
-
-        // Write a GIF to file!
-        // @param path the path at which to save the GIF. This should end in ".gif"
-        // @param bounds the bounds of each frame of the GIF.
-        //        You may leave this value as zeroes to default
-        //        to the size of the first frame in the GIF.
-        // @param palette the set of colors to use in the GIF.
-        //        If palette.size() < 2, this function throws
-        //        std::runtime_error. If palette.size() > 256,
-        //        only the first 256 colors will be used.
-        void Save(std::string path, const std::vector<RGBA>& palette, VecInt bounds = VecInt(0, 0)) const;
+        // @param cfg the configuration to use in saving this GIF. See SaveConfig
+        //        documentation for a description of each parameter.
+        void Save(std::string path, const SaveConfig& cfg) const;
 
         // Adds a frame to the GIF.
         // @param img the Image to be added
