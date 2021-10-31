@@ -15,8 +15,6 @@ namespace zmath
 		T** data;
 		
 		Sampleable2D();
-		Sampleable2D(int x, int y, const T& val = T());
-		Sampleable2D(VecInt bounds, const T& val = T());
 
 		void BoundCheck(Vec check) const;
 		void BoundCheck(VecInt check) const;
@@ -56,6 +54,9 @@ namespace zmath
 		};
 
 	public:
+		Sampleable2D(int x, int y, const T& val = T());
+		Sampleable2D(VecInt bounds, const T& val = T());
+		
 		virtual ~Sampleable2D();
 
 		bool ContainsCoord(Vec pos) const;
