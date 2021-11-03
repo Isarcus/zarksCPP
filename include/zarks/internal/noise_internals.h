@@ -2,27 +2,6 @@
 
 #include <zarks/math/VecT.h>
 
-#include <unordered_map>
-
-namespace std
-{
-
-// Necessary in order to use VecInt as a key in an std::unordered_map
-template <>
-struct hash<zmath::VecInt>
-{
-    size_t operator()(const zmath::VecInt& k) const
-    {
-        static constexpr size_t multBy = 7919;
-        size_t res = 17;
-        res = res * multBy + hash<unsigned>()(k.X);
-        res = res * multBy + hash<unsigned>()(k.Y);
-        return res;
-    }
-};
-
-} // namespace std
-
 namespace zmath
 {
 
