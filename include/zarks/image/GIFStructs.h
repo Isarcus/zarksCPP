@@ -9,6 +9,7 @@ namespace zmath
 
 namespace gif
 {
+    static constexpr size_t HEADER_SIZE = 6;
     static constexpr const char* HEADER_89a = "GIF89a";
     static constexpr const char* HEADER_87a = "GIF87a";
 

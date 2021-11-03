@@ -2,6 +2,7 @@
 #include <zarks/io/binary.h>
 #include <zarks/io/BitBuffer.h>
 #include <zarks/io/logdefs.h>
+#include <zarks/math/KMeans.h>
 
 #include <fstream>
 #include <cstring>
@@ -15,6 +16,39 @@ namespace zmath
 
 // For structs and exceptions in GIFStructs.h
 using namespace gif;
+
+//               //
+// K-Means Types //
+//               //
+
+struct RGBACounter
+{
+    unsigned R, G, B;
+    RGBACounter() : R(0), G(0), B(0) {}
+
+    void operator+=(zmath::RGBA c)
+    {
+        R += c.R;
+        G += c.G;
+        B += c.B;
+    }
+
+    RGBA operator/(size_t s)
+    {
+        return RGBA(
+            R / s,
+            G / s,
+            B / s);
+    }
+};
+
+struct RGBADist
+{
+    double operator()(RGBA c1, RGBA c2)
+    {
+        return RGBA::Distance(c1, c2);
+    }
+};
 
 //            //
 // SaveConfig //
@@ -100,7 +134,47 @@ GIF::GIF(std::istream& is)
 
 void GIF::Save(std::string path, const SaveConfig& cfg) const
 {
+    // Open and check stream
+    std::ofstream os(path, std::ios_base::binary);
+    if (!os)
+    {
+        throw std::runtime_error("Could not open file at " + path);
+    }
 
+    // Call generic save method
+    Save(os, cfg);
+}
+
+void GIF::Save(std::ostream& os, const SaveConfig& cfg) const
+{
+    // Check stream
+    if (!os)
+    {
+        throw std::runtime_error("Invalid output stream passed to GIF::Save()");
+    }
+
+    // Make sure there are frames to write
+    if (frames.empty())
+    {
+        throw std::runtime_error("Tried to save an empty GIF");
+    }
+
+    // Determine if there is a global color table and size of color table(s)
+    bool global = (cfg.globalPalette) ? true : !cfg.palette.empty();
+    unsigned numColors = (cfg.palette.empty());
+    if (cfg.palette.empty())
+    {
+        numColors = cfg.paletteSize ? std::min(255U, cfg.paletteSize) : 255U;
+    }
+    else
+    {
+        numColors = std::min(cfg.palette.size(), 255UL);
+    }
+
+    // Determine bounds
+    VecInt bounds = (cfg.bounds != VecInt()) ? cfg.bounds : Bounds();
+
+    std::cout << global << numColors << bounds << "\n";
 }
 
 void GIF::Add(const Image& img, bool adjustBounds, int idx)
@@ -146,9 +220,83 @@ VecInt GIF::Bounds() const
         return VecInt(0, 0);
 }
 
-//                 //
-// Private Methods //
-//                 //
+//                      //
+// Helpful SAVE Methods //
+//                      //
+
+void GIF::writeGraphicsExtension(std::ostream& os, double duration)
+{
+    // Determine the duration of this frame
+    duration = std::max(0.0, std::min(duration, 655.35));
+    uint16_t intDur = (uint16_t)(std::round(duration * 100));
+
+    // Create temporary buffer
+    char buf[8]{};
+    buf[0] = (char)BlockType::EXTENSION;
+    buf[1] = (char)ExtensionType::GRAPHICS;
+    buf[2] = 4; // 4 bytes follow this one, plus a null terminator 
+    ToBytes(buf + 4, intDur, Endian::Little);
+
+    // Write temporary buffer to output stream
+    os.write(buf, 8);
+}
+
+void GIF::writeColorTable(std::ostream& os, const std::vector<RGBA>& palette)
+{
+    // Make sure palette size is at least 2
+    if (palette.size() < 2)
+    {
+        throw std::runtime_error("GIF palette must have at least 2 colors");
+    }
+
+    // Determine used and unused colors
+    unsigned usedColors = std::min(palette.size(), 256UL);
+    unsigned unusedColors = std::pow(2, std::ceil(std::log2(usedColors))) - usedColors;
+
+    // Write all used colors to the stream
+    for (unsigned i = 0; i < usedColors; i++)
+    {
+        RGBA col = palette[i];
+        uint8_t rgb[3] { col.R, col.G, col.B };
+        os.write((char*)rgb, 3);
+    }
+
+    // Write all unused colors
+    char blanks[254 * 3]{}; // holds maximum possible length of unused color bytes
+    os.write(blanks, unusedColors * 3);
+}
+
+void GIF::writeFrame(std::ostream& os, const Image& frame, VecInt bounds, const std::vector<RGBA>& palette)
+{
+    // Indices vector for LZW compression
+    std::vector<uint8_t> indices;
+    indices.reserve(bounds.Area());
+
+    // Loop through image and fill indices vector
+    Vec scale = Vec(bounds) / Vec(frame.Bounds());
+    for (int y = 0; y < bounds.Y; y++)
+    {
+        for (int x = 0; x < bounds.X; x++)
+        {
+            // Sample a color from the image and compute the index in the
+            // color table which best represents that color
+            RGBA color = frame.Sample(Vec(x, y) * scale);
+            indices.push_back(ComputeNearestMean<RGBA, RGBADist>(palette, color)); 
+        }
+    }
+
+    // Undergo LZW compression for this frame
+    compressLZW(os, indices, std::ceil(std::log2(palette.size())));
+}
+
+void GIF::compressLZW(std::ostream& os, const std::vector<uint8_t>& indices, uint8_t minBits)
+{
+
+}
+
+//                      //
+// Helpful LOAD Methods //
+//                      //
 
 std::pair<Image, uint16_t> GIF::loadNextFrame(std::istream& is, const std::vector<RGBA>& globalColorTable)
 {

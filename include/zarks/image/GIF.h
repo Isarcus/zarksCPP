@@ -37,7 +37,7 @@ namespace zmath
             // The number of colors to use in the final palette. This value is
             // ignored if the `palette` vector is not empty. If this is zero
             // and `palette` is empty, then a default size of 255 will be used.
-            int paletteSize;
+            unsigned paletteSize;
 
             // Whether the palette should be global. This value is ignored if
             // the `palette` vector is not empty.
@@ -59,6 +59,7 @@ namespace zmath
         // @param cfg the configuration to use in saving this GIF. See SaveConfig
         //        documentation for a description of each parameter.
         void Save(std::string path, const SaveConfig& cfg) const;
+        void Save(std::ostream& os, const SaveConfig& cfg) const;
 
         // Adds a frame to the GIF.
         // @param img the Image to be added
@@ -86,9 +87,45 @@ namespace zmath
     private:
         std::deque<Image> frames;
 
-        //                 //
-        // Helpful Methods //
-        //                 //
+        //                      //
+        // Helpful SAVE Methods //
+        //                      //
+
+        // Write a Graphics Control Extension block.
+        // @param os the output stream to write to.
+        // @param duration the length of time, in seconds, that the next frame
+        //        should be displayed for. This will be rounded to hundredths
+        //        of a second, and the maximum value is (2^16 - 1) / 100, or
+        //        655.35.
+        static void writeGraphicsExtension(std::ostream& os, double duration);
+
+        // Write a color table.
+        // @param os the output stream to write to.
+        // @param palette the colors to write. Order will be preserved.
+        //        If palette.size() < 2, std::runtime_error will be thrown.
+        //        If palette.size() > 256, only the first 256 colors will be used.
+        //        If palette.size() is within the specified range but is not a
+        //        power of 2, the total number of colors written will be rounded
+        //        up to the nearest power of 2.
+        static void writeColorTable(std::ostream& os, const std::vector<RGBA>& palette);
+
+        // Write a single frame as an Image Block.
+        // @param os the output stream to write to.
+        // @param frame the image to write.
+        static void writeFrame(std::ostream& os, const Image& frame, VecInt bounds, const std::vector<RGBA>& palette);
+
+        // Compress a series of 8-bit indices to LZW codes and write them to the
+        //  output stream.
+        // @param os the output stream to write to.
+        // @param indices the indices to compress.
+        // @param minBits the minimum number of bits needed to represent the maximum
+        //        value found in `indices`. When indexing a palette of N colors, this
+        //        must be at least ceil(log2(N)).
+        static void compressLZW(std::ostream& os, const std::vector<uint8_t>& indices, uint8_t minBits);
+
+        //                      //
+        // Helpful LOAD Methods //
+        //                      //
 
         // Load a frame from the GIF input stream, or throw EndOfStreamException 
         //  if there are no more frames to be loaded. If `globalColorTable` is 
