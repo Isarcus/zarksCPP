@@ -205,7 +205,7 @@ namespace zmath
 	inline T Sampleable2D<T>::Sample(Vec pos) const
 	{
 		BoundCheck(pos);
-		if (pos == (VecInt)pos)
+		if (pos == pos.Floor())
 		{
 			return At(pos);
 		}
@@ -214,8 +214,8 @@ namespace zmath
 		const VecInt max = pos.Ceil();
 		const Vec within = pos - min;
 
-		T y0 = interp5(data[min.X][min.Y], data[max.X, min.Y], within.X);
-		T y1 = interp5(data[min.X][max.Y], data[max.X, max.Y], within.X);
+		T y0 = interp5(data[min.X][min.Y], data[max.X][min.Y], within.X);
+		T y1 = interp5(data[min.X][max.Y], data[max.X][max.Y], within.X);
 		T z = interp5(y0, y1, within.Y);
 
 		return T(z);
