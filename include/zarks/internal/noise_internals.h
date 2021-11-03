@@ -7,16 +7,16 @@
 namespace std
 {
 
-// Necessary in order to use Vec as a key in an std::unordered_map
-template <typename T>
-struct hash<zmath::VecT<T>>
+// Necessary in order to use VecInt as a key in an std::unordered_map
+template <>
+struct hash<zmath::VecInt>
 {
-    size_t operator()(const zmath::VecT<T>& k) const
+    size_t operator()(const zmath::VecInt& k) const
     {
-        static constexpr size_t multBy = 73; // 31
+        static constexpr size_t multBy = 7919;
         size_t res = 17;
-        res = res * multBy + hash<T>()(k.X);
-        res = res * multBy + hash<T>()(k.Y);
+        res = res * multBy + hash<unsigned>()(k.X);
+        res = res * multBy + hash<unsigned>()(k.Y);
         return res;
     }
 };
