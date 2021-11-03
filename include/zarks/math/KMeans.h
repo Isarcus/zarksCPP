@@ -10,7 +10,12 @@ namespace zmath
     //  as compared with the < operator.
     template <typename T, typename DISTANCE_CALC>
     size_t ComputeNearestMean(const std::vector<T>& means, const T& val);
-    
+
+    // @return An iterator pointing to the mean with the least distance
+    //  to `val`, as compared with the < operator.
+    template <typename T, typename DISTANCE_CALC, typename ITER_T>
+    ITER_T ComputeNearestMean(ITER_T begin, ITER_T end, const T& val);
+
     // Runs the Naive K Means algorithm, as described at https://en.wikipedia.org/wiki/K-means_clustering.
     // @param T the type of the data and means to run the algorithm on.
     // @param DISTANCE_CALC a type that overloads operator()(const T&, const T&),
@@ -40,7 +45,7 @@ namespace zmath
     template <typename T, typename DISTANCE_CALC>
     size_t ComputeNearestMean(const std::vector<T>& means, const T& val)
     {
-        // Create distance comparator
+        // Create distance calculator
         DISTANCE_CALC distCalc;
 
         // Compute mean with the least distance to val
@@ -58,6 +63,29 @@ namespace zmath
 
         // Return index of nearest mean
         return idx;
+    }
+
+    template <typename T, typename DISTANCE_CALC, typename ITER_T>
+    ITER_T ComputeNearestMean(ITER_T begin, ITER_T end, const T& val)
+    {
+        // Create distance calculator
+        DISTANCE_CALC distCalc;
+
+        // Run compute loop
+        ITER_T ret = begin;
+        auto lowestDist = distCalc(*begin, val);
+        for (ITER_T iter = ++begin; iter != end; iter++)
+        {
+            auto thisDist = distCalc(*iter, val);
+            if (thisDist < lowestDist)
+            {
+                lowestDist = thisDist;
+                ret = iter;
+            }
+        }
+
+        // Return iterator to nearest mean
+        return ret;
     }
 
     template <typename T, typename DISTANCE_CALC, typename SUM_T = T>
