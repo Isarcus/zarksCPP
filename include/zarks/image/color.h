@@ -5,23 +5,21 @@
 
 namespace zmath
 {
-	typedef unsigned char uint8;
-
 	typedef struct RGBA {
-		uint8 R, G, B, A;
+		uint8_t R, G, B, A;
 
-		RGBA(uint8 r, uint8 g, uint8 b, uint8 a);
-		RGBA(uint8 r, uint8 g, uint8 b);
-		RGBA(uint8 brightness, uint8 a);
-		RGBA(uint8 brightness);
+		RGBA(uint8_t r, uint8_t g, uint8_t b, uint8_t a);
+		RGBA(uint8_t r, uint8_t g, uint8_t b);
+		RGBA(uint8_t brightness, uint8_t a);
+		RGBA(uint8_t brightness);
 		RGBA();
 
 		RGBA Opaque() const;
 		RGBA Transparent() const;
 		RGBA Negative() const;
 
-		uint8& operator[] (int i);
-		uint8 operator[] (int i) const;
+		uint8_t& operator[] (int i);
+		uint8_t operator[] (int i) const;
 		bool operator== (RGBA c) const;
 
 		double Brightness(bool accountForAlpha = false) const;

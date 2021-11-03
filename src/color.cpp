@@ -7,28 +7,28 @@
 namespace zmath
 {
 
-RGBA::RGBA(uint8 r, uint8 g, uint8 b, uint8 a)
+RGBA::RGBA(uint8_t r, uint8_t g, uint8_t b, uint8_t a)
 	: R(r)
 	, G(g)
 	, B(b)
 	, A(a)
 { }
 
-RGBA::RGBA(uint8 r, uint8 g, uint8 b)
+RGBA::RGBA(uint8_t r, uint8_t g, uint8_t b)
 	: R(r)
 	, G(g)
 	, B(b)
 	, A(255)
 { }
 
-RGBA::RGBA(uint8 brightness, uint8 a)
+RGBA::RGBA(uint8_t brightness, uint8_t a)
 	: R(brightness)
 	, G(brightness)
 	, B(brightness)
 	, A(a)
 { }
 
-RGBA::RGBA(uint8 brightness)
+RGBA::RGBA(uint8_t brightness)
 	: R(brightness)
 	, G(brightness)
 	, B(brightness)
@@ -57,7 +57,7 @@ RGBA RGBA::Negative() const
 	return RGBA(255 - R, 255 - G, 255 - B, A);
 }
 
-uint8& RGBA::operator[](int i)
+uint8_t& RGBA::operator[](int i)
 {
 	switch (i)
 	{
@@ -70,7 +70,7 @@ uint8& RGBA::operator[](int i)
 	throw std::runtime_error("Invalid RGBA index: " + std::to_string(i));
 }
 
-uint8 RGBA::operator[](int i) const
+uint8_t RGBA::operator[](int i) const
 {
 	switch (i)
 	{
