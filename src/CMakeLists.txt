@@ -5,6 +5,7 @@ add_library(${ZARKS_LIB_NAME}
     GIF.cpp
     GIFStructs.cpp
     Image.cpp
+    LZWTree.cpp
     Map.cpp
     Mat3.cpp
     MemBuffer.cpp
