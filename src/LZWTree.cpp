@@ -66,6 +66,9 @@ void LZWTree::Reset(size_t startCodes)
     {
         root->nodes[i] = new LZWNode(i);
     }
+
+    // Begin descending from root
+    current = root;
 }
 
 size_t LZWTree::Size() const
@@ -75,6 +78,8 @@ size_t LZWTree::Size() const
 
 void LZWTree::recursiveDelete(LZWNode* node)
 {
+    if (node == nullptr) return;
+
     for (auto& pair : node->nodes)
     {
         recursiveDelete(pair.second);
