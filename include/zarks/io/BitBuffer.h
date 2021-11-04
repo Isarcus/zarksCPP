@@ -79,6 +79,11 @@ namespace zmath
         // Access a bit, without bound-checking
         bool operator[](BitAddress addr) const;
 
+        // @return a pointer to the internal data array.
+        uint8_t* Data();
+        // @return a const pointer to the internal data array.
+        const uint8_t* Data() const;
+
         // Read an unsigned value of several bits
         // @param startBit the bit at which to begin reading.
         // @param readBits the number of bits to read. This function will

@@ -195,6 +195,16 @@ bool BitBuffer::operator[](BitAddress addr) const
     return data[addr.byteIdx] & BITS[addr.bitIdx];
 }
 
+uint8_t* BitBuffer::Data()
+{
+    return data;
+}
+
+const uint8_t* BitBuffer::Data() const
+{
+    return data;
+}
+
 size_t BitBuffer::Read(size_t startBit, uint8_t readBits, bool leastToGreatest) const
 {
     if (readBits > BITS_IN_SIZE)
