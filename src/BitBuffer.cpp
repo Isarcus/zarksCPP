@@ -251,6 +251,16 @@ size_t BitBuffer::SizeBytes() const
     return next.Bytes();
 }
 
+size_t BitBuffer::Capacity() const
+{
+    return capacityBytes * 8;
+}
+
+size_t BitBuffer::CapacityBytes() const
+{
+    return capacityBytes;
+}
+
 bool BitBuffer::Full() const
 {
     return next.Bytes() == capacityBytes &&

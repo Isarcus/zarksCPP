@@ -101,13 +101,14 @@ namespace zmath
         //        first, false if the most significant but comes first.
         size_t Read(BitAddress start, uint8_t readBits, bool leastToGreatest = true) const;
 
-        // @return the current size of the buffer in bits. This is
-        //         not guaranteed to be accurate when there are more
-        //         bits in the buffer than can be represented by
-        //         size_t.
+        // @return the current size of the buffer in bits.
         size_t Size() const;
         // @return the current size of the buffer in bytes, rounded up.
         size_t SizeBytes() const;
+        // @return the current capacity of the buffer in bits.
+        size_t Capacity() const;
+        // @return the current capacity of the buffer in bytes.
+        size_t CapacityBytes() const;
         // @return whether the underlying array is currently utilizing
         //         the entire capacity
         bool Full() const;
