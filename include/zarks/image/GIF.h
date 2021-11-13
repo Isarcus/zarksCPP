@@ -12,38 +12,6 @@ namespace zmath
     class GIF
     {
     public:
-        typedef struct SaveConfig
-        {
-            SaveConfig();
-
-            // The dimensions with which to save the GIF.
-            // If not set, defaults to the dimensions of the first frame in
-            // the GIF.
-            VecInt bounds;
-
-            // The duration in seconds of each frame in the GIF. 
-            // If the vector has only one element, then that element will
-            //  determine the duration of all frames in the GIF.
-            // If the vector has fewer elements than there are frames, then
-            //  frame durations will "wrap" around the vector.
-            // If the vector has more elements than there are frames, then
-            //  only the first <number of frames> elements will be used.
-            std::vector<double> durations;
-
-            // The palette to use when coloring the GIF. If set, this will 
-            // serve as the global palette for all frames.
-            std::vector<RGBA> palette;
-
-            // The number of colors to use in the final palette. This value is
-            // ignored if the `palette` vector is not empty. If this is zero
-            // and `palette` is empty, then a default size of 255 will be used.
-            unsigned paletteSize;
-
-            // Whether the palette should be global. This value is ignored if
-            // the `palette` vector is not empty.
-            bool globalPalette;
-        } SaveConfig;
-
         // Create an empty GIF object, ready to accept new frames.
         GIF();
         // Load a GIF from a filepath. If the path does not exist,
@@ -55,11 +23,34 @@ namespace zmath
         GIF(std::istream& is);
 
         // Write a GIF to file!
-        // @param path the path at which to save the GIF. This should end in ".gif"
-        // @param cfg the configuration to use in saving this GIF. See SaveConfig
-        //        documentation for a description of each parameter.
-        void Save(std::string path, const SaveConfig& cfg) const;
-        void Save(std::ostream& os, const SaveConfig& cfg) const;
+        // @param path the path at which to save the GIF. This should end
+        //        in ".gif"
+        // @param bounds the dimensions with which to save the GIF. If left
+        //        uninitialized, defaults to the dimensions of the first
+        //        frame in the GIF.
+        // @param palette the global palette to use for coloring the GIF.
+        //        Only the first 256 colors will be used. If left
+        //        uninitialized, defaults to a palette of size 256.
+        // @param durations the durations of each frame in the GIF.
+        //        If the vector has only one element, then that element will
+        //        determine the duration of all frames in the GIF.
+        //        If the vector has fewer elements than there are frames, then
+        //        frame durations will "wrap" around the vector.
+        //        If the vector has more elements than there are frames, then
+        //        only the first <number of frames> elements will be used.
+        void Save(std::string path,
+                  VecInt bounds = VecInt(),
+                  const std::vector<RGBA>& palette = {},
+                  const std::vector<double>& durations = {}) const;
+
+        // Write a GIF to file!
+        // @param paletteSize the size of the palette to use for each image.
+        // @param global whether all frames should share the same palette.
+        void Save(std::string path,
+                  bool global,
+                  VecInt bounds = VecInt(),
+                  unsigned paletteSize = 256,
+                  const std::vector<double>& durations = {}) const;
 
         // Adds a frame to the GIF.
         // @param img the Image to be added
@@ -91,6 +82,25 @@ namespace zmath
         // Helpful SAVE Methods //
         //                      //
 
+        // Evaluate the true size of a color table.
+        static unsigned computeColorTableSize(const std::vector<RGBA>& palette);
+        static unsigned computeColorTableSize(unsigned numColors);
+
+        // @param numColors the number of colors in the final palette.
+        //        This value will be rounded up to the nearest power of 2, up
+        //        to 256.
+        // @return a color palette.
+        static std::vector<RGBA> getDefaultPalette(unsigned numColors);
+
+        // Compute a palette to represent a frame of a GIF using the K
+        // Means algorithm.
+        // @param frame the frame for which to compute the palette.
+        // @param numColors the number of colors in the final palette.
+        //        This value will be rounded up to the nearest power of 2, up
+        //        to 256.
+        // @return A color palette.
+        static std::vector<RGBA> getKMeansPalette(const Image& frame, unsigned numColors);
+
         // Write a Graphics Control Extension block.
         // @param os the output stream to write to.
         // @param duration the length of time, in seconds, that the next frame
@@ -112,16 +122,19 @@ namespace zmath
         // Write a single frame as an Image Block.
         // @param os the output stream to write to.
         // @param frame the image to write.
-        static void writeFrame(std::ostream& os, const Image& frame, VecInt bounds, const std::vector<RGBA>& palette);
+        static void writeFrame(std::ostream& os, const Image& frame, VecInt bounds, const std::vector<RGBA>& palette, bool writeTable);
 
         // Compress a series of 8-bit indices to LZW codes and write them to the
         //  output stream.
         // @param os the output stream to write to.
         // @param indices the indices to compress.
-        // @param minBits the minimum number of bits needed to represent the maximum
-        //        value found in `indices`. When indexing a palette of N colors, this
-        //        must be at least ceil(log2(N)).
-        static void compressLZW(std::ostream& os, const std::vector<uint8_t>& indices, uint8_t minBits);
+        static void compressLZW(std::ostream& os, const std::vector<uint8_t>& indices);
+
+        // Write blocks of bytes to an output stream.
+        // @param os the output stream to write to.
+        // @param data a pointer to the data to be written.
+        // @param bytes the number of bytes to write.
+        static void writeSubBlocks(std::ostream& os, const void* data, size_t bytes);
 
         //                      //
         // Helpful LOAD Methods //
@@ -186,7 +199,7 @@ namespace zmath
         //        Descriptor (e.g. LSDFlags::colorTableSize and
         //        IDFlags::colorTableSize).
         // @return 2^(1 + bitField)
-        static int getColorTableSize(int bitField);
+        static int loadColorTableSize(int bitField);
 
         // Return an LZW code table containing only the basic color codes,
         // clear code, and EOI code.

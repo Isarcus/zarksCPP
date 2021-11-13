@@ -2,6 +2,7 @@
 #include <zarks/io/binary.h>
 #include <zarks/io/BitBuffer.h>
 #include <zarks/io/logdefs.h>
+#include <zarks/io/LZWTree.h>
 #include <zarks/math/KMeans.h>
 
 #include <fstream>
@@ -10,6 +11,7 @@
 #include <iomanip>
 #include <vector>
 #include <cmath>
+#include <random>
 
 namespace zmath
 {
@@ -49,15 +51,6 @@ struct RGBADist
         return RGBA::Distance(c1, c2);
     }
 };
-
-//            //
-// SaveConfig //
-//            //
-
-GIF::SaveConfig::SaveConfig()
-    : paletteSize(0)
-    , globalPalette(true)
-{}
 
 //     //
 // GIF //
@@ -107,7 +100,7 @@ GIF::GIF(std::istream& is)
     std::vector<RGBA> globalColorTable;
     if (flags.globalTableFlag)
     {
-        globalColorTable = loadColorTable(is, getColorTableSize(flags.colorTableSize));
+        globalColorTable = loadColorTable(is, loadColorTableSize(flags.colorTableSize));
     }
 
     // Process blocks for as long as needed
@@ -132,25 +125,16 @@ GIF::GIF(std::istream& is)
     }
 }
 
-void GIF::Save(std::string path, const SaveConfig& cfg) const
+void GIF::Save(std::string path,
+               VecInt bounds,
+               const std::vector<RGBA>& palette,
+               const std::vector<double>& durations) const
 {
-    // Open and check stream
-    std::ofstream os(path, std::ios_base::binary);
+    // Check stream
+    std::ofstream os(path);
     if (!os)
     {
         throw std::runtime_error("Could not open file at " + path);
-    }
-
-    // Call generic save method
-    Save(os, cfg);
-}
-
-void GIF::Save(std::ostream& os, const SaveConfig& cfg) const
-{
-    // Check stream
-    if (!os)
-    {
-        throw std::runtime_error("Invalid output stream passed to GIF::Save()");
     }
 
     // Make sure there are frames to write
@@ -159,22 +143,118 @@ void GIF::Save(std::ostream& os, const SaveConfig& cfg) const
         throw std::runtime_error("Tried to save an empty GIF");
     }
 
-    // Determine if there is a global color table and size of color table(s)
-    bool global = (cfg.globalPalette) ? true : !cfg.palette.empty();
-    unsigned numColors = (cfg.palette.empty());
-    if (cfg.palette.empty())
+    // Determine bounds
+    if (bounds == VecInt()) bounds = Bounds();
+
+    // Determine palette
+    const std::vector<RGBA>& finalPalette = (palette.size() < 2) ?
+                                             getDefaultPalette(256) :
+                                             palette;
+
+    // Determine durations
+    const std::vector<double>& finalDurations = (durations.empty()) ?
+                                                std::vector<double>{ 0.1 } :
+                                                durations;
+
+    // Output standard log message
+    LOG_INFO("Saving GIF of size " << bounds << " and palette size " <<
+             computeColorTableSize(finalPalette) << " at " << path);
+    
+    // Write header
+    os.write(HEADER_89a, HEADER_SIZE);
+
+    // Write LSD
+    uint8_t lsd[7];
+    ToBytes<uint16_t>(lsd, bounds.X, Endian::Little);
+    ToBytes<uint16_t>(lsd + 2, bounds.Y, Endian::Little);
+    lsd[5] = 0b10000000;
+    lsd[5] |= computeColorTableSize(palette) << 4;
+    lsd[5] |= computeColorTableSize(palette);
+    os.write((char*)lsd, 7);
+
+    // Write global color table
+    writeColorTable(os, finalPalette);
+
+    // Write all frames
+    for (size_t i = 0; i < frames.size(); i++)
     {
-        numColors = cfg.paletteSize ? std::min(255U, cfg.paletteSize) : 255U;
+        writeGraphicsExtension(os, finalDurations[i % finalDurations.size()]);
+        writeFrame(os, frames[i], bounds, finalPalette, false);
     }
-    else
+
+    // Write final GIF terminator byte
+    os.put((char)BlockType::END_OF_FILE);
+}
+
+void GIF::Save(std::string path,
+               bool global,
+               VecInt bounds,
+               unsigned paletteSize,
+               const std::vector<double>& durations) const
+{
+    // Check stream
+    std::ofstream os(path);
+    if (!os)
     {
-        numColors = std::min(cfg.palette.size(), 255UL);
+        throw std::runtime_error("Could not open file at " + path);
+    }
+
+    // Make sure there are frames to write
+    if (frames.empty())
+    {
+        throw std::runtime_error("Tried to save an empty GIF");
     }
 
     // Determine bounds
-    VecInt bounds = (cfg.bounds != VecInt()) ? cfg.bounds : Bounds();
+    if (bounds == VecInt()) bounds = Bounds();
 
-    std::cout << global << numColors << bounds << "\n";
+        // Output standard log message
+    LOG_INFO("Saving GIF of size " << bounds << " and palette size " <<
+             computeColorTableSize(paletteSize) << " at " << path);
+
+    // Write header
+    os.write(HEADER_89a, HEADER_SIZE);
+
+    // Write LSD
+    uint8_t lsd[7];
+    ToBytes<uint16_t>(lsd, bounds.X, Endian::Little);
+    ToBytes<uint16_t>(lsd + 2, bounds.Y, Endian::Little);
+    if (global)
+    {
+        lsd[5] = 0b10000000;
+        lsd[5] |= computeColorTableSize(paletteSize) << 4;
+        lsd[5] |= computeColorTableSize(paletteSize);
+    }
+    os.write((char*)lsd, 7);
+
+    // Create and write global table, if applicable
+    std::vector<RGBA> globalColorTable;
+    if (global)
+    {
+        globalColorTable = getDefaultPalette(paletteSize);
+        writeColorTable(os, globalColorTable);
+    }
+
+    // Determine durations
+    const std::vector<double>& finalDurations = (durations.empty()) ?
+                                                std::vector<double>{ 0.1 } :
+                                                durations;
+
+    // Write all frames
+    for (size_t i = 0; i < frames.size(); i++)
+    {
+        LOG_DEBUG("Writing frame #" << i);
+        const std::vector<RGBA>& colorTableToUse = (global) ?
+                                                    globalColorTable :
+                                                    getKMeansPalette(frames[i], paletteSize);
+        LOG_DEBUG(" -> Color table size: " << colorTableToUse.size());
+
+        writeGraphicsExtension(os, finalDurations[i % finalDurations.size()]);
+        writeFrame(os, frames[i], bounds, colorTableToUse, !global);
+    }
+
+    // Write final GIF terminator byte
+    os.put((char)BlockType::END_OF_FILE);
 }
 
 void GIF::Add(const Image& img, bool adjustBounds, int idx)
@@ -224,21 +304,81 @@ VecInt GIF::Bounds() const
 // Helpful SAVE Methods //
 //                      //
 
+unsigned GIF::computeColorTableSize(const std::vector<RGBA>& palette)
+{
+    return computeColorTableSize(palette.size());
+}
+
+unsigned GIF::computeColorTableSize(unsigned numColors)
+{
+    if (numColors < 2) return 256;
+    return std::min(256U, (unsigned)std::pow(2, std::ceil(std::log2(numColors))));
+}
+
+std::vector<RGBA> GIF::getDefaultPalette(unsigned numColors)
+{
+    // Determine the number of colors for this palette
+    numColors = computeColorTableSize(numColors);
+    LOG_DEBUG("Creating default palette of size " << numColors);
+
+    // Initialize the palette vector
+    std::vector<RGBA> palette(numColors);
+    unsigned idx = 0;
+    int root3 = std::floor(std::pow(numColors, 1.0 / 3.0));
+    for (int r = 0; r < root3; r++)
+        for (int g = 0; g < root3; g++)
+            for (int b = 0; b < root3; b++)
+                palette[idx++] = RGBA(
+                    (uint8_t)std::round(r / std::max(1.0, (double)root3 - 1)),
+                    (uint8_t)std::round(g / std::max(1.0, (double)root3 - 1)),
+                    (uint8_t)std::round(b / std::max(1.0, (double)root3 - 1))
+                );
+    LOG_DEBUG("Determined " << idx << " evenly spread colors");
+
+    // Assign pseudorandom colors for the rest
+    std::mt19937 rng;
+    while (idx < numColors)
+    {
+        RGBA c;
+        c.R = rng();
+        c.G = rng();
+        c.B = rng();
+
+        palette[idx++] = c;
+    }
+
+    return palette;
+}
+
+std::vector<RGBA> GIF::getKMeansPalette(const Image& frame, unsigned numColors)
+{
+    // Get default palette
+    std::vector<RGBA> palette = getDefaultPalette(numColors);
+
+    // Run K Means algorithm
+    LOG_DEBUG("Running K Means algorithm on palette of size " << palette.size());
+    ComputeKMeans<RGBA, RGBADist, RGBACounter>(palette, frame);
+
+    return palette;
+}
+
 void GIF::writeGraphicsExtension(std::ostream& os, double duration)
 {
+    LOG_DEBUG("Writing graphics extension with duration " << duration);
+
     // Determine the duration of this frame
     duration = std::max(0.0, std::min(duration, 655.35));
     uint16_t intDur = (uint16_t)(std::round(duration * 100));
 
     // Create temporary buffer
-    char buf[8]{};
-    buf[0] = (char)BlockType::EXTENSION;
-    buf[1] = (char)ExtensionType::GRAPHICS;
+    uint8_t buf[8]{};
+    buf[0] = (uint8_t)BlockType::EXTENSION;
+    buf[1] = (uint8_t)ExtensionType::GRAPHICS;
     buf[2] = 4; // 4 bytes follow this one, plus a null terminator 
     ToBytes(buf + 4, intDur, Endian::Little);
 
     // Write temporary buffer to output stream
-    os.write(buf, 8);
+    os.write((char*)buf, 8);
 }
 
 void GIF::writeColorTable(std::ostream& os, const std::vector<RGBA>& palette)
@@ -251,7 +391,10 @@ void GIF::writeColorTable(std::ostream& os, const std::vector<RGBA>& palette)
 
     // Determine used and unused colors
     unsigned usedColors = std::min(palette.size(), 256UL);
-    unsigned unusedColors = std::pow(2, std::ceil(std::log2(usedColors))) - usedColors;
+    unsigned totalColors = computeColorTableSize(palette);
+    unsigned unusedColors = totalColors - usedColors;
+    LOG_DEBUG("Writing color table with " << usedColors << " used colors and " <<
+              unusedColors << " unused colors");
 
     // Write all used colors to the stream
     for (unsigned i = 0; i < usedColors; i++)
@@ -262,18 +405,39 @@ void GIF::writeColorTable(std::ostream& os, const std::vector<RGBA>& palette)
     }
 
     // Write all unused colors
-    char blanks[254 * 3]{}; // holds maximum possible length of unused color bytes
-    os.write(blanks, unusedColors * 3);
+    if (unusedColors)
+    {
+        char blanks[254 * 3]{}; // holds maximum possible length of unused color bytes
+        os.write(blanks, unusedColors * 3);
+    }
 }
 
-void GIF::writeFrame(std::ostream& os, const Image& frame, VecInt bounds, const std::vector<RGBA>& palette)
+void GIF::writeFrame(std::ostream& os, const Image& frame, VecInt bounds, const std::vector<RGBA>& palette, bool writeTable)
 {
+    // Write beginning of image block
+    uint8_t buf[10]{};
+    buf[0] = (uint8_t)BlockType::IMAGE;
+    ToBytes<uint16_t>(buf + 5, bounds.X, Endian::Little);
+    ToBytes<uint16_t>(buf + 7, bounds.Y, Endian::Little);
+    if (writeTable)
+    {
+        // If there's a local table, say so and tell its length
+        buf[9] = 0b10000000 | std::min(uint8_t(7), uint8_t(std::ceil(std::log2(palette.size())) - 1));
+    }
+    os.write((char*)buf, 10);
+
+    if (writeTable)
+    {
+        writeColorTable(os, palette);
+    }
+
     // Indices vector for LZW compression
     std::vector<uint8_t> indices;
     indices.reserve(bounds.Area());
 
     // Loop through image and fill indices vector
-    Vec scale = Vec(bounds) / Vec(frame.Bounds());
+    LOG_DEBUG("Scaling frame from " << frame.Bounds() << " to " << bounds);
+    Vec scale = Vec(frame.Bounds()) / Vec(bounds);
     for (int y = 0; y < bounds.Y; y++)
     {
         for (int x = 0; x < bounds.X; x++)
@@ -286,12 +450,89 @@ void GIF::writeFrame(std::ostream& os, const Image& frame, VecInt bounds, const 
     }
 
     // Undergo LZW compression for this frame
-    compressLZW(os, indices, std::ceil(std::log2(palette.size())));
+    compressLZW(os, indices);
 }
 
-void GIF::compressLZW(std::ostream& os, const std::vector<uint8_t>& indices, uint8_t minBits)
+void GIF::compressLZW(std::ostream& os, const std::vector<uint8_t>& indices)
 {
+    LOG_DEBUG("Running LZW compression on " << indices.size() << " indices");
+    
+    // Set clear code and EOI code. Assume 8 bits required per index (9 with extra codes).
+    const uint16_t clearCode = 256;
+    const uint16_t EOICode = 257;
+    const uint8_t baseCodeSize = 9;
+    uint8_t codeSize = baseCodeSize;
+    size_t codesNextSize = std::pow(2, codeSize);
 
+    // Create an LZW tree for keeping track of used codes.
+    // Even though it should NEVER receive a clearCode or an EOICode,
+    // initialize the tree with EOICode nodes so that the first
+    // unique code it produces is EOICode + 1.
+    LZWTree tree(EOICode + 1);
+
+    // Create BitBuffer to hold variable-length LZW codes
+    BitBuffer bbuf;
+
+    // Write initial clear code
+    bbuf << BitField(clearCode, codeSize);
+
+    // Loop through all indices
+    size_t lastEncodedIdx = 0;
+    for (size_t i = 0; i < indices.size(); i++)
+    {
+        size_t code = tree.Add(indices[i]);
+        if (code != tree.npos)
+        {
+            // the index buffer is now equal to indices[i], meaning
+            // indices[i] has not been encoded yet
+            lastEncodedIdx = i - 1;
+
+            LOG_DEBUG("Writing code " << code << " of size " << (int)codeSize);
+            LOG_DEBUG(" -> tree size: " << tree.Size());
+            bbuf << BitField(code, codeSize);
+            LOG_DEBUG("Code written; bbuf size " << bbuf.Size() << "; capacity " << bbuf.Capacity());
+
+            if (tree.Size() == codesNextSize)
+            {
+                codeSize++;
+                codesNextSize = std::pow(2, codeSize);
+            }
+
+            if (codeSize > 12)
+            {
+                // TODO: should this be earlier??
+                bbuf << BitField(clearCode, 12);
+                tree.Reset(EOICode + 1);
+                codeSize = baseCodeSize;
+                codesNextSize = std::pow(2, codeSize);
+            }
+        }
+    }
+
+    for (size_t i = lastEncodedIdx; i < indices.size(); i++)
+    {
+        bbuf << BitField(indices[i], codeSize);
+    }
+
+    // Write final EOI code
+    bbuf << BitField(EOICode, codeSize);
+
+    // Write bitbuffer to output stream
+    writeSubBlocks(os, bbuf.Data(), bbuf.SizeBytes());
+}
+
+void GIF::writeSubBlocks(std::ostream& os, const void* data, size_t bytes)
+{
+    const char* ptr = static_cast<const char*>(data);
+    const char* const maxPtr = static_cast<const char*>(data) + bytes;
+    while (ptr < maxPtr)
+    {
+        size_t toWrite = std::min(maxPtr - ptr, 255L);
+        os.put(toWrite);
+        os.write(ptr, toWrite);
+        ptr += toWrite;
+    }
+    os.put(0);
 }
 
 //                      //
@@ -339,7 +580,7 @@ std::pair<Image, uint16_t> GIF::loadNextFrame(std::istream& is, const std::vecto
         // Read color codes and create image
         if (desc.flags.localTableFlag)
         {
-            std::vector<RGBA> localColorTable = loadColorTable(is, getColorTableSize(desc.flags.colorTableSize));
+            std::vector<RGBA> localColorTable = loadColorTable(is, loadColorTableSize(desc.flags.colorTableSize));
             image = decodeImage(VecInt(desc.width, desc.height), lzwCodes, localColorTable);
         }
         else if (globalColorTable.size())
@@ -566,9 +807,9 @@ std::vector<uint8_t> GIF::decompressLZW(const LZWFrame& data)
             prevCode = bbuf.Read(bitIdx, codeSize);
             bitIdx += codeSize;
             indexStream.push_back(codeTableCurrent.at(prevCode).at(0));
-            LOG_DEBUG(" -> LZW code #" << prevCode << " (code size == "
-                      << (int)codeSize << "; table size == " << codeTableCurrent.size()
-                      << ")");
+            // LOG_DEBUG(" -> LZW code #" << prevCode << " (code size == "
+            //           << (int)codeSize << "; table size == " << codeTableCurrent.size()
+            //           << ")");
             
             // Special cases that *shouldn't* happen, but technically
             // can, because you can do whatever the heck you want if
@@ -582,9 +823,9 @@ std::vector<uint8_t> GIF::decompressLZW(const LZWFrame& data)
         bitIdx += codeSize;
 
         // Notify of this code
-        LOG_DEBUG(" -> LZW code #" << thisCode << " (code size == "
-                  << (int)codeSize << "; table size == " << codeTableCurrent.size()
-                  << ")");
+        // LOG_DEBUG(" -> LZW code #" << thisCode << " (code size == "
+        //           << (int)codeSize << "; table size == " << codeTableCurrent.size()
+        //           << ")");
 
         // If this code is a clear code, reset the code table, code size,
         // and the maximum allowable code value for this code size
@@ -720,7 +961,7 @@ std::vector<RGBA> GIF::loadColorTable(std::istream& is, unsigned numColors)
     return table;
 }
 
-int GIF::getColorTableSize(int bitField)
+int GIF::loadColorTableSize(int bitField)
 {
     return std::pow(2, 1 + bitField);
 }
@@ -730,7 +971,7 @@ std::vector<std::vector<uint8_t>> GIF::getBaseCodeTable(int minCodeSize)
     const uint16_t numColorCodes = std::min(256, (int)std::pow(2, minCodeSize));
 
     std::vector<std::vector<uint8_t>> table;
-    table.reserve(numColorCodes + 2);
+    table.reserve(4096); // Reserve 2^12 codes
     for (uint16_t c = 0; c < numColorCodes; c++)
         table.push_back({(uint8_t)c});
     table.push_back({}); // clear code

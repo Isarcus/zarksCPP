@@ -26,5 +26,7 @@ int main(int argc, char** argv)
     Image frame = gif.At(0);
     frame.Save("frame.png");
 
+    gif.Save("gif.gif", true);
+
     return 0;
 }
