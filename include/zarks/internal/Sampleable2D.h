@@ -80,6 +80,9 @@ namespace zmath
 		T Sample(VecInt pos) const;
 		T Sample(Vec pos) const;
 
+		void FlipVertical();
+		void FlipHorizontal();
+
 		Iterator GetIterator(VecInt pos);
 		ConstIterator GetIterator(VecInt pos) const;
 	};
@@ -219,6 +222,30 @@ namespace zmath
 		T z = interp5(y0, y1, within.Y);
 
 		return T(z);
+	}
+
+	template<typename T>
+	void  Sampleable2D<T>::FlipVertical()
+	{
+		for (int x = 0; x < bounds.X; x++)
+		{
+			for (int y = 0; y < bounds.Y / 2; y++)
+			{
+				std::swap(data[x][y], data[x][bounds.Y - 1 - y]);
+			}
+		}
+	}
+
+	template<typename T>
+	void  Sampleable2D<T>::FlipHorizontal()
+	{
+		for (int x = 0; x < bounds.X / 2; x++)
+		{
+			for (int y = 0; y < bounds.Y; y++)
+			{
+				std::swap(data[x][y], data[bounds.X - 1 - x][y]);
+			}
+		}
 	}
 
 	template<typename T>
