@@ -7,7 +7,8 @@
  *              the math question, "given a function, f(x), describe
  *              the set of points consisting of the centers of all
  *              circles with a given radius, r, that are tangent to
- *              f(x)"
+ *              f(x)". But it goes a step further, allowing radius
+ *              to vary as a function of x.
  */
 
 #include <zarks/math/Map.h>
@@ -60,16 +61,16 @@ int main()
     auto func = getLambda(std::cos, 2.5, 3);
     
     // Radius of the circles
-    double radius = 1.5;
+    auto radius = getLambda(std::cos, 0, 3);
 
     // Loop through each x in a large enough range to generate
     // a complete graph
-    for (int x = -radius/scale.X; x < bounds.X + radius/scale.X; x++)
+    for (int x = -20.0/scale.X; x < bounds.X + 20.0/scale.X; x++)
     {
         // Calculate input x, f(x), and offset(x)
         double inputX = x * scale.X;
         Vec funcPoint(inputX, func(inputX));
-        Vec offset = getOffset(inputX, radius, func);
+        Vec offset = getOffset(inputX, radius(inputX), func);
 
         // Three points to be graphed
         const VecInt graphMe[3]{
