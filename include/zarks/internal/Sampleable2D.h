@@ -207,14 +207,13 @@ namespace zmath
 	template<typename T>
 	inline T Sampleable2D<T>::Sample(Vec pos) const
 	{
-		BoundCheck(pos);
 		if (pos == pos.Floor())
 		{
 			return At(pos);
 		}
 
-		const VecInt min = pos.Floor();
-		const VecInt max = pos.Ceil();
+		const VecInt min = Vec::Max(pos.Floor(), Vec(0, 0));
+		const VecInt max = Vec::Min(min + Vec(1, 1), bounds - Vec(1, 1));
 		const Vec within = pos - min;
 
 		T y0 = interp5(data[min.X][min.Y], data[max.X][min.Y], within.X);

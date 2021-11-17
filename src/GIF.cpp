@@ -131,7 +131,7 @@ void GIF::Save(std::string path,
                const std::vector<double>& durations) const
 {
     // Check stream
-    std::ofstream os(path);
+    std::ofstream os(path, std::ios_base::binary);
     if (!os)
     {
         throw std::runtime_error("Could not open file at " + path);
@@ -164,13 +164,7 @@ void GIF::Save(std::string path,
     os.write(HEADER_89a, HEADER_SIZE);
 
     // Write LSD
-    uint8_t lsd[7];
-    ToBytes<uint16_t>(lsd, bounds.X, Endian::Little);
-    ToBytes<uint16_t>(lsd + 2, bounds.Y, Endian::Little);
-    lsd[5] = 0b10000000;
-    lsd[5] |= computeColorTableSize(palette) << 4;
-    lsd[5] |= computeColorTableSize(palette);
-    os.write((char*)lsd, 7);
+    writeLSD(os, bounds, true, computeColorTableSize(palette));
 
     // Write global color table
     writeColorTable(os, finalPalette);
@@ -193,7 +187,7 @@ void GIF::Save(std::string path,
                const std::vector<double>& durations) const
 {
     // Check stream
-    std::ofstream os(path);
+    std::ofstream os(path, std::ios_base::binary);
     if (!os)
     {
         throw std::runtime_error("Could not open file at " + path);
@@ -216,16 +210,7 @@ void GIF::Save(std::string path,
     os.write(HEADER_89a, HEADER_SIZE);
 
     // Write LSD
-    uint8_t lsd[7];
-    ToBytes<uint16_t>(lsd, bounds.X, Endian::Little);
-    ToBytes<uint16_t>(lsd + 2, bounds.Y, Endian::Little);
-    if (global)
-    {
-        lsd[5] = 0b10000000;
-        lsd[5] |= computeColorTableSize(paletteSize) << 4;
-        lsd[5] |= computeColorTableSize(paletteSize);
-    }
-    os.write((char*)lsd, 7);
+    writeLSD(os, bounds, global, computeColorTableSize(paletteSize));
 
     // Create and write global table, if applicable
     std::vector<RGBA> globalColorTable;
@@ -360,6 +345,21 @@ std::vector<RGBA> GIF::getKMeansPalette(const Image& frame, unsigned numColors)
     ComputeKMeans<RGBA, RGBADist, RGBACounter>(palette, frame);
 
     return palette;
+}
+
+void GIF::writeLSD(std::ostream& os, VecInt bounds, bool globalTable, unsigned globalTableSize)
+{
+    uint8_t lsd[7];
+    ToBytes<uint16_t>(lsd, bounds.X, Endian::Little);
+    ToBytes<uint16_t>(lsd + 2, bounds.Y, Endian::Little);
+    if (globalTable)
+    {
+        lsd[4] = 0b10000000;
+        int colorTableBits = std::log2(globalTableSize) - 1;
+        lsd[4] |= colorTableBits << 4;
+        lsd[4] |= colorTableBits;
+    }
+    os.write((char*)lsd, 7);
 }
 
 void GIF::writeGraphicsExtension(std::ostream& os, double duration)

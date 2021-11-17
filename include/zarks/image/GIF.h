@@ -101,6 +101,8 @@ namespace zmath
         // @return A color palette.
         static std::vector<RGBA> getKMeansPalette(const Image& frame, unsigned numColors);
 
+        static void writeLSD(std::ostream& os, VecInt bounds, bool globalTable, unsigned globalTableSize);
+
         // Write a Graphics Control Extension block.
         // @param os the output stream to write to.
         // @param duration the length of time, in seconds, that the next frame
