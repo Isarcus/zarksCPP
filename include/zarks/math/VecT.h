@@ -74,7 +74,19 @@ namespace zmath
 
 		static VecT Min(VecT v1, VecT v2);
 		static VecT Max(VecT v1, VecT v2);
+		static double DistForm(VecT v1, VecT v2);
 		static VecT UnitVector(double angle, double magnitude = 1.0);
+
+		struct DIST
+		{
+			double operator()(VecT v1, VecT v2);
+		};
+
+		template <typename COMP = std::less<T>, typename RET = bool>
+		struct COMPAIR
+		{
+			VecT<RET> operator()(VecT v1, VecT v2);
+		};
 
 		template <typename W>
 		operator VecT<W>() const;
@@ -339,12 +351,35 @@ inline VecT<T> VecT<T>::Max(VecT v1, VecT v2)
 }
 
 template <typename T>
+double VecT<T>::DistForm(VecT v1, VecT v2)
+{
+	return std::sqrt(std::pow(v1.X - v2.X, 2) + std::pow(v1.Y - v2.Y, 2));
+}
+
+template <typename T>
 inline VecT<T> VecT<T>::UnitVector(double angle, double magnitude)
 {
 	return VecT (
 		std::cos(angle),
 		std::sin(angle)
 	) * magnitude;
+}
+
+template <typename T>
+double VecT<T>::DIST::operator()(VecT<T> v1, VecT<T> v2)
+{
+	return VecT<T>::DistForm(v1, v2);
+}
+
+template <typename T>
+template <typename COMP, typename RET>
+VecT<RET> VecT<T>::COMPAIR<COMP, RET>::operator()(VecT<T> v1, VecT<T> v2)
+{
+	COMP comp;
+	return VecT<RET>(
+		comp(v1.X, v2.X),
+		comp(v1.Y, v2.Y)
+	);
 }
 
 template <typename T>
