@@ -431,6 +431,9 @@ void GIF::writeFrame(std::ostream& os, const Image& frame, VecInt bounds, const 
         writeColorTable(os, palette);
     }
 
+    // Assume minimum code size of 8, for simplicity's sake
+    os.put(8);
+    
     // Indices vector for LZW compression
     std::vector<uint8_t> indices;
     indices.reserve(bounds.Area());
