@@ -15,12 +15,10 @@ namespace zmath
 
 Map::Map()
 	: Sampleable2D()
-	, subMap(true)
 {}
 
 Map::Map(VecInt bounds)
 	: Sampleable2D(bounds)
-	, subMap(false)
 {}
 
 Map::Map(int x, int y)
@@ -29,7 +27,6 @@ Map::Map(int x, int y)
 
 Map::Map(const Map& map)
 	: Sampleable2D()
-	, subMap(false)
 {
 	*this = map;
 }
@@ -52,7 +49,6 @@ Map& Map::operator=(const Map& rhs)
 		FreeData();
 
 		bounds = rhs.bounds;
-		subMap = false;
 
 		data = alloc2d<double>(bounds.X, bounds.Y);
 	}
@@ -69,28 +65,12 @@ Map& Map::operator=(Map&& rhs)
 
 		data = rhs.data;
 		bounds = rhs.bounds;
-		subMap = rhs.subMap;
 
 		rhs.data = nullptr;
 		rhs.bounds = VecInt(0, 0);
-		rhs.subMap = false;
 	}
 
 	return *this;
-}
-
-void Map::FreeData()
-{
-	if (subMap)
-	{
-		delete data;
-		data = nullptr;
-		bounds = VecInt(0, 0);
-	}
-	else
-	{
-		Sampleable2D::FreeData();
-	}
 }
 
 double Map::GetMin() const
@@ -234,16 +214,16 @@ Map Map::operator()(VecInt min_, VecInt max_) const
 	VecInt max = Vec::Max(min_, max_);
 	min = VecInt::Max(min, VecInt(0, 0));
 	max = VecInt::Min(max, bounds);
+	VecInt newBounds(max - min);
 
-	// Initialize submap
-	Map m;
-	m.subMap = true;
-
-	// Make the new map's data a subset of the called map's data
-	m.data = new double* [max.X - min.X];
-	for (int idx = 0, x = min.X; x < max.X; x++, idx++)
+	// Create new map
+	Map m(newBounds);
+	for (int x = 0; x < newBounds.X; x++)
 	{
-		m.data[idx] = &(data[x][min.Y]);
+		for (int y = 0; y < newBounds.Y; y++)
+		{
+			m[x][y] = data[min.X + x][min.Y + y];
+		}
 	}
 
 	return m;

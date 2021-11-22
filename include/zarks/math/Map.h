@@ -23,8 +23,6 @@ namespace zmath
 		Map& operator= (const Map& m);
 		Map& operator= (Map&& m);
 
-		void FreeData() override;
-
 		// Map characteristics
 
 		double GetMin() const;
@@ -39,7 +37,7 @@ namespace zmath
 		Vec DerivativeAt(VecInt pos) const;
 		double SlopeAt(VecInt pos) const;
 
-		// return a reference to an underlying section of the map
+		// Return a deepcopy of an underlying section of this map
 		Map Copy(VecInt min, VecInt max) const;
 		Map operator() (VecInt min, VecInt max) const;
 
