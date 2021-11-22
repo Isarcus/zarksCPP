@@ -35,6 +35,7 @@ namespace zmath
 		T DistManhattan(VecT v) const;
 		T LNorm(double L) const;
 		double Angle() const;
+		VecT Flip() const;
 
 		VecT Mod(VecT denom) const;
 		VecT Floor() const;
@@ -177,6 +178,12 @@ template <typename T>
 inline double VecT<T>::Angle() const
 {
 	return std::atan2(Y, X);
+}
+
+template <typename T>
+inline VecT<T> VecT<T>::Flip() const
+{
+	return VecT<T>(Y, X);
 }
 
 template <typename T>
