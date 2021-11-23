@@ -490,12 +490,12 @@ void GIF::compressLZW(std::ostream& os, const std::vector<uint8_t>& indices)
             // indices[i] has not been encoded yet
             lastEncodedIdx = i - 1;
 
-            LOG_DEBUG("Writing code " << code << " of size " << (int)codeSize);
-            LOG_DEBUG(" -> tree size: " << tree.Size());
+            // LOG_DEBUG("Writing code " << code << " of size " << (int)codeSize);
+            // LOG_DEBUG(" -> tree size: " << tree.Size());
             bbuf << BitField(code, codeSize);
-            LOG_DEBUG("Code written; bbuf size " << bbuf.Size() << "; capacity " << bbuf.Capacity());
+            // LOG_DEBUG("Code written; bbuf size " << bbuf.Size() << "; capacity " << bbuf.Capacity());
 
-            if (tree.Size() == codesNextSize)
+            if (tree.Size() > codesNextSize)
             {
                 codeSize++;
                 codesNextSize = std::pow(2, codeSize);
