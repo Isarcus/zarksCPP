@@ -43,7 +43,7 @@ namespace zmath
 
 		// Chainable manipulation functions
 
-		Map& Clear(double val);
+		Map& Clear(double val = 0);
 		Map& Interpolate(double newMin, double newMax);
 		Map& Abs();
 		Map& FillBorder(int thickness, double val);
@@ -81,9 +81,19 @@ namespace zmath
 
 		Map& Pow(double exp);
 
+		// Matrix functions
+
+		Map MatMul(const Map& m) const;
+		void MatMul(const Map& m, Map& result) const;
+		Map Transpose() const;
+		void Transpose(Map& result) const;
+
 		void Save(std::string path);
 
+		void PrintMatrix(std::ostream& os = std::cout) const;
+
 	private:
-		bool subMap; // only true for maps created with operator() calls
+		static VecInt getMatrixBounds(VecInt lhs, VecInt rhs);
+
 	};
 }

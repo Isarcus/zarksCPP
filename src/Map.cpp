@@ -1,10 +1,13 @@
 #include <zarks/math/Map.h>
 #include <zarks/internal/zmath_internals.h>
 #include <zarks/io/binary.h>
+#include <zarks/io/logdefs.h>
 
 #include <cmath>
 #include <fstream>
+#include <sstream>
 #include <iostream>
+#include <iomanip>
 #include <exception>
 
 #define LOOP_MAP for (int x = 0; x < bounds.X; x++) for (int y = 0; y < bounds.Y; y++)
@@ -416,6 +419,62 @@ Map& Map::Pow(double exp)
 	return *this;
 }
 
+Map Map::MatMul(const Map& m) const
+{
+	Map result;
+	MatMul(m, result);
+	return result;
+}
+
+void Map::MatMul(const Map& m, Map& result) const
+{
+	// Ensure result is the right size
+	VecInt newBounds = getMatrixBounds(bounds, m.bounds);
+	if (result.bounds == newBounds)
+	{
+		result.Clear();
+	}
+	else
+	{
+		result = Map(newBounds);
+	}
+
+	// Loop through multiplication of M x N and N x P matrices 
+	for (int N = 0; N < bounds.Y; N++)
+	{
+		for (int M = 0; M < bounds.X; M++)
+		{
+			for (int P = 0; P < newBounds.Y; P++)
+			{
+				result.data[M][P] += data[M][N] * m.data[N][P];
+			}
+		}
+	}
+}
+
+Map Map::Transpose() const
+{
+	Map result;
+	Transpose(result);
+	return result;
+}
+
+void Map::Transpose(Map& result) const
+{
+	// Ensure result is the right size
+	VecInt newBounds = bounds.Flip();
+	if (result.bounds != newBounds)
+	{
+		result = Map(newBounds);
+	}
+
+	// Loop through transposition
+	LOOP_MAP
+	{
+		result.data[y][x] = data[x][y];
+	}
+}
+
 void Map::Save(std::string path)
 {
 	std::ofstream file;
@@ -423,38 +482,121 @@ void Map::Save(std::string path)
 	file.open(path, std::ios::binary | std::ios::out);
 
 	uint8_t header[64];
-	uint8_t boundX[4];
-	uint8_t boundY[4];
 
 	uint32_t uintX = bounds.X;
 	uint32_t uintY = bounds.Y;
 
-	// little-endian encoding
-	boundX[0] = uintX;
-	boundX[1] = uintX >> 8;
-	boundX[2] = uintX >> 16;
-	boundX[3] = uintX >> 24;
-
-	boundY[0] = uintY;
-	boundY[1] = uintY >> 8;
-	boundY[2] = uintY >> 16;
-	boundY[3] = uintY >> 24;
-
-	// Write the intro data
+	// Write header & bounds data
 	file.write((char*)header, sizeof(header));
-	file.write((char*)boundX, sizeof(boundX));
-	file.write((char*)boundY, sizeof(boundY));
+	WriteBuf(file, uintX, Endian::Little);
+	WriteBuf(file, uintY, Endian::Little);
 
 	// Write the actual map data, little-endian
 	LOOP_MAP
 	{
-		uint8_t arr[sizeof(double)];
-		ToBytes(arr, data[x][y], Endian::Little);
-
-		file.write((char*)arr, sizeof(arr));
+		WriteBuf(file, data[x][y], Endian::Little);
 	}
 		
-	std::cout << "File saved at " << path << "\n";
+	LOG_INFO("File saved at " << path << "\n");
+}
+
+void Map::PrintMatrix(std::ostream& os) const
+{
+	// Skip printing anything if empty
+	if (bounds == VecInt(0, 0))
+	{
+		return;
+	}
+
+	// General formatting settings
+	static const int maxPrintDim = 10;
+	static const int maxPrintPartial = 4;
+	VecT<bool> skipMid(
+		bounds.X > maxPrintDim,
+		bounds.Y > maxPrintDim
+	);
+
+	// Formatting specifics for this map
+	int maxRowIdxLen = std::to_string(bounds.X - 1).size();
+	int maxColIdxLen = std::to_string(bounds.Y - 1).size();
+	int datumWidth = std::max(maxColIdxLen + 1, 6);
+
+	// Set stream precision and alignment
+	auto flags = os.flags();
+	os << std::setprecision(3) << std::left;
+
+	// Print column indices
+	os << std::string(maxRowIdxLen + 3, ' ');
+	for (int y = 0; y < bounds.Y; y++)
+	{
+		if (skipMid.Y && y == maxPrintPartial)
+		{
+			y = bounds.Y - maxPrintPartial;
+			os << std::string(8, ' ');
+		}
+		os << std::setw(datumWidth) << y;
+	}
+	os << '\n';
+
+	// Print table header line
+	os << std::string(maxRowIdxLen + 2, ' ');
+	os.fill('-');
+	for (int y = 0; y < bounds.Y; y++)
+	{
+		if (skipMid.Y && y == maxPrintPartial)
+		{
+			y = bounds.Y - maxPrintPartial;
+			os << std::string(8, '-');
+		}
+		os << std::setw(datumWidth) << '-';
+	}
+	os << '\n';
+
+	// Print all data
+	os.fill(' ');
+	for (int x = 0; x < bounds.X; x++)
+	{
+		// See if rows should be skipped
+		if (skipMid.X && x == maxPrintPartial)
+		{
+			x = bounds.X - maxPrintPartial;
+			os << ".\n.\n";
+		}
+
+		// Print row index
+		os << std::setw(maxRowIdxLen) << x << " | ";
+
+		for (int y = 0; y < bounds.Y; y++)
+		{
+			// See if columns should be skipped
+			if (skipMid.Y && y == maxPrintPartial)
+			{
+				y = bounds.Y - maxPrintPartial;
+				os << " . . .  ";
+			}
+
+			// Print this item
+			os << std::setw(datumWidth) << data[x][y];
+		}
+
+		// Print newline for new row
+		os << '\n';
+	}
+
+	// Reset stream formatting
+	os.flags(flags);
+}
+
+VecInt Map::getMatrixBounds(VecInt lhs, VecInt rhs)
+{
+	if (lhs.Y != rhs.X)
+	{
+		std::ostringstream os;
+		os << "Matrix bounds mismatch: " << lhs << " and " << rhs;
+		throw std::runtime_error(os.str());
+	}
+
+	return VecInt(lhs.X, rhs.Y);
 }
 
 } // namespace zmath
