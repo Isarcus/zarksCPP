@@ -164,7 +164,7 @@ namespace zmath
         // @return An std::pair containing an image and the duration of that
         //         image. the duration will be 0 if not specified by a graphics
         //         extension block preceding the loaded image.
-        std::pair<Image, uint16_t> loadNextFrame(std::istream& is, const std::vector<RGBA>& globalColorTable);
+        std::pair<Image, uint16_t> loadNextFrame(std::istream& is, VecInt canvasBounds, const std::vector<RGBA>& globalColorTable);
 
         // Process an extension block, starting at the byte immediately following
         //  the EXTENSION_INTRODUCER byte. If the first byte that this function
@@ -199,7 +199,18 @@ namespace zmath
         //        gif::ColorTableException if anyindex exceeds the size
         //        of the colorTable.
         // @return A fully decoded image.
-        static Image decodeImage(VecInt bounds, const std::vector<uint8_t>& indices, const std::vector<RGBA>& colorTable);
+        static Image decodeImage(VecInt canvasBounds,
+                                 VecInt frameBounds,
+                                 VecInt offset,
+                                 const std::vector<uint8_t>& indices,
+                                 const std::vector<RGBA>& colorTable);
+        static Image decodeImage(VecInt canvasBounds,
+                                 VecInt frameBounds,
+                                 VecInt offset,
+                                 const std::vector<uint8_t>& indices,
+                                 const std::vector<RGBA>& colorTable,
+                                 const Image& prevFrame,
+                                 int transparentIdx);
 
         // @param is the input stream to read from.
         // @param numColors this should refer to the total number of colors in

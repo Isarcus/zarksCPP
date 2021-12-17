@@ -87,8 +87,8 @@ GIF::GIF(std::istream& is)
     // Read the 7-byte logical screen descriptor
     uint8_t descriptor[7], *ptr = descriptor;
     is.read((char*)descriptor, 7);
-    __attribute__((unused)) uint16_t canvasWidth = FromBytes<uint16_t>(AdvancePtr(ptr, 2), Endian::Little);
-    __attribute__((unused)) uint16_t canvasHeight = FromBytes<uint16_t>(AdvancePtr(ptr, 2), Endian::Little);
+    uint16_t canvasWidth = FromBytes<uint16_t>(AdvancePtr(ptr, 2), Endian::Little);
+    uint16_t canvasHeight = FromBytes<uint16_t>(AdvancePtr(ptr, 2), Endian::Little);
     LSDFlags flags(*ptr);
     // Ignore the last two bytes of the descriptor. The following link
     // explains why the 6th and 7th bytes, which represent the background
@@ -104,11 +104,12 @@ GIF::GIF(std::istream& is)
     }
 
     // Process blocks for as long as needed
+    VecInt bounds(canvasWidth, canvasHeight);
     while (true)
     {
         try
         {
-            auto pair = loadNextFrame(is, globalColorTable);
+            auto pair = loadNextFrame(is, bounds, globalColorTable);
             frames.push_back(pair.first);
             LOG_DEBUG("Loaded frame #" << frames.size());
         }
@@ -560,10 +561,9 @@ void GIF::writeSubBlocks(std::ostream& os, const void* data, size_t bytes)
 // Helpful LOAD Methods //
 //                      //
 
-std::pair<Image, uint16_t> GIF::loadNextFrame(std::istream& is, const std::vector<RGBA>& globalColorTable)
+std::pair<Image, uint16_t> GIF::loadNextFrame(std::istream& is, VecInt canvasBounds, const std::vector<RGBA>& globalColorTable)
 {
-    BlockType blockType;
-    is.read((char*)(&blockType), 1);
+    BlockType blockType = (BlockType)is.get();
 
     // Make sure stream is still valid. If not, assume EOF has been reached
     if (!is)
@@ -573,62 +573,84 @@ std::pair<Image, uint16_t> GIF::loadNextFrame(std::istream& is, const std::vecto
 
     // Declarations
     Image image;
-    uint16_t duration = 0;
+    GraphicsExtension graphics;
 
-    // Based on the type of this block, attempt to either load in a new
-    // frame or interpret an extension block
-    switch (blockType)
+    // Load blocks until an image block is reached. If a graphics control
+    // extension is encountered first, then load it in and continue
+    while (blockType != BlockType::IMAGE)
     {
+        switch (blockType)
+        {
+        
+        case BlockType::EXTENSION:
+        {
+            LOG_DEBUG("EXTENSION BLOCK " << is.tellg());
+            ExtensionType extType = (ExtensionType)is.peek();
+
+            // If graphics extension encountered, load it
+            if (extType == ExtensionType::GRAPHICS)
+                graphics = GraphicsExtension(is);
+            // Otherwise, ignore this block
+            else
+                readExtensionBlock(is);
+            
+            break;
+        } // case BlockType::EXTENSION
+
+        case BlockType::END_OF_FILE:
+            throw gif::EndOfStreamException("Encountered EOF byte");
+
+        default:
+        {
+            std::ostringstream errstr;
+            errstr << "Unrecognized first byte of block: 0x" << std::hex
+                << std::setw(2) << std::setfill('0') << (int)blockType;
+            throw gif::FormatException(errstr.str());
+        } // default
+
+        } // switch
+
+        // Read first byte of new block
+        is.read((char*)(&blockType), 1);
+
+    } // while
+
+    LOG_DEBUG("IMAGE BLOCK " << is.tellg());
+    // Get the image descriptor
+    ImageDescriptor desc(is);
+
+    // Load raw image data
+    auto rawData = loadImageData(is);
+    // Parse raw data for LZW codes
+    auto lzwCodes = decompressLZW(rawData);
+
+    // Read color codes and create image
+    const std::vector<RGBA>& colorTable = (desc.flags.localTableFlag) ? 
+                                          loadColorTable(is, loadColorTableSize(desc.flags.colorTableSize)) :
+                                          globalColorTable;
     
-    case BlockType::EXTENSION:
+    // Ensure color table to be used is ok
+    if (colorTable.empty())
     {
-        LOG_DEBUG("EXTENSION BLOCK " << is.tellg());
-        readExtensionBlock(is);
-        return loadNextFrame(is, globalColorTable);
-    } // case BlockType::EXTENSION
+        throw gif::FormatException("Missing global and local color table!");
+    }
 
-    case BlockType::IMAGE:
+    // Load in frame
+    VecInt frameBounds(desc.width, desc.height);
+    VecInt offset(desc.offsetWidth, desc.offsetHeight);
+    if (graphics.transparentFlag && !frames.empty())
     {
-        LOG_DEBUG("IMAGE BLOCK " << is.tellg());
-        // Get the image descriptor
-        ImageDescriptor desc(is);
-
-        // Load raw image data
-        auto rawData = loadImageData(is);
-        // Parse raw data for LZW codes
-        auto lzwCodes = decompressLZW(rawData);
-
-        // Read color codes and create image
-        if (desc.flags.localTableFlag)
-        {
-            std::vector<RGBA> localColorTable = loadColorTable(is, loadColorTableSize(desc.flags.colorTableSize));
-            image = decodeImage(VecInt(desc.width, desc.height), lzwCodes, localColorTable);
-        }
-        else if (globalColorTable.size())
-        {
-            image = decodeImage(VecInt(desc.width, desc.height), lzwCodes, globalColorTable);
-        }
-        else
-        {
-            throw gif::FormatException("Missing global and local color table!");
-        }
-        break;
-    } // case BlockType::IMAGE
-
-    case BlockType::END_OF_FILE:
-        throw gif::EndOfStreamException("Encountered end of file byte");
-
-    default:
+        // If transparency flag is set and there exists a previous frame,
+        // then use that previous frame for parts of this frame
+        image = decodeImage(canvasBounds, frameBounds, offset, lzwCodes, colorTable, frames.back(), graphics.transparentIdx);
+    }
+    else
     {
-        std::ostringstream errstr;
-        errstr << "Unrecognized first byte of block: 0x" << std::hex
-               << std::setw(2) << std::setfill('0') << (int)blockType;
-        throw gif::FormatException(errstr.str());
-    } // default
+        // Otherwise, just decode the frame normally
+        image = decodeImage(canvasBounds, frameBounds, offset, lzwCodes, colorTable);
+    }
 
-    } // switch
-
-    return std::pair<Image, uint16_t>(image, duration);
+    return std::pair<Image, uint16_t>(image, graphics.duration);
 }
 
 void GIF::readExtensionBlock(std::istream& is)
@@ -927,26 +949,83 @@ std::vector<uint8_t> GIF::decompressLZW(const LZWFrame& data)
     return indexStream;
 }
 
-Image GIF::decodeImage(VecInt bounds, const std::vector<uint8_t>& indices, const std::vector<RGBA>& colorTable)
+Image GIF::decodeImage(VecInt canvasBounds,
+                       VecInt frameBounds,
+                       VecInt offset,
+                       const std::vector<uint8_t>& indices,
+                       const std::vector<RGBA>& colorTable)
 {
-    Image image(bounds);
+    Image image(canvasBounds);
 
     size_t idx = 0;
-    for (int y = 0; y < bounds.Y; y++)
+    for (int y = 0; y < frameBounds.Y; y++)
     {
-        for (int x = 0; x < bounds.X; x++)
+        for (int x = 0; x < frameBounds.X; x++)
         {
-            if (idx >= indices.size()) break;
+            if (idx >= indices.size())
+                break;
 
+            // Get this color index
+            int colorIdx = indices[idx];
+
+            // Set the current image pixel to the color at colorIdx
             try
             {
-                image[x][y] = colorTable.at(indices[idx]);
+                image.At(VecInt(x, y) + offset) = colorTable.at(colorIdx);
             }
-            catch(const std::exception& e)
+            catch(const std::runtime_error& e)
             {
-                throw gif::FormatException("Index " + std::to_string(indices[idx]) +
+                throw gif::FormatException("Index " + std::to_string(colorIdx) +
                                            " exceeds the color table of size:" +
                                            std::to_string(colorTable.size()));
+            }
+
+            idx++;
+        }
+    }
+
+    return image;
+}
+
+Image GIF::decodeImage(VecInt canvasBounds,
+                       VecInt frameBounds,
+                       VecInt offset,
+                       const std::vector<uint8_t>& indices,
+                       const std::vector<RGBA>& colorTable,
+                       const Image& prevFrame,
+                       int transparentIdx)
+{
+    Image image(canvasBounds);
+
+    size_t idx = 0;
+    for (int y = 0; y < frameBounds.Y; y++)
+    {
+        for (int x = 0; x < frameBounds.X; x++)
+        {
+            if (idx >= indices.size())
+                break;
+            
+            // Get this color index
+            int colorIdx = indices[idx];
+
+            // If this is the transparent index, use previous frame's color
+            if (colorIdx == transparentIdx)
+            {
+                image.At(VecInt(x, y) + offset) = prevFrame.At(VecInt(x, y) + offset);
+            }
+            // Otherwise, set the current image pixel to the color at colorIdx
+            else
+            {
+                try
+                {
+                    image.At(VecInt(x, y) + offset) = colorTable.at(colorIdx);
+                }
+                catch(const std::runtime_error& e)
+                {
+                    throw gif::FormatException("Index " + std::to_string(colorIdx) +
+                                               " exceeds the color table of size:" +
+                                               std::to_string(colorTable.size()));
+                }
             }
 
             idx++;
