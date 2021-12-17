@@ -169,6 +169,9 @@ void GIF::Save(std::string path,
     // Write global color table
     writeColorTable(os, finalPalette);
 
+    // Write Netscape 2.0 looping extension
+    writeNetscape2Extension(os);
+
     // Write all frames
     for (size_t i = 0; i < frames.size(); i++)
     {
@@ -219,6 +222,9 @@ void GIF::Save(std::string path,
         globalColorTable = getDefaultPalette(paletteSize);
         writeColorTable(os, globalColorTable);
     }
+
+    // Write Netscape 2.0 looping extension
+    writeNetscape2Extension(os);
 
     // Determine durations
     const std::vector<double>& finalDurations = (durations.empty()) ?
@@ -360,6 +366,18 @@ void GIF::writeLSD(std::ostream& os, VecInt bounds, bool globalTable, unsigned g
         lsd[4] |= colorTableBits;
     }
     os.write((char*)lsd, 7);
+}
+
+void GIF::writeNetscape2Extension(std::ostream& os, uint16_t numReps)
+{
+    os.put((uint8_t)BlockType::EXTENSION);
+    os.put((uint8_t)ExtensionType::APPLICATION);
+    os.put(11); // length of this sub-block
+    os.write("NETSCAPE2.0", 11);
+    os.put(3); // length of next sub-block
+    os.put(1);
+    WriteBuf(os, numReps, Endian::Little);
+    os.put(0); // null block terminator
 }
 
 void GIF::writeGraphicsExtension(std::ostream& os, double duration)

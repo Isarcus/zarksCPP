@@ -103,6 +103,8 @@ namespace zmath
 
         static void writeLSD(std::ostream& os, VecInt bounds, bool globalTable, unsigned globalTableSize);
 
+        static void writeNetscape2Extension(std::ostream& os, uint16_t numReps = 0);
+
         // Write a Graphics Control Extension block.
         // @param os the output stream to write to.
         // @param duration the length of time, in seconds, that the next frame
