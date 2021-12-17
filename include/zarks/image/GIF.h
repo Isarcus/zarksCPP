@@ -101,8 +101,18 @@ namespace zmath
         // @return A color palette.
         static std::vector<RGBA> getKMeansPalette(const Image& frame, unsigned numColors);
 
+        // Write the Logical Screen Descriptor.
+        // @param os the output stream to write to.
+        // @param bounds the dimensions of the GIF.
+        // @param globalTable whether there is a global color table.
+        // @param globalTableSize the size of the global color table.
+        //        This value is ignored if globalTable is false.
         static void writeLSD(std::ostream& os, VecInt bounds, bool globalTable, unsigned globalTableSize);
 
+        // Write the Netscape 2.0 Application Extension block.
+        // @param os the output stream to write to.
+        // @param numReps the number of loops to execute before the GIF stops
+        //        playing. Leave this as zero for infinite repetitions.
         static void writeNetscape2Extension(std::ostream& os, uint16_t numReps = 0);
 
         // Write a Graphics Control Extension block.
