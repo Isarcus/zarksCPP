@@ -6,9 +6,9 @@ namespace zmath
     class MemBuffer
     {
     public:
-        MemBuffer(uint8_t* buf, size_t bytes);
-        MemBuffer(char* buf, size_t bytes);
-        MemBuffer(std::istream& buf, size_t bytes = 0);
+        MemBuffer(const uint8_t* buf, size_t bytes);
+        MemBuffer(const char* buf, size_t bytes);
+        MemBuffer(std::istream& buf, size_t bytes);
         MemBuffer(const MemBuffer& mbuf);
         MemBuffer(MemBuffer&& mbuf);
         ~MemBuffer();

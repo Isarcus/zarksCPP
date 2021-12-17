@@ -4,11 +4,11 @@
 namespace zmath
 {
 
-MemBuffer::MemBuffer(char* buf, size_t bytes)
-    : MemBuffer((uint8_t*)buf, bytes)
+MemBuffer::MemBuffer(const char* buf, size_t bytes)
+    : MemBuffer(reinterpret_cast<const uint8_t*>(buf), bytes)
 {}
 
-MemBuffer::MemBuffer(uint8_t* buf, size_t bytes)
+MemBuffer::MemBuffer(const uint8_t* buf, size_t bytes)
     : data(bufcpy(buf, bytes))
     , end(data + bytes)
     , current(data)
