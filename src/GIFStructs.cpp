@@ -31,7 +31,7 @@ LSDFlags::LSDFlags(uint8_t flagByte)
 
 IDFlags::IDFlags()
     : colorTableSize(0)
-    , __reservedBits(0)
+    , _reservedBits(0)
     , sortFlag(0)
     , interlaceFlag(0)
     , localTableFlag(0)
@@ -39,7 +39,7 @@ IDFlags::IDFlags()
 
 IDFlags::IDFlags(uint8_t flagByte)
     : colorTableSize ( flagByte & COLOR_TABLE_SIZE)
-    , __reservedBits ((flagByte & RESERVED_BITS)          >> 3)
+    , _reservedBits  ((flagByte & RESERVED_BITS)          >> 3)
     , sortFlag       ((flagByte & SORT_FLAG)              >> 5)
     , interlaceFlag  ((flagByte & INTERLACE_FLAG)         >> 6)
     , localTableFlag ((flagByte & LOCAL_COLOR_TABLE_FLAG) >> 7)
@@ -73,10 +73,61 @@ std::ostream& operator<<(std::ostream& os, const ImageDescriptor& desc)
         << " -> height: " << desc.height << "\n"
         << " -> flags:\n"
         << "   -> colorTableSize: " << desc.flags.colorTableSize << "\n"
-        << "   -> __reservedBits: " << desc.flags.__reservedBits << "\n"
+        << "   -> _reservedBits:  " << desc.flags._reservedBits << "\n"
         << "   -> sortFlag:       " << desc.flags.sortFlag << "\n"
         << "   -> interlaceFlag:  " << desc.flags.interlaceFlag << "\n"
         << "   -> localTableFlag: " << desc.flags.localTableFlag << "\n";
+}
+
+//                   //
+// GraphicsExtension //
+//                   //
+
+GraphicsExtension::GraphicsExtension()
+    : transparentFlag(0)
+    , userInputFlag(0)
+    , disposalMethod(0)
+    , _reservedBits(0)
+{}
+
+GraphicsExtension::GraphicsExtension(std::istream& is)
+{
+    // Read first byte; this must be ExtensionType::GRAPHICS
+    ExtensionType extType = (ExtensionType)is.get();
+    if (extType != ExtensionType::GRAPHICS)
+    {
+        throw std::runtime_error("Called GraphicsExtension constructor on a non-graphics control block!");
+    }
+
+    // Read initial Graphics Control byte and make sure it is 4
+    uint8_t byteSize = (uint8_t)is.get();
+    if (byteSize != 4)
+    {
+        throw FormatException("Expected Graphics Extension of size 4, not " + std::to_string(byteSize));
+    }
+
+    // Read in the rest of the block
+    uint8_t buf[5], *ptr = buf;
+    is.read((char*)buf, 5);
+
+    // Interpret packed field
+    uint8_t flagByte = buf[0];
+    transparentFlag =  flagByte & TRANSPARENT_FLAG;
+    userInputFlag   = (flagByte & USER_INPUT_FLAG) >> 1;
+    disposalMethod  = (flagByte & DISPOSAL_METHOD) >> 2;
+    _reservedBits   = (flagByte & RESERVED_BITS)   >> 5;
+
+    // Read in duration
+    duration = FromBytes<uint16_t>(ptr + 1, Endian::Little);
+    
+    // Read in transparency index, if applicable
+    transparentIdx = (transparentFlag) ? buf[3] : 0;
+
+    // Sanity check - ensure block terminator is null
+    if (buf[4])
+    {
+        throw FormatException("No null terminator on Graphics Extension block");
+    }
 }
 
 //            //

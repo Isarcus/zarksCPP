@@ -73,9 +73,9 @@ namespace gif
         /* * * * * * * * * */
 
         /* A */ unsigned colorTableSize : 3;
-        /* B */ unsigned __reservedBits : 2;
-        /* C */ unsigned sortFlag : 1;
-        /* D */ unsigned interlaceFlag : 1;
+        /* B */ unsigned _reservedBits  : 2;
+        /* C */ unsigned sortFlag       : 1;
+        /* D */ unsigned interlaceFlag  : 1;
         /* E */ unsigned localTableFlag : 1;
 
         /* A */ static constexpr uint8_t COLOR_TABLE_SIZE       = 0b00000111;
@@ -103,6 +103,30 @@ namespace gif
 
         friend std::ostream& operator<<(std::ostream& os, const ImageDescriptor& desc);
     } ImageDescriptor;
+
+    typedef struct GraphicsExtension
+    {
+        GraphicsExtension();
+        
+        // Requires that the stream has *just* read the first byte
+        // of a graphics control extension, i.e. BlockType::EXTENSION,
+        // AND that the following byte is ExtensionType::GRAPHICS
+        GraphicsExtension(std::istream& is);
+
+        unsigned transparentFlag : 1;
+        unsigned userInputFlag   : 1;
+        unsigned disposalMethod  : 3;
+        unsigned _reservedBits   : 3;
+
+        static constexpr uint8_t TRANSPARENT_FLAG = 0b00000001;
+        static constexpr uint8_t USER_INPUT_FLAG  = 0b00000010;
+        static constexpr uint8_t DISPOSAL_METHOD  = 0b00011100;
+        static constexpr uint8_t RESERVED_BITS    = 0b11100000;
+
+        uint16_t duration;
+        uint8_t transparentIdx;
+
+    } GraphicsExtension;
 
     //            //
     // Exceptions //
