@@ -296,8 +296,10 @@ unsigned GIF::computeColorTableSize(const std::vector<RGBA>& palette)
 
 unsigned GIF::computeColorTableSize(unsigned numColors)
 {
-    if (numColors < 2) return 256;
-    return std::min(256U, (unsigned)std::pow(2, std::ceil(std::log2(numColors))));
+    if (numColors < 2)
+        return 256;
+    else
+        return std::min(256U, (unsigned)std::pow(2, std::ceil(std::log2(numColors))));
 }
 
 std::vector<RGBA> GIF::getDefaultPalette(unsigned numColors)
@@ -314,20 +316,18 @@ std::vector<RGBA> GIF::getDefaultPalette(unsigned numColors)
         for (int g = 0; g < root3; g++)
             for (int b = 0; b < root3; b++)
                 palette[idx++] = RGBA(
-                    (uint8_t)std::round(r / std::max(1.0, (double)root3 - 1)),
-                    (uint8_t)std::round(g / std::max(1.0, (double)root3 - 1)),
-                    (uint8_t)std::round(b / std::max(1.0, (double)root3 - 1))
-                );
-    LOG_DEBUG("Determined " << idx << " evenly spread colors");
+                    (uint8_t)std::floor(255.99 * (r / std::max(1.0, (double)root3 - 1))),
+                    (uint8_t)std::floor(255.99 * (g / std::max(1.0, (double)root3 - 1))),
+                    (uint8_t)std::floor(255.99 * (b / std::max(1.0, (double)root3 - 1))));
 
-    // Assign pseudorandom colors for the rest
     std::mt19937 rng;
     while (idx < numColors)
     {
         RGBA c;
-        c.R = rng();
-        c.G = rng();
-        c.B = rng();
+        uint32_t rand = rng();
+        c.R = rand;
+        c.G = rand >> 8;
+        c.B = rand >> 16;
 
         palette[idx++] = c;
     }
