@@ -77,6 +77,9 @@ namespace zmath
 		const T* operator[](int x) const;
 		T* operator[](int x);
 
+		void CopyInRange(const Sampleable2D& samp, VecInt min, VecInt max, VecInt to = VecInt(0, 0));
+		void CopyNotInRange(const Sampleable2D& samp, VecInt min, VecInt max, VecInt to = VecInt(0, 0));
+
 		T Sample(VecInt pos) const;
 		T Sample(Vec pos) const;
 
@@ -196,6 +199,45 @@ namespace zmath
 	inline T* Sampleable2D<T>::operator[](int x)
 	{
 		return data[x];
+	}
+
+	template<typename T>
+	void Sampleable2D<T>::CopyInRange(const Sampleable2D<T>& samp, VecInt min, VecInt max, VecInt to)
+	{
+		VecInt setCoord = Vec::Max(Vec(0, 0), to);
+		for (int x = min.X; x < max.X && setCoord.X < bounds.X; x++, setCoord.X++)
+		{
+			setCoord.Y = to.Y;
+			for (int y = min.Y; y < max.Y && setCoord.Y < bounds.Y; y++, setCoord.Y++)
+			{
+				VecInt coord(x, y);
+				Set(setCoord, samp.At(coord));
+			}
+		}
+	}
+
+	template<typename T>
+	void Sampleable2D<T>::CopyNotInRange(const Sampleable2D<T>& samp, VecInt min, VecInt max, VecInt to)
+	{
+		const VecInt otherBounds(samp.bounds);
+		VecInt otherCoord(0, 0);
+		for (int x = to.X; x < bounds.X && otherCoord.X < otherBounds.X; x++, otherCoord.X++)
+		{
+			otherCoord.Y = 0;
+			for (int y = to.Y; y < bounds.Y && otherCoord.Y < otherBounds.Y; y++, otherCoord.Y++)
+			{
+				// If y has reached minimum x bound, skip to max y bound
+				if (otherCoord.Y >= min.Y && otherCoord.Y < max.Y &&
+					otherCoord.X >= min.X && otherCoord.X < max.X)
+				{
+					y += max.Y - otherCoord.Y - 1;
+					otherCoord.Y = max.Y - 1;
+					continue;
+				}
+
+				Set(x, y, samp.At(otherCoord));
+			}
+		}
 	}
 
 	template<typename T>
