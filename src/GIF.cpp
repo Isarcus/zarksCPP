@@ -107,20 +107,25 @@ GIF::GIF(std::istream& is)
     VecInt bounds(canvasWidth, canvasHeight);
     while (true)
     {
+        // Try to load next frame
         try
         {
             auto pair = loadNextFrame(is, bounds, globalColorTable);
             frames.push_back(pair.first);
             LOG_DEBUG("Loaded frame #" << frames.size());
         }
+        // This exception signifies that the correctly-formatted end of
+        // the GIF has been found
         catch (const gif::EndOfStreamException& e)
         {
             break;
         }
+        // This exception will only be thrown if the decoder ran into
+        // an issue with the GIF being loaded
         catch (const gif::GifLoadingException& e)
         {
-            std::cerr << e << std::endl;
-            std::cerr << " -> Stream position: " << is.tellg() << std::endl;
+            LOG_ERROR(e);
+            LOG_ERROR(" -> Stream position: " << is.tellg());
             break;
         }
     }
@@ -206,7 +211,7 @@ void GIF::Save(std::string path,
     // Determine bounds
     if (bounds == VecInt()) bounds = Bounds();
 
-        // Output standard log message
+    // Output standard log message
     LOG_INFO("Saving GIF of size " << bounds << " and palette size " <<
              computeColorTableSize(paletteSize) << " at " << path);
 
@@ -239,7 +244,6 @@ void GIF::Save(std::string path,
         const std::vector<RGBA>& colorTableToUse = (global) ?
                                                     globalColorTable :
                                                     getKMeansPalette(frames[i], paletteSize);
-        LOG_DEBUG(" -> Color table size: " << colorTableToUse.size());
 
         writeGraphicsExtension(os, finalDurations[i % finalDurations.size()]);
         writeFrame(os, frames[i], bounds, colorTableToUse, !global);
@@ -327,6 +331,7 @@ std::vector<RGBA> GIF::getDefaultPalette(unsigned numColors)
                     (uint8_t)std::floor(255.99 * (g / std::max(1.0, (double)root3 - 1))),
                     (uint8_t)std::floor(255.99 * (b / std::max(1.0, (double)root3 - 1))));
 
+    // Fill the rest of the palette with pseudorandom values
     std::mt19937 rng;
     while (idx < numColors)
     {
@@ -344,7 +349,6 @@ std::vector<RGBA> GIF::getDefaultPalette(unsigned numColors)
 
 std::vector<RGBA> GIF::getKMeansPalette(const Image& frame, unsigned numColors)
 {
-    // Get default palette
     std::vector<RGBA> palette = getDefaultPalette(numColors);
 
     // Run K Means algorithm
@@ -571,12 +575,10 @@ std::pair<Image, uint16_t> GIF::loadNextFrame(std::istream& is, VecInt canvasBou
         throw gif::BadStreamException("Failed to read first byte of block");
     }
 
-    // Declarations
-    Image image;
-    GraphicsExtension graphics;
-
     // Load blocks until an image block is reached. If a graphics control
     // extension is encountered first, then load it in and continue
+    Image image;
+    GraphicsExtension graphics;
     while (blockType != BlockType::IMAGE)
     {
         switch (blockType)
@@ -857,42 +859,38 @@ std::vector<uint8_t> GIF::decompressLZW(const LZWFrame& data)
             prevCode = bbuf.Read(bitIdx, codeSize);
             bitIdx += codeSize;
             indexStream.push_back(codeTableCurrent.at(prevCode).at(0));
-            // LOG_DEBUG(" -> LZW code #" << prevCode << " (code size == "
-            //           << (int)codeSize << "; table size == " << codeTableCurrent.size()
-            //           << ")");
             
             // Special cases that *shouldn't* happen, but technically
             // can, because you can do whatever the heck you want if
             // you're writing a GIF encoder
-            if (prevCode == clearCode) continue;
-            if (prevCode == EOICode) break;
+            if (prevCode == clearCode)
+                continue;
+            else if (prevCode == EOICode)
+                break;
         }
 
         // Read the next code
         uint16_t thisCode = bbuf.Read(bitIdx, codeSize);
         bitIdx += codeSize;
 
-        // Notify of this code
-        // LOG_DEBUG(" -> LZW code #" << thisCode << " (code size == "
-        //           << (int)codeSize << "; table size == " << codeTableCurrent.size()
-        //           << ")");
-
-        // If this code is a clear code, reset the code table, code size,
-        // and the maximum allowable code value for this code size
         if (thisCode == clearCode)
         {
+            // If this code is a clear code, reset the code table, code size,
+            // and the maximum allowable code value for this code size
             LOG_DEBUG(" -> CC");
+
             // Reset the code table and code size
             codeTableCurrent = codeTableBase;
             codeSize = codeSizeBase;
             maxCodeThisSize = std::pow(2, codeSize) - 1;
+
             // Set prevCode to CC
             prevCode = thisCode;
             continue;
         }
-        // If this code is an EOI code, we're all done!
         else if (thisCode == EOICode)
         {
+            // If this code is an EOI code, we're all done!
             LOG_DEBUG(" -> EOI");
             break;
         }
@@ -923,8 +921,8 @@ std::vector<uint8_t> GIF::decompressLZW(const LZWFrame& data)
         }
         else
         {
-            const auto& prevCodeVal = codeTableCurrent.at(prevCode);
             // let K be the first index of {CODE-1}
+            const auto& prevCodeVal = codeTableCurrent.at(prevCode);
             uint8_t K = prevCodeVal.at(0);
 
             // add {CODE-1}+K to code table
@@ -963,6 +961,7 @@ Image GIF::decodeImage(VecInt canvasBounds,
                        const std::vector<RGBA>& colorTable,
                        const Image* prevFrame)
 {
+    // Create frame and copy relevant parts from previous frame
     Image image(canvasBounds);
     if (prevFrame)
     {
@@ -1007,7 +1006,7 @@ Image GIF::decodeImage(VecInt canvasBounds,
                        const Image& prevFrame,
                        int transparentIdx)
 {
-    // Create image for this frame
+    // Create frame and copy relevant parts from previous frame
     Image image(canvasBounds);
     image.CopyNotInRange(prevFrame, offset, offset + frameBounds);
 
@@ -1022,14 +1021,14 @@ Image GIF::decodeImage(VecInt canvasBounds,
             // Get this color index
             int colorIdx = indices[idx];
 
-            // If this is the transparent index, use previous frame's color
             if (colorIdx == transparentIdx)
             {
+                // If this is the transparent index, use previous frame's color
                 image.At(VecInt(x, y) + offset) = prevFrame.At(VecInt(x, y) + offset);
             }
-            // Otherwise, set the current image pixel to the color at colorIdx
             else
             {
+                // Otherwise, set the current image pixel to the color at colorIdx
                 try
                 {
                     image.At(VecInt(x, y) + offset) = colorTable.at(colorIdx);

@@ -198,7 +198,9 @@ namespace zmath
         // @param colorTable a colorTable. This function will throw a
         //        gif::ColorTableException if anyindex exceeds the size
         //        of the colorTable.
-        // @param prevFrame the previously loaded frame, if there is one.
+        // @param prevFrame the previously loaded frame, if there is one. There
+        //        should only not be if the frame to be loaded is the very
+        //        first one in the GIF.
         // @param transparentIdx the transparent color index, if applicable.
         // @return A fully decoded image.
         static Image decodeImage(VecInt canvasBounds,
@@ -207,6 +209,9 @@ namespace zmath
                                  const std::vector<uint8_t>& indices,
                                  const std::vector<RGBA>& colorTable,
                                  const Image* prevFrame = nullptr);
+        // @param prevFrame the previously loaded frame from which to get
+        //        colors for any transparent pixels.
+        // @param transparentIdx the transparent color index.
         static Image decodeImage(VecInt canvasBounds,
                                  VecInt frameBounds,
                                  VecInt offset,
@@ -224,14 +229,14 @@ namespace zmath
         // @param bitField a value from 0-7; the last three bits of
         //        the fifth byte of the Logical Screen Descriptor or
         //        the last three bits of the tenth byte of an Image
-        //        Descriptor (e.g. LSDFlags::colorTableSize and
-        //        IDFlags::colorTableSize).
+        //        Descriptor (i.e. LSDFlags::colorTableSize and
+        //        IDFlags::colorTableSize, respectively).
         // @return 2^(1 + bitField)
         static int loadColorTableSize(int bitField);
 
-        // Return an LZW code table containing only the basic color codes,
-        // clear code, and EOI code.
         // @param minCodeSize the minimum size of a *color* code, in bits.
+        // @return An LZW code table containing only the basic color codes,
+        // clear code, and EOI code.
         static std::vector<std::vector<uint8_t>> getBaseCodeTable(int minCodeSize);
     };
     
