@@ -53,12 +53,12 @@ BitBuffer::BitBuffer(BitBuffer&& bbuf)
 
 BitBuffer::BitBuffer(size_t bitCapacity)
     : capacityBytes(BitAddress(bitCapacity).Bytes())
-    , data(new uint8_t[capacityBytes])
+    , data(new uint8_t[capacityBytes]{})
 {}
 
 BitBuffer::BitBuffer(const void* bytes, size_t sizeBytes)
     : capacityBytes(sizeBytes)
-    , data(new uint8_t[capacityBytes])
+    , data(new uint8_t[capacityBytes]{})
     , next(sizeBytes, 0)
 {
     memcpy(data, bytes, sizeBytes);
@@ -66,7 +66,7 @@ BitBuffer::BitBuffer(const void* bytes, size_t sizeBytes)
 
 BitBuffer::BitBuffer(const void* bytes, const BitAddress& size)
     : capacityBytes(size.Bytes())
-    , data(new uint8_t[capacityBytes])
+    , data(new uint8_t[capacityBytes]{})
     , next(size)
 {
     memcpy(data, bytes, size.Bytes());
@@ -83,7 +83,7 @@ BitBuffer& BitBuffer::operator=(const BitBuffer& bbuf)
     {
         delete[] data;
         capacityBytes = bbuf.SizeBytes();
-        data = new uint8_t[capacityBytes];
+        data = new uint8_t[capacityBytes]{};
         memcpy(data, bbuf.data, capacityBytes);
         next = bbuf.next;
     }
@@ -291,7 +291,7 @@ void BitBuffer::ReserveBytes(size_t bytes)
     if (bytes > capacityBytes)
     {
         // Allocate new array and copy relevant info over to it
-        uint8_t* newArr = new uint8_t[bytes];
+        uint8_t* newArr = new uint8_t[bytes]{};
         memcpy(newArr, data, next.Bytes());
 
         // Delete old array
@@ -306,11 +306,12 @@ void BitBuffer::ReserveBytes(size_t bytes)
 void BitBuffer::Clear()
 {
     next = BitAddress(0);
+    memset(data, 0, capacityBytes);
 }
 
 void BitBuffer::reallocArray()
 {
-    uint8_t* newData = new uint8_t[capacityBytes * 2];
+    uint8_t* newData = new uint8_t[capacityBytes * 2]{};
     memcpy(newData, data, capacityBytes);
     delete[] data;
     data = newData;
