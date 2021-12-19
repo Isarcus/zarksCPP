@@ -28,10 +28,13 @@ int main(int argc, char** argv)
     // Save just-loaded GIF in new file
     LOG_INFO("Re-saving GIF as gif.gif");
     gif.Save("gif.gif", true);
+    gif.Save("gif_local.gif", false);
 
     // Ensure GIF was just saved correctly by loading it in
     LOG_INFO("Re-loading GIF at gif.gif")
     GIF reload("gif.gif");
+    GIF reload_local("gif_local.gif");
+    reload_local.Save("reload_local.gif");
 
     return 0;
 }
