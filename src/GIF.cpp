@@ -441,7 +441,7 @@ void GIF::writeFrame(std::ostream& os, const Image& frame, VecInt bounds, const 
     if (writeTable)
     {
         // If there's a local table, say so and tell its length
-        buf[9] = 0b10000000 | std::min(uint8_t(7), uint8_t(std::ceil(std::log2(palette.size())) - 1));
+        buf[9] = 0b10000000 | uint8_t(std::ceil(std::log2(computeColorTableSize(palette))) - 1);
     }
     os.write((char*)buf, 10);
 
@@ -618,16 +618,16 @@ std::pair<Image, uint16_t> GIF::loadNextFrame(std::istream& is, VecInt canvasBou
     LOG_DEBUG("IMAGE BLOCK " << is.tellg());
     // Get the image descriptor
     ImageDescriptor desc(is);
+    
+    // Read color codes and create image
+    const std::vector<RGBA>& colorTable = (desc.flags.localTableFlag) ? 
+                                          loadColorTable(is, loadColorTableSize(desc.flags.colorTableSize)) :
+                                          globalColorTable;
 
     // Load raw image data
     auto rawData = loadImageData(is);
     // Parse raw data for LZW codes
     auto lzwCodes = decompressLZW(rawData);
-
-    // Read color codes and create image
-    const std::vector<RGBA>& colorTable = (desc.flags.localTableFlag) ? 
-                                          loadColorTable(is, loadColorTableSize(desc.flags.colorTableSize)) :
-                                          globalColorTable;
     
     // Ensure color table to be used is ok
     if (colorTable.empty())
