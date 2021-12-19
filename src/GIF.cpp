@@ -995,7 +995,9 @@ Image GIF::decodeImage(VecInt canvasBounds,
                        const Image& prevFrame,
                        int transparentIdx)
 {
+    // Create image for this frame
     Image image(canvasBounds);
+    image.CopyNotInRange(prevFrame, offset, offset + frameBounds);
 
     size_t idx = 0;
     for (int y = 0; y < frameBounds.Y; y++)
