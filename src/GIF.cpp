@@ -356,7 +356,7 @@ std::vector<RGBA> GIF::getKMeansPalette(const Image& frame, unsigned numColors)
 
 void GIF::writeLSD(std::ostream& os, VecInt bounds, bool globalTable, unsigned globalTableSize)
 {
-    uint8_t lsd[7];
+    uint8_t lsd[7]{};
     ToBytes<uint16_t>(lsd, bounds.X, Endian::Little);
     ToBytes<uint16_t>(lsd + 2, bounds.Y, Endian::Little);
     if (globalTable)
