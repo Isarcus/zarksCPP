@@ -15,7 +15,7 @@ Mat3::Mat3()
 			{0, 1, 0},
 			{0, 0, 1} } {}
 
-Mat3::Mat3(double arr[3][3])
+Mat3::Mat3(const double arr[3][3])
 	: data{ {arr[0][0], arr[0][1], arr[0][2]},
 			{arr[1][0], arr[1][1], arr[1][2]},
 			{arr[2][0], arr[2][1], arr[2][2]} } {}
@@ -91,7 +91,7 @@ Mat3& Mat3::operator*=(const Mat3& mat3)
 		result[row][col] = data[row][0]*mat3[0][col] + data[row][1]*mat3[1][col] + data[row][2]*mat3[2][col];
 	}
 
-	std::memcpy(data, result, sizeof(result));
+	memcpy(data, result, sizeof(result));
 
 	return *this;
 }

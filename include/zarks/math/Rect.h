@@ -9,6 +9,8 @@ namespace zmath
 		Vec max;
 
 		Rect();
+		Rect(const Rect& rect) = default;
+		Rect(Rect&& rect) = default;
 		Rect(Vec dimensions);
 		Rect(Vec point1, Vec point2);
 		Rect(double x1, double y1, double x2, double y2);

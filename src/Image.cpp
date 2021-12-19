@@ -2,12 +2,15 @@
 #include <zarks/math/MapT.h>
 #include <zarks/math/GaussField.h>
 
+#pragma GCC diagnostic push
+#pragma GCC diagnostic ignored "-Wmissing-field-initializers"
 #define STB_IMAGE_IMPLEMENTATION
 #include <stb/stb_image.h>
 
 #define STBI_MSC_SECURE_CRT // apparently necessary for Visual Studio
 #define STB_IMAGE_WRITE_IMPLEMENTATION
 #include <stb/stb_image_write.h>
+#pragma GCC diagnostic pop
 
 #include <iostream>
 #include <fstream>
@@ -33,7 +36,7 @@ Image::Image(const Map& m)
 {
 	LOOP_IMAGE
 	{
-		uint8 shade = 255.999 * m[x][y];
+		uint8_t shade = 255.999 * m[x][y];
 		data[x][y] = RGBA(shade, shade, shade);
 	}
 }
@@ -78,7 +81,7 @@ Image::Image(const Map& m, Scheme scheme)
 Image::Image(std::string path)
 {
 	int width, height, channels = -1;
-	uint8* stbImg = stbi_load(path.c_str(), &width, &height, &channels, 0);
+	uint8_t* stbImg = stbi_load(path.c_str(), &width, &height, &channels, 0);
 
 	// Abort if it fails to load, or you'll crash the damn computer again
 	if (!stbImg || channels == -1) // I included the 'channels == -1' check bc I'm paranoid
@@ -139,6 +142,7 @@ Image::Image(std::string path)
 }
 
 Image::Image(const Image& img)
+	: Sampleable2D<RGBA>() // Avoid -Wextra warning
 {
 	(*this) = img;
 }
@@ -155,11 +159,6 @@ Image::Image()
 Image::~Image()
 {
 	free2d(data, bounds.X);
-}
-
-VecInt Image::Bounds() const
-{
-	return bounds;
 }
 
 Image& Image::operator=(const Image& img)
@@ -385,7 +384,7 @@ Image& Image::BlurGaussian(double sigma, bool blurAlpha)
 		VecInt imgPos(x,y);
 
 		double influence = 0;
-		std::array<double, 4> rgba;
+		std::array<double, 4> rgba{};
 		for (const auto& point : points)
 		{
 			const VecInt pointPos = point.first + imgPos;
@@ -404,10 +403,10 @@ Image& Image::BlurGaussian(double sigma, bool blurAlpha)
 
 		for (auto& c : rgba) c /= influence;
 
-		imgNew[x][y] = RGBA((uint8)std::min(255.0, std::round(rgba[0])),
-							(uint8)std::min(255.0, std::round(rgba[1])),
-							(uint8)std::min(255.0, std::round(rgba[2])),
-							(blurAlpha) ? At(imgPos).A : (uint8)std::min(255.0, std::round(rgba[3])));
+		imgNew[x][y] = RGBA((uint8_t)std::min(255.0, std::round(rgba[0])),
+							(uint8_t)std::min(255.0, std::round(rgba[1])),
+							(uint8_t)std::min(255.0, std::round(rgba[2])),
+							(blurAlpha) ? At(imgPos).A : (uint8_t)std::min(255.0, std::round(rgba[3])));
 	}
 
 	return *this = imgNew;
@@ -493,7 +492,7 @@ void Image::Save(std::string path, unsigned int channels) const
 		throw std::runtime_error("Image: I only know how to save 3- and 4-channel images!");
 	}
 
-	uint8* pixels = new uint8[(uint64_t)bounds.X * (uint64_t)bounds.Y * channels];
+	uint8_t* pixels = new uint8_t[(uint64_t)bounds.X * (uint64_t)bounds.Y * channels];
 
 	int index = 0;
 	for (int y = 0; y < bounds.Y; y++)

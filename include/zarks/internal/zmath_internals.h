@@ -78,10 +78,21 @@ constexpr double interpLinear(double val0, double val1, double t)
 	return t * val1 + (1.0 - t) * val0;
 }
 
-constexpr double interp5(double val0, double val1, double t)
+template <typename T>
+T interpLinear(const T& val0, const T& val1, double t)
 {
-	double t_adj = 6 * std::pow(t, 5) - 15 * std::pow(t, 4) + 10 * std::pow(t, 3);
-	return interpLinear(val0, val1, t_adj);
+	return T::Interpolate(val0, val1, t);
+}
+
+constexpr double interp5(double t)
+{
+	return 6 * std::pow(t, 5) - 15 * std::pow(t, 4) + 10 * std::pow(t, 3);
+}
+
+template <typename T>
+T interp5(const T& val0, const T& val1, double t)
+{
+	return interpLinear(val0, val1, interp5(t));
 }
 
 template <typename T>

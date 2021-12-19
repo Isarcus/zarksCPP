@@ -3,12 +3,11 @@
 #include <zarks/internal/zmath_internals.h>
 #include <zarks/internal/noise_internals.h>
 
-#include <chrono>
 #include <cmath>
-#include <random>
-#include <unordered_map>
+#include <chrono>
 #include <iostream>
 #include <utility>
+#include <algorithm>
 
 namespace zmath
 {
@@ -274,22 +273,8 @@ Map Worley(const NoiseConfig& cfg)
 					// distances[i] = ((int)(distances[i] * 20.0)) / 20.0;
 				}
 
-				// Sort the distances, low to high. TODO: use a better sorting algorithm
-				while (true)
-				{
-					bool done = true;
-					for (unsigned i = 1; i < distanceLen; i++)
-					{
-						if (distances[i - 1] > distances[i])
-						{
-							double temp = distances[i];
-							distances[i] = distances[i - 1];
-							distances[i - 1] = temp;
-							done = false;
-						}
-					}
-					if (done) break;
-				}
+				// Sort the distances, low to high
+				std::sort(distances.begin(), distances.end());
 
 				// Compute brightness
 				double Z = 1;
@@ -369,22 +354,8 @@ Map WorleyPlex(const NoiseConfig& cfg, const Map& baseMap)
 					distances[i] = (hash[test] + coordList[i] - itl).LNorm(baseMap[x][y]);
 				}
 
-				// Sort the distances, low to high. TODO: use a better sorting algorithm
-				while (true)
-				{
-					bool done = true;
-					for (unsigned i = 1; i < distanceLen; i++)
-					{
-						if (distances[i - 1] > distances[i])
-						{
-							double temp = distances[i];
-							distances[i] = distances[i - 1];
-							distances[i - 1] = temp;
-							done = false;
-						}
-					}
-					if (done) break;
-				}
+				// Sort the distances, low to high
+				std::sort(distances.begin(), distances.end());
 
 				// Compute brightness
 				double Z = 1;

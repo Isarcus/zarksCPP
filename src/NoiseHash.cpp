@@ -1,5 +1,4 @@
 #include <zarks/noise/NoiseHash.h>
-
 #include <zarks/internal/zmath_internals.h>
 
 #include <chrono>

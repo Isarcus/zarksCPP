@@ -10,7 +10,9 @@ namespace zmath
 	{
 	public:
 		Mat3();
-		Mat3(double arr[3][3]);
+		Mat3(const double arr[3][3]);
+		Mat3(const Mat3& mat3);
+		Mat3(const Mat3&& mat3);
 
 		Mat3& operator=(const Mat3& mat3);
 		Mat3& operator=(const double* const* arr);

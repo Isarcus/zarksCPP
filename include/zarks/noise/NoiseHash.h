@@ -1,6 +1,6 @@
 #pragma once
 
-#include <zarks/internal/noise_internals.h>
+#include <zarks/math/hashing.h>
 
 #include <random>
 #include <unordered_map>

@@ -15,8 +15,6 @@ namespace zmath
 		T** data;
 		
 		Sampleable2D();
-		Sampleable2D(int x, int y, const T& val = T());
-		Sampleable2D(VecInt bounds, const T& val = T());
 
 		void BoundCheck(Vec check) const;
 		void BoundCheck(VecInt check) const;
@@ -56,10 +54,15 @@ namespace zmath
 		};
 
 	public:
+		Sampleable2D(int x, int y, const T& val = T());
+		Sampleable2D(VecInt bounds, const T& val = T());
+		
 		virtual ~Sampleable2D();
 
 		bool ContainsCoord(Vec pos) const;
 		bool ContainsCoord(VecInt pos) const;
+
+		VecInt Bounds() const;
 
 		void Set(int x, int y, const T& val);
 		void Set(int x, int y, T&& val);
@@ -74,8 +77,14 @@ namespace zmath
 		const T* operator[](int x) const;
 		T* operator[](int x);
 
+		void CopyInRange(const Sampleable2D& samp, VecInt min, VecInt max, VecInt to = VecInt(0, 0));
+		void CopyNotInRange(const Sampleable2D& samp, VecInt min, VecInt max, VecInt to = VecInt(0, 0));
+
 		T Sample(VecInt pos) const;
 		T Sample(Vec pos) const;
+
+		void FlipVertical();
+		void FlipHorizontal();
 
 		Iterator GetIterator(VecInt pos);
 		ConstIterator GetIterator(VecInt pos) const;
@@ -118,6 +127,12 @@ namespace zmath
 	inline bool Sampleable2D<T>::ContainsCoord(VecInt pos) const
 	{
 		return (pos >= VecInt(0, 0) && pos < bounds);
+	}
+
+	template<typename T>
+	inline VecInt Sampleable2D<T>::Bounds() const
+	{
+		return bounds;
 	}
 
 	template<typename T>
@@ -187,6 +202,45 @@ namespace zmath
 	}
 
 	template<typename T>
+	void Sampleable2D<T>::CopyInRange(const Sampleable2D<T>& samp, VecInt min, VecInt max, VecInt to)
+	{
+		VecInt setCoord = Vec::Max(Vec(0, 0), to);
+		for (int x = min.X; x < max.X && setCoord.X < bounds.X; x++, setCoord.X++)
+		{
+			setCoord.Y = to.Y;
+			for (int y = min.Y; y < max.Y && setCoord.Y < bounds.Y; y++, setCoord.Y++)
+			{
+				VecInt coord(x, y);
+				Set(setCoord, samp.At(coord));
+			}
+		}
+	}
+
+	template<typename T>
+	void Sampleable2D<T>::CopyNotInRange(const Sampleable2D<T>& samp, VecInt min, VecInt max, VecInt to)
+	{
+		const VecInt otherBounds(samp.bounds);
+		VecInt otherCoord(0, 0);
+		for (int x = to.X; x < bounds.X && otherCoord.X < otherBounds.X; x++, otherCoord.X++)
+		{
+			otherCoord.Y = 0;
+			for (int y = to.Y; y < bounds.Y && otherCoord.Y < otherBounds.Y; y++, otherCoord.Y++)
+			{
+				// If y has reached minimum x bound, skip to max y bound
+				if (otherCoord.Y >= min.Y && otherCoord.Y < max.Y &&
+					otherCoord.X >= min.X && otherCoord.X < max.X)
+				{
+					y += max.Y - otherCoord.Y - 1;
+					otherCoord.Y = max.Y - 1;
+					continue;
+				}
+
+				Set(x, y, samp.At(otherCoord));
+			}
+		}
+	}
+
+	template<typename T>
 	inline T Sampleable2D<T>::Sample(VecInt pos) const
 	{
 		return At(pos.X, pos.Y);
@@ -195,21 +249,44 @@ namespace zmath
 	template<typename T>
 	inline T Sampleable2D<T>::Sample(Vec pos) const
 	{
-		BoundCheck(pos);
-		if (pos == (VecInt)pos)
+		if (pos == pos.Floor())
 		{
 			return At(pos);
 		}
 
-		const VecInt min = pos.Floor();
-		const VecInt max = pos.Ceil();
+		const VecInt min = Vec::Max(pos.Floor(), Vec(0, 0));
+		const VecInt max = Vec::Min(min + Vec(1, 1), bounds - Vec(1, 1));
 		const Vec within = pos - min;
 
-		T y0 = interp5(data[min.X][min.Y], data[max.X, min.Y], within.X);
-		T y1 = interp5(data[min.X][max.Y], data[max.X, max.Y], within.X);
+		T y0 = interp5(data[min.X][min.Y], data[max.X][min.Y], within.X);
+		T y1 = interp5(data[min.X][max.Y], data[max.X][max.Y], within.X);
 		T z = interp5(y0, y1, within.Y);
 
 		return T(z);
+	}
+
+	template<typename T>
+	void  Sampleable2D<T>::FlipVertical()
+	{
+		for (int x = 0; x < bounds.X; x++)
+		{
+			for (int y = 0; y < bounds.Y / 2; y++)
+			{
+				std::swap(data[x][y], data[x][bounds.Y - 1 - y]);
+			}
+		}
+	}
+
+	template<typename T>
+	void  Sampleable2D<T>::FlipHorizontal()
+	{
+		for (int x = 0; x < bounds.X / 2; x++)
+		{
+			for (int y = 0; y < bounds.Y; y++)
+			{
+				std::swap(data[x][y], data[bounds.X - 1 - x][y]);
+			}
+		}
 	}
 
 	template<typename T>

@@ -1,6 +1,6 @@
 #include <zarks/math/3D/Tessellation3D.h>
-#include <zarks/math/binary.h>
-#include <zarks/math/numerals.h>
+#include <zarks/io/binary.h>
+#include <zarks/io/numerals.h>
 #include <zarks/internal/zmath_internals.h>
 
 #include <cstring>

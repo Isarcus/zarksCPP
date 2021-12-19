@@ -10,6 +10,11 @@ namespace zmath
 
 		Triangle3D() = default;
 		Triangle3D(Vec3 v1, Vec3 v2, Vec3 v3);
+		Triangle3D(const Triangle3D& tri) = default;
+		Triangle3D(Triangle3D&& tri) = default;
+
+		Triangle3D& operator=(const Triangle3D&) = default;
+		Triangle3D& operator=(Triangle3D&&) = default;
 
 		Triangle3D Set(Vec3 v1, Vec3 v2, Vec3 v3);
 		
