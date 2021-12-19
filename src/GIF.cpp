@@ -638,7 +638,12 @@ std::pair<Image, uint16_t> GIF::loadNextFrame(std::istream& is, VecInt canvasBou
     // Load in frame
     VecInt frameBounds(desc.width, desc.height);
     VecInt offset(desc.offsetWidth, desc.offsetHeight);
-    if (graphics.transparentFlag && !frames.empty())
+    if (frames.empty())
+    {
+        // Decode frame normally if it is the first one
+        image = decodeImage(canvasBounds, frameBounds, offset, lzwCodes, colorTable);
+    }
+    else if (graphics.transparentFlag)
     {
         // If transparency flag is set and there exists a previous frame,
         // then use that previous frame for parts of this frame
@@ -646,8 +651,10 @@ std::pair<Image, uint16_t> GIF::loadNextFrame(std::istream& is, VecInt canvasBou
     }
     else
     {
-        // Otherwise, just decode the frame normally
-        image = decodeImage(canvasBounds, frameBounds, offset, lzwCodes, colorTable);
+        // If no transparency, still pass in previous frame in case the
+        // frame bounds are less than the total bounds or there is an
+        // offset for this frame
+        image = decodeImage(canvasBounds, frameBounds, offset, lzwCodes, colorTable, &frames.back());
     }
 
     return std::pair<Image, uint16_t>(image, graphics.duration);
@@ -953,9 +960,14 @@ Image GIF::decodeImage(VecInt canvasBounds,
                        VecInt frameBounds,
                        VecInt offset,
                        const std::vector<uint8_t>& indices,
-                       const std::vector<RGBA>& colorTable)
+                       const std::vector<RGBA>& colorTable,
+                       const Image* prevFrame)
 {
     Image image(canvasBounds);
+    if (prevFrame)
+    {
+        image.CopyNotInRange(*prevFrame, offset, offset + frameBounds);
+    }
 
     size_t idx = 0;
     for (int y = 0; y < frameBounds.Y; y++)

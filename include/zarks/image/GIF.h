@@ -198,12 +198,15 @@ namespace zmath
         // @param colorTable a colorTable. This function will throw a
         //        gif::ColorTableException if anyindex exceeds the size
         //        of the colorTable.
+        // @param prevFrame the previously loaded frame, if there is one.
+        // @param transparentIdx the transparent color index, if applicable.
         // @return A fully decoded image.
         static Image decodeImage(VecInt canvasBounds,
                                  VecInt frameBounds,
                                  VecInt offset,
                                  const std::vector<uint8_t>& indices,
-                                 const std::vector<RGBA>& colorTable);
+                                 const std::vector<RGBA>& colorTable,
+                                 const Image* prevFrame = nullptr);
         static Image decodeImage(VecInt canvasBounds,
                                  VecInt frameBounds,
                                  VecInt offset,
