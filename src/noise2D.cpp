@@ -228,8 +228,8 @@ Map Worley(const NoiseConfig& cfg)
 {
 	// this coordList works for simpler algorithms that use fewer than ~5 points
 	std::vector<Vec> coordList;
-	for (int x = -2; x <= 2; x++)
-		for (int y = -2; y <= 2; y++)
+	for (int x = -3; x <= 3; x++)
+		for (int y = -3; y <= 3; y++)
 			coordList.push_back(Vec(x, y));
 
 	// RNG
