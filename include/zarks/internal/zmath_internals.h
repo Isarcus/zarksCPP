@@ -8,6 +8,7 @@ namespace zmath
 {
 
 constexpr double PI = 3.14159265358979323846264;
+constexpr double PIX2 = PI * 2.0;
 constexpr double PID2 = PI / 2.0;
 constexpr double DOUBLEMAX = std::numeric_limits<double>::max();
 constexpr double DOUBLEMIN = std::numeric_limits<double>::lowest();
