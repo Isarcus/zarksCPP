@@ -36,6 +36,8 @@ namespace zmath
 		T LNorm(double L) const;
 		double Angle() const;
 		VecT Flip() const;
+		VecT Bound(VecT min, VecT max) const;
+		VecT Round() const;
 
 		VecT Mod(VecT denom) const;
 		VecT Floor() const;
@@ -184,6 +186,24 @@ template <typename T>
 inline VecT<T> VecT<T>::Flip() const
 {
 	return VecT<T>(Y, X);
+}
+
+template <typename T>
+inline VecT<T> VecT<T>::Bound(VecT<T> min, VecT<T> max) const
+{
+	return VecT<T>(
+		std::min(max.X, std::max(min.X, X)),
+		std::min(max.Y, std::max(min.Y, Y))
+	);
+}
+
+template <typename T>
+inline VecT<T> VecT<T>::Round() const
+{
+	return VecT<T>(
+		std::round(X),
+		std::round(Y)
+	);
 }
 
 template <typename T>
