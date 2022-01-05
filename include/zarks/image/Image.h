@@ -46,6 +46,7 @@ namespace zmath
 		Image& Droppify(const std::array<Vec, 3>& origins, const std::array<double, 3>& periods);
 		Image& BlurGaussian(double sigma, bool blurAlpha = true);
 		Image& PixelateGaussian(const Map& map, double sigma);
+		Image& WarpGaussian(const Map& map, double sigma, double amplitude);
 		Image& EnhanceContrast(double sigma);
 
 		// Save an image using STBI

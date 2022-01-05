@@ -412,7 +412,6 @@ Image& Image::BlurGaussian(double sigma, bool blurAlpha)
 	return *this = imgNew;
 }
 
-// Warps an image Gaussianly-ish!
 Image& Image::PixelateGaussian(const Map& map, double sigma)
 {
 	MapT<std::pair<Vec, double>> transforms(bounds);
@@ -461,6 +460,68 @@ Image& Image::PixelateGaussian(const Map& map, double sigma)
 	std::cout << " All done!\n";
 
 	return *this;
+}
+
+Image& Image::WarpGaussian(const Map& map, double sigma, double amplitude)
+{
+	// Scaling and sampling constants
+	const VecInt mapBounds = map.Bounds();
+	const Vec scaleVec = Vec(mapBounds) / Vec(bounds);
+	const Vec scaleSigma = scaleVec * sigma;
+	const GaussField gauss(scaleSigma, amplitude);
+
+	// Generate warp map
+    Sampleable2D<std::pair<Vec, int>> result(bounds, {Vec(), 0});
+    for (int x = 0; x < bounds.X; x++)
+    {
+        for (int y = 0; y < bounds.Y; y++)
+        {
+            const Vec mapPoint = Vec(x, y) * scaleVec;
+            // Determine influence for this point
+            for (int dx = -scaleSigma.X*2; dx <= scaleSigma.X*2; dx++)
+            {
+                for (int dy = -scaleSigma.Y*2; dy <= scaleSigma.Y*2; dy++)
+                {
+                    // This represents the point currently being sampled
+                    VecInt offsetVec(dx, dy);
+                    VecInt resultPoint = ((mapPoint + offsetVec) / scaleVec).Round();
+
+                    // Skip any out of bounds points
+                    if (resultPoint.Min() >= 0 && resultPoint.X < bounds.X && resultPoint.Y < bounds.Y)
+					{
+						Vec weightVec = Vec(offsetVec) * gauss.Sample(dx, dy) * map.Sample(mapPoint);
+						auto& elem = result.At(resultPoint);
+						elem.first += weightVec;
+						elem.second++;
+					}
+                }
+            }
+        }
+    }
+
+	// Reduce result map
+    for (int x = 0; x < bounds.X; x++)
+    {
+        for (int y = 0; y < bounds.Y; y++)
+        {
+            auto& pair = result[x][y];
+            pair.first /= pair.second;
+        }
+    }
+
+	// Warp current image
+    Image warped(bounds);
+    for (int x = 0; x < bounds.X; x++)
+    {
+        for (int y = 0; y < bounds.Y; y++)
+        {
+            Vec samplePoint = Vec(x, y) + result[x][y].first / scaleVec;
+            samplePoint = samplePoint.Bound(VecInt(), bounds - 1);
+            warped[x][y] = Sample(samplePoint);
+        }
+    }
+
+	return *this = std::move(warped);
 }
 
 Image& Image::EnhanceContrast(double sigma)
