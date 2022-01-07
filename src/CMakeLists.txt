@@ -14,7 +14,6 @@ add_library(${ZARKS_LIB_NAME}
     NoiseHash.cpp
     Noiser.cpp
     numerals.cpp
-    Rect.cpp
     Shape3D.cpp
     StreamKeeper.cpp
     Tessellation3D.cpp

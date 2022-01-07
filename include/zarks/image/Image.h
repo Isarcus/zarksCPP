@@ -2,14 +2,12 @@
 
 #include <zarks/internal/Sampleable2D.h>
 #include <zarks/image/color.h>
-#include <zarks/math/Rect.h>
 #include <zarks/math/Map.h>
 #include <zarks/math/VecT.h>
 
 #include <string>
 #include <vector>
 #include <array>
-#include <memory>
 
 namespace zmath
 {
