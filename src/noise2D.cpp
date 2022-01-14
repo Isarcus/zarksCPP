@@ -351,7 +351,7 @@ Map WorleyPlex(const NoiseConfig& cfg, const Map& baseMap)
 					Vec test = base + coordList[i];
 
 					// This is where the base map is used
-					distances[i] = (hash[test] + coordList[i] - itl).LNorm(baseMap[x][y]);
+					distances[i] = (hash[test] + coordList[i] - itl).LNorm(baseMap(x, y));
 				}
 
 				// Sort the distances, low to high

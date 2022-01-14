@@ -34,10 +34,10 @@ Tessellation3D::Tessellation3D(const Map& map, Vec3 scale, bool fillSides, bool 
 	{
 		for (int y = 0; y < bounds.Y - 1; y++)
 		{
-			Vec3 c00(x, map[x][y], y);
-			Vec3 c01(x, map[x][y + 1], y + 1);
-			Vec3 c10(x + 1, map[x + 1][y], y);
-			Vec3 c11(x + 1, map[x + 1][y + 1], y + 1);
+			Vec3 c00(x, map(x, y), y);
+			Vec3 c01(x, map(x, y + 1), y + 1);
+			Vec3 c10(x + 1, map(x + 1, y), y);
+			Vec3 c11(x + 1, map(x + 1, y + 1), y + 1);
 
 			data.push_back(Triangle3D(c00, c10, c11));
 			data.push_back(Triangle3D(c11, c01, c00));
@@ -52,9 +52,9 @@ Tessellation3D::Tessellation3D(const Map& map, Vec3 scale, bool fillSides, bool 
 			for (int y = 0; y < bounds.Y; y += bounds.Y - 1)
 			{
 				Vec3 c00(x, 0, y);
-				Vec3 c01(x, map[x][y], y);
+				Vec3 c01(x, map(x, y), y);
 				Vec3 c10(x + 1, 0, y);
-				Vec3 c11(x + 1, map[x + 1][y], y);
+				Vec3 c11(x + 1, map(x + 1, y), y);
 
 				data.push_back(Triangle3D(c00, c10, c11));
 				data.push_back(Triangle3D(c11, c01, c00));
@@ -67,9 +67,9 @@ Tessellation3D::Tessellation3D(const Map& map, Vec3 scale, bool fillSides, bool 
 			for (int x = 0; x < bounds.X; x += bounds.X - 1)
 			{
 				Vec3 c00(x, 0, y);
-				Vec3 c01(x, map[x][y], y);
+				Vec3 c01(x, map(x, y), y);
 				Vec3 c10(x, 0, y + 1);
-				Vec3 c11(x, map[x][y + 1], y + 1);
+				Vec3 c11(x, map(x, y + 1), y + 1);
 
 				data.push_back(Triangle3D(c00, c10, c11));
 				data.push_back(Triangle3D(c11, c01, c00));

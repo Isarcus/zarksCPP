@@ -20,7 +20,7 @@ int main()
     {
         for (int y = 0; y < bounds.Y; y++)
         {
-            image[x][y] = ((x/20 + y/20) % 2) ? RGBA::Black() : RGBA::White();
+            image(x, y) = ((x/20 + y/20) % 2) ? RGBA::Black() : RGBA::White();
         }
     }
 

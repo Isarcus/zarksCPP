@@ -44,7 +44,7 @@ int main()
     {
         for (int y = 0; y < 512; y++)
         {
-            img[x][y] = RGBA(
+            img(x, y) = RGBA(
                 x / 2,
                 0,
                 y / 2
@@ -69,7 +69,7 @@ int main()
     {
         for (int y = 0; y < bounds.Y; y++)
         {
-            img[x][y] = means[meanLocs[x][y]];
+            img(x, y) = means[meanLocs(x, y)];
         }
     }
 

@@ -1,10 +1,10 @@
 #pragma once
+
+#include <zarks/internal/Sampleable2D.h>
 #include <zarks/math/VecT.h>
 #include <zarks/math/GaussField.h>
-#include <zarks/internal/Sampleable2D.h>
 
 #include <string>
-#include <memory>
 
 namespace zmath
 {
@@ -18,7 +18,6 @@ namespace zmath
 		Map(int x, int y);
 		Map(const Map& map);
 		Map(Map&& map);
-		~Map();
 
 		Map& operator= (const Map& m);
 		Map& operator= (Map&& m);
@@ -39,7 +38,6 @@ namespace zmath
 
 		// Return a deepcopy of an underlying section of this map
 		Map Copy(VecInt min, VecInt max) const;
-		Map operator() (VecInt min, VecInt max) const;
 
 		// Chainable manipulation functions
 
@@ -96,4 +94,5 @@ namespace zmath
 		static VecInt getMatrixBounds(VecInt lhs, VecInt rhs);
 
 	};
-}
+	
+} // namespace zmath

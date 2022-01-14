@@ -29,67 +29,39 @@ Map::Map(int x, int y)
 {}
 
 Map::Map(const Map& map)
-	: Sampleable2D()
-{
-	*this = map;
-}
+	: Sampleable2D(map)
+{}
 
 Map::Map(Map&& map)
-	: Sampleable2D()
-{
-	*this = std::move(map);
-}
-
-Map::~Map()
-{
-	FreeData();
-}
+	: Sampleable2D(std::move(map))
+{}
 
 Map& Map::operator=(const Map& rhs)
 {
-	if (bounds != rhs.bounds)
-	{
-		FreeData();
-
-		bounds = rhs.bounds;
-
-		data = alloc2d<double>(bounds.X, bounds.Y);
-	}
-
-	LOOP_MAP data[x][y] = rhs.data[x][y];
+	Sampleable2D::operator=(rhs);
 	return *this;
 }
 
 Map& Map::operator=(Map&& rhs)
 {
-	if (this != &rhs)
-	{
-		FreeData();
-
-		data = rhs.data;
-		bounds = rhs.bounds;
-
-		rhs.data = nullptr;
-		rhs.bounds = VecInt(0, 0);
-	}
-
+	Sampleable2D::operator=(std::move(rhs));
 	return *this;
 }
 
 double Map::GetMin() const
 {
-	double min = data[0][0];
+	double min = data[0];
 
-	LOOP_MAP min = std::min(min, data[x][y]);
+	LOOP_MAP min = std::min(min, at_itl(x, y));
 
 	return min;
 }
 
 double Map::GetMax() const
 {
-	double max = data[0][0];
+	double max = data[0];
 
-	LOOP_MAP max = std::max(max, data[x][y]);
+	LOOP_MAP max = std::max(max, at_itl(x, y));
 
 	return max;
 }
@@ -101,8 +73,8 @@ std::pair<double, double> Map::GetMinMax() const
 	// I'm the only one who has to read this code I'm the only one who has to read this code I'm the only one who has to read this code I'm the only 
 	LOOP_MAP
 	{
-		minmax.first = std::min(minmax.first, data[x][y]);
-		minmax.second = std::max(minmax.second, data[x][y]);
+		minmax.first = std::min(minmax.first, at_itl(x, y));
+		minmax.second = std::max(minmax.second, at_itl(x, y));
 	}
 
 	return minmax;
@@ -111,7 +83,7 @@ std::pair<double, double> Map::GetMinMax() const
 double Map::Sum() const
 {
 	double sum = 0;
-	LOOP_MAP sum += data[x][y];
+	LOOP_MAP sum += at_itl(x, y);
 	return sum;
 }
 
@@ -125,7 +97,7 @@ double Map::Variance() const
 	double mean = Mean();
 	double variance = 0;
 
-	LOOP_MAP variance += std::pow(mean - data[x][y], 2);
+	LOOP_MAP variance += std::pow(mean - at_itl(x, y), 2);
 
 	return variance / (double)(bounds.Area() - 1);
 }
@@ -207,25 +179,14 @@ double Map::SlopeAt(VecInt pos) const
 
 Map Map::Copy(VecInt min, VecInt max) const
 {
-	return (*this)(min, max);
-}
-
-Map Map::operator()(VecInt min_, VecInt max_) const
-{
-	// Create correctly bounded and organized min and max vectors
-	VecInt min = Vec::Min(min_, max_);
-	VecInt max = Vec::Max(min_, max_);
 	min = VecInt::Max(min, VecInt(0, 0));
 	max = VecInt::Min(max, bounds);
-	VecInt newBounds(max - min);
-
-	// Create new map
-	Map m(newBounds);
-	for (int x = 0; x < newBounds.X; x++)
+	Map m(max - min);
+	for (int x = min.X; x < max.X; x++)
 	{
-		for (int y = 0; y < newBounds.Y; y++)
+		for (int y = min.Y; y < max.Y; y++)
 		{
-			m[x][y] = data[min.X + x][min.Y + y];
+			m(VecInt(x, y) - min) = at_itl(x, y);
 		}
 	}
 
@@ -234,7 +195,7 @@ Map Map::operator()(VecInt min_, VecInt max_) const
 
 Map& Map::Clear(double val)
 {
-	LOOP_MAP data[x][y] = val;
+	LOOP_MAP at_itl(x, y) = val;
 	return *this;
 }
 
@@ -244,20 +205,20 @@ Map& Map::Interpolate(double newMin, double newMax)
 	double oldRange = old.second - old.first;
 	if (oldRange == 0)
 	{
-		LOOP_MAP data[x][y] = newMin;
+		LOOP_MAP at_itl(x, y) = newMin;
 		return *this;
 	}
 
 	double newRange = newMax - newMin;
 
-	LOOP_MAP data[x][y] = (data[x][y] - old.first) / oldRange * newRange + newMin;
+	LOOP_MAP at_itl(x, y) = (at_itl(x, y) - old.first) / oldRange * newRange + newMin;
 
 	return *this;
 }
 
 Map& Map::Abs()
 {
-	LOOP_MAP data[x][y] = std::abs(data[x][y]);
+	LOOP_MAP at_itl(x, y) = std::abs(at_itl(x, y));
 	return *this;
 }
 
@@ -281,7 +242,7 @@ Map& Map::Fill(VecInt min, VecInt max, double val)
 	{
 		for (int y = min.Y; y < max.Y; y++)
 		{
-			data[x][y] = val;
+			at_itl(x, y) = val;
 		}
 	}
 	return *this;
@@ -289,19 +250,19 @@ Map& Map::Fill(VecInt min, VecInt max, double val)
 
 Map& Map::Replace(double val, double with)
 {
-	LOOP_MAP if (data[x][y] == val) data[x][y] = with;
+	LOOP_MAP if (at_itl(x, y) == val) at_itl(x, y) = with;
 	return *this;
 }
 
 Map& Map::Apply(const GaussField& gauss)
 {
-	LOOP_MAP data[x][y] += gauss.Sample(x, y);
+	LOOP_MAP at_itl(x, y) += gauss.Sample(x, y);
 	return *this;
 }
 
 Map& Map::Apply(double(*calculation)(double))
 {
-	LOOP_MAP data[x][y] = calculation(data[x][y]);
+	LOOP_MAP at_itl(x, y) = calculation(at_itl(x, y));
 	return *this;
 }
 
@@ -316,19 +277,19 @@ Map Map::SlopeMap()
 
 Map& Map::BoundMax(double newMax)
 {
-	LOOP_MAP data[x][y] = std::min(newMax, data[x][y]);
+	LOOP_MAP at_itl(x, y) = std::min(newMax, at_itl(x, y));
 	return *this;
 }
 
 Map& Map::BoundMin(double newMin)
 {
-	LOOP_MAP data[x][y] = std::max(newMin, data[x][y]);
+	LOOP_MAP at_itl(x, y) = std::max(newMin, at_itl(x, y));
 	return *this;
 }
 
 Map& Map::Bound(double newMin, double newMax)
 {
-	LOOP_MAP data[x][y] = std::min(newMax, std::max(newMin, data[x][y]));
+	LOOP_MAP at_itl(x, y) = std::min(newMax, std::max(newMin, at_itl(x, y)));
 	return *this;
 }
 
@@ -336,7 +297,7 @@ Map& Map::operator+=(const Map& m)
 {
 	BOUNDABORT(m);
 
-	LOOP_MAP data[x][y] += m.data[x][y];
+	LOOP_MAP at_itl(x, y) += m.at_itl(x, y);
 		
 	return *this;
 }
@@ -345,7 +306,7 @@ Map& Map::operator-=(const Map& m)
 {
 	BOUNDABORT(m);
 
-	LOOP_MAP data[x][y] -= m.data[x][y];
+	LOOP_MAP at_itl(x, y) -= m.at_itl(x, y);
 
 	return *this;
 }
@@ -354,7 +315,7 @@ Map& Map::operator*=(const Map& m)
 {
 	BOUNDABORT(m);
 
-	LOOP_MAP data[x][y] *= m.data[x][y];
+	LOOP_MAP at_itl(x, y) *= m.at_itl(x, y);
 
 	return *this;
 }
@@ -365,14 +326,14 @@ Map& Map::operator/=(const Map& m)
 
 	LOOP_MAP
 	{
-		if (m.data[x][y] == 0)
+		if (m.at_itl(x, y) == 0)
 		{
-			if (data[x][y] > 0) data[x][y] = DOUBLEMAX;
-			else if (data[x][y] < 0) data[x][y] = DOUBLEMIN;
+			if (at_itl(x, y) > 0) at_itl(x, y) = DOUBLEMAX;
+			else if (at_itl(x, y) < 0) at_itl(x, y) = DOUBLEMIN;
 		}
 		else
 		{
-			data[x][y] /= m.data[x][y];
+			at_itl(x, y) /= m.at_itl(x, y);
 		}
 	}
 
@@ -381,25 +342,25 @@ Map& Map::operator/=(const Map& m)
 
 Map& Map::operator+=(double val)
 {
-	LOOP_MAP data[x][y] += val;
+	LOOP_MAP at_itl(x, y) += val;
 	return *this;
 }
 
 Map& Map::operator-=(double val)
 {
-	LOOP_MAP data[x][y] -= val;
+	LOOP_MAP at_itl(x, y) -= val;
 	return *this;
 }
 
 Map& Map::operator*=(double val)
 {
-	LOOP_MAP data[x][y] *= val;
+	LOOP_MAP at_itl(x, y) *= val;
 	return *this;
 }
 
 Map& Map::operator/=(double val)
 {
-	if (val != 0) LOOP_MAP data[x][y] /= val;
+	if (val != 0) LOOP_MAP at_itl(x, y) /= val;
 	return *this;
 }
 
@@ -415,7 +376,7 @@ Map& Map::Div(double val) { return *this /= val; }
 
 Map& Map::Pow(double exp)
 {
-	LOOP_MAP data[x][y] = std::pow(data[x][y], exp);
+	LOOP_MAP at_itl(x, y) = std::pow(at_itl(x, y), exp);
 	return *this;
 }
 
@@ -446,7 +407,7 @@ void Map::MatMul(const Map& m, Map& result) const
 		{
 			for (int P = 0; P < newBounds.Y; P++)
 			{
-				result.data[M][P] += data[M][N] * m.data[N][P];
+				result.at_itl(M, P) += at_itl(M, N) * m.at_itl(N, P);
 			}
 		}
 	}
@@ -471,7 +432,7 @@ void Map::Transpose(Map& result) const
 	// Loop through transposition
 	LOOP_MAP
 	{
-		result.data[y][x] = data[x][y];
+		result.at_itl(y, x) = at_itl(x, y);
 	}
 }
 
@@ -494,7 +455,7 @@ void Map::Save(std::string path)
 	// Write the actual map data, little-endian
 	LOOP_MAP
 	{
-		WriteBuf(file, data[x][y], Endian::Little);
+		WriteBuf(file, at_itl(x, y), Endian::Little);
 	}
 		
 	LOG_INFO("File saved at " << path << "\n");
@@ -576,7 +537,7 @@ void Map::PrintMatrix(std::ostream& os) const
 			}
 
 			// Print this item
-			os << std::setw(datumWidth) << data[x][y];
+			os << std::setw(datumWidth) << at_itl(x, y);
 		}
 
 		// Print newline for new row

@@ -69,7 +69,7 @@ Map getFractal(VecInt mapBounds, complex min, complex max, SAMPLER sampler)
         for (int y = 0; y < mapBounds.Y; y++)
         {
             complex point = complex(x * scale.real(), y * scale.imag()) + min;
-            map[x][y] = sampler(point);
+            map(x, y) = sampler(point);
         }
     }
 

@@ -1,6 +1,6 @@
 #include <zarks/image/Image.h>
-#include <zarks/math/MapT.h>
 #include <zarks/math/GaussField.h>
+#include <zarks/internal/zmath_internals.h>
 
 #pragma GCC diagnostic push
 #pragma GCC diagnostic ignored "-Wmissing-field-initializers"
@@ -23,6 +23,10 @@ using namespace zmath;
 namespace zmath
 {
 
+Image::Image()
+	: Sampleable2D()
+{}
+
 Image::Image(int width, int height, RGBA col)
 	: Sampleable2D(VecInt::Max(VecInt(width, height), VecInt(1, 1)), col)
 {}
@@ -36,8 +40,8 @@ Image::Image(const Map& m)
 {
 	LOOP_IMAGE
 	{
-		uint8_t shade = 255.999 * m[x][y];
-		data[x][y] = RGBA(shade, shade, shade);
+		uint8_t shade = 255.999 * m(x, y);
+		at_itl(x, y) = RGBA(shade, shade, shade);
 	}
 }
 
@@ -55,7 +59,7 @@ Image::Image(const Map& m, Scheme scheme)
 	// Loop and assign colors
 	LOOP_IMAGE
 	{
-		double val = m[x][y];
+		double val = m(x, y);
 
 		int idxUpper = 0;
 		for (unsigned i = 0; i < scheme.colors.size(); i++)
@@ -70,7 +74,7 @@ Image::Image(const Map& m, Scheme scheme)
 		double min = thresholds[idxUpper - 1];
 		double range = thresholds[idxUpper] - min;
 
-		data[x][y] = RGBA::Interpolate(
+		at_itl(x, y) = RGBA::Interpolate(
 			scheme.colors[idxUpper - 1],
 			scheme.colors[idxUpper],
 			(val - min) / range
@@ -93,10 +97,10 @@ Image::Image(std::string path)
 		return;
 	}
 
-	bounds = Vec(width, height);
+	bounds = VecInt(width, height);
 
 	// Allocate data
-	data = alloc2d<RGBA>(width, height);
+	data = new RGBA[bounds.Area()];
 
 	int stbIdx = 0;
 	LOOP_IMAGE_HORIZONTAL
@@ -104,19 +108,19 @@ Image::Image(std::string path)
 		switch (channels)
 		{
 		case 1: // Grayscale
-			data[x][y] = RGBA(stbImg[stbIdx]);
+			at_itl(x, y) = RGBA(stbImg[stbIdx]);
 			stbIdx++;
 			break;
 
 		case 2: // Grayscale with alpha
-			data[x][y] = RGBA(
+			at_itl(x, y) = RGBA(
 				stbImg[stbIdx],
 				stbImg[stbIdx + 1]);
 			stbIdx += 2;
 			break;
 
 		case 3: // RGB
-			data[x][y] = RGBA(
+			at_itl(x, y) = RGBA(
 				stbImg[stbIdx],
 				stbImg[stbIdx + 1],
 				stbImg[stbIdx + 2]);
@@ -124,7 +128,7 @@ Image::Image(std::string path)
 			break;
 
 		case 4: // RGBA
-			data[x][y] = RGBA(
+			at_itl(x, y) = RGBA(
 				stbImg[stbIdx],
 				stbImg[stbIdx + 1],
 				stbImg[stbIdx + 2],
@@ -142,50 +146,23 @@ Image::Image(std::string path)
 }
 
 Image::Image(const Image& img)
-	: Sampleable2D<RGBA>() // Avoid -Wextra warning
-{
-	(*this) = img;
-}
-
-Image::Image(Image&& img)
-{
-	*this = std::move(img);
-}
-
-Image::Image()
-	: Image(1, 1)
+	: Sampleable2D(img)
 {}
 
-Image::~Image()
-{
-	free2d(data, bounds.X);
-}
+Image::Image(Image&& img)
+	: Sampleable2D(std::move(img))
+{}
 
 Image& Image::operator=(const Image& img)
 {
-	if (bounds != img.bounds)
-	{
-		free2d(data, bounds.X);
-		bounds = img.bounds;
+	Sampleable2D::operator=(img);
 
-		data = alloc2d<RGBA>(bounds.X, bounds.Y, RGBA::Black());
-	}
-
-	LOOP_IMAGE data[x][y] = img[x][y];
 	return *this;
 }
 
 Image& Image::operator=(Image&& img)
 {
-	if (this != &img)
-	{
-		free2d(data, bounds.X);
-		bounds = img.bounds;
-		data = img.data;
-
-		img.data = nullptr;
-		img.bounds = VecInt(0, 0);
-	}
+	Sampleable2D::operator=(std::move(img));
 
 	return *this;
 }
@@ -199,7 +176,7 @@ Image& Image::Paste(const Image& img, VecInt at)
 			VecInt thisCoord = at + VecInt(x, y);
 			if (ContainsCoord(thisCoord))
 			{
-				data[thisCoord.X][thisCoord.Y] = img.data[x][y];
+				at_itl(thisCoord.X, thisCoord.Y) = img.at_itl(x, y);
 			}
 		}
 	}
@@ -242,10 +219,9 @@ Image& Image::Resize(VecInt to_bounds)
 		{
 			VecInt samplePos = Vec(x, y) * scale;
 
-			img[x][y] = At(samplePos);
+			img(x, y) = at_itl(samplePos);
 		}
 	}
-
 
 	return *this = img;
 }
@@ -259,7 +235,7 @@ Image& Image::Clear(RGBA col)
 {
 	LOOP_IMAGE
 	{
-		data[x][y] = col;
+		at_itl(x, y) = col;
 	}
 
 	return *this;
@@ -267,7 +243,7 @@ Image& Image::Clear(RGBA col)
 
 Image& Image::Negative()
 {
-	LOOP_IMAGE data[x][y] = data[x][y].Negative();
+	LOOP_IMAGE at_itl(x, y) = at_itl(x, y).Negative();
 
 	return *this;
 }
@@ -283,7 +259,7 @@ Image& Image::RestrictPalette(const std::vector<RGBA>& palette)
 
 		for (unsigned i = 0; i < palette.size(); i++)
 		{
-			double min = RGBA::Distance(data[x][y], palette[i]);
+			double min = RGBA::Distance(at_itl(x, y), palette[i]);
 
 			if (min < val_min)
 			{
@@ -292,7 +268,7 @@ Image& Image::RestrictPalette(const std::vector<RGBA>& palette)
 			}
 		}
 
-		data[x][y] = palette.at(idx_min);
+		at_itl(x, y) = palette.at(idx_min);
 	}
 
 	return *this;
@@ -360,7 +336,7 @@ Image& Image::Droppify(const std::array<Vec, 3>& origins, const std::array<doubl
 		for (auto& w : weights) w /= intensity;
 
 		// Apply weights
-		RGBA& pix = data[x][y];
+		RGBA& pix = at_itl(x, y);
 		for (int i = 0; i < 3; i++)
 		{
 			pix[i] = (double)pix[i] * weights[i];
@@ -403,7 +379,7 @@ Image& Image::BlurGaussian(double sigma, bool blurAlpha)
 
 		for (auto& c : rgba) c /= influence;
 
-		imgNew[x][y] = RGBA((uint8_t)std::min(255.0, std::round(rgba[0])),
+		imgNew(x, y) = RGBA((uint8_t)std::min(255.0, std::round(rgba[0])),
 							(uint8_t)std::min(255.0, std::round(rgba[1])),
 							(uint8_t)std::min(255.0, std::round(rgba[2])),
 							(blurAlpha) ? At(imgPos).A : (uint8_t)std::min(255.0, std::round(rgba[3])));
@@ -414,7 +390,7 @@ Image& Image::BlurGaussian(double sigma, bool blurAlpha)
 
 Image& Image::PixelateGaussian(const Map& map, double sigma)
 {
-	MapT<std::pair<Vec, double>> transforms(bounds);
+	Sampleable2D<std::pair<Vec, double>> transforms(bounds);
 
 	int radius = sigma * 2.0;
 	GaussField gauss(sigma, 1.0, Vec());
@@ -433,9 +409,9 @@ Image& Image::PixelateGaussian(const Map& map, double sigma)
 		{
 			// if map contains point and point's influence is larger than transform's current influence
 			VecInt pointPos = point.first + imgPos;
-			if (map.ContainsCoord(pointPos) && point.second*map[x][y] > transforms.At(pointPos).second)
+			if (map.ContainsCoord(pointPos) && point.second*map(x, y) > transforms.At(pointPos).second)
 			{
-				transforms.At(pointPos) = { imgPos, point.second*map[x][y] };
+				transforms.At(pointPos) = { imgPos, point.second*map(x, y) };
 				//std::cout << "set " << point.first << " to " << imgPos << " " << point.second << "\n";
 			}
 		}
@@ -446,12 +422,12 @@ Image& Image::PixelateGaussian(const Map& map, double sigma)
 	Image imgNew(bounds);
 	LOOP_IMAGE
 	{
-		VecInt samplePos = transforms[x][y].first;
+		VecInt samplePos = transforms(x, y).first;
 		if (!map.ContainsCoord(samplePos))
 		{
 			samplePos = Vec::Max(VecInt(0, 0), Vec::Min(bounds - 1, samplePos));
 		}
-		imgNew[x][y] = At(samplePos);
+		imgNew(x, y) = At(samplePos);
 		//std::cout << "setting " << Vec(x, y) << " to " << samplePos << "\n";
 	}
 
@@ -504,7 +480,7 @@ Image& Image::WarpGaussian(const Map& map, double sigma, double amplitude)
     {
         for (int y = 0; y < bounds.Y; y++)
         {
-            auto& pair = result[x][y];
+            auto& pair = result(x, y);
             pair.first /= pair.second;
         }
     }
@@ -515,9 +491,9 @@ Image& Image::WarpGaussian(const Map& map, double sigma, double amplitude)
     {
         for (int y = 0; y < bounds.Y; y++)
         {
-            Vec samplePoint = Vec(x, y) + result[x][y].first / scaleVec;
+            Vec samplePoint = Vec(x, y) + result(x, y).first / scaleVec;
             samplePoint = samplePoint.Bound(VecInt(), bounds - 1);
-            warped[x][y] = Sample(samplePoint);
+            warped(x, y) = Sample(samplePoint);
         }
     }
 
@@ -531,22 +507,24 @@ Image& Image::EnhanceContrast(double sigma)
 
 	LOOP_IMAGE
 	{
-		double dR = ((int)data[x][y].R - (int)blurred[x][y].R) / 255.0;
-		double dG = ((int)data[x][y].G - (int)blurred[x][y].G) / 255.0;
-		double dB = ((int)data[x][y].B - (int)blurred[x][y].B) / 255.0;
+		RGBA& thisPixel = at_itl(x, y);
+		const RGBA blurPixel = blurred.at_itl(x, y);
+		double dR = ((int)thisPixel.R - (int)blurPixel.R) / 255.0;
+		double dG = ((int)thisPixel.G - (int)blurPixel.G) / 255.0;
+		double dB = ((int)thisPixel.B - (int)blurPixel.B) / 255.0;
 
-		if (dR < 0) data[x][y].R *= (1.0 + dR);
-		else data[x][y].R += dR * (255.0 - data[x][y].R);
-		if (dG < 0) data[x][y].G *= (1.0 + dG);
-		else data[x][y].G += dG * (255.0 - data[x][y].G);
-		if (dB < 0) data[x][y].B *= (1.0 + dB);
-		else data[x][y].B += dB * (255.0 - data[x][y].B);
+		if (dR < 0) thisPixel.R *= (1.0 + dR);
+		else thisPixel.R += dR * (255.0 - thisPixel.R);
+		if (dG < 0) thisPixel.G *= (1.0 + dG);
+		else thisPixel.G += dG * (255.0 - thisPixel.G);
+		if (dB < 0) thisPixel.B *= (1.0 + dB);
+		else thisPixel.B += dB * (255.0 - thisPixel.B);
 	}
 
 	return *this;
 }
 
-void Image::Save(std::string path, unsigned int channels) const
+void Image::Save(std::string path, unsigned channels) const
 {
 	if (channels != 3 && channels != 4)
 	{
@@ -560,7 +538,7 @@ void Image::Save(std::string path, unsigned int channels) const
 	{
 		for (int x = 0; x < bounds.X; x++)
 		{
-			RGBA col = data[x][y];
+			RGBA col = at_itl(x, y);
 
 			pixels[index++] = col.R;
 			pixels[index++] = col.G;
@@ -642,7 +620,7 @@ void Image::SaveMNIST(std::string path_images, std::string path_labels, int colu
 			{
 				for (int x = 0; x < MNIST_IMG_WIDTH; x++)
 				{
-					bytes[idx_byte++] = std::round(map[x][y] * 255.0);
+					bytes[idx_byte++] = std::round(map(x, y) * 255.0);
 				}
 			}
 

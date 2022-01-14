@@ -23,8 +23,6 @@ namespace zmath
 		Image(Image&& img);
 		Image();
 
-		~Image();
-
 		Image& operator=(const Image& img);
 		Image& operator=(Image&& img);
 
@@ -51,4 +49,5 @@ namespace zmath
 		void Save(std::string path, unsigned int channels = 3) const;
 		void SaveMNIST(std::string path_images, std::string path_labels, int columns, int emptyBorderSize = 2) const;
 	};
-}
+
+} // namespace zmath
