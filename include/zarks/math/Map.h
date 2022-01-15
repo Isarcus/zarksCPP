@@ -10,10 +10,8 @@ namespace zmath
 {
 	class Map : public Sampleable2D<double>
 	{
-	private:
-		Map();
-
 	public:
+		Map();
 		Map(VecInt bounds);
 		Map(int x, int y);
 		Map(const Map& map);
