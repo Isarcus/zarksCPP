@@ -346,7 +346,7 @@ namespace zmath
 		size_t len = bounds.Area();
 		for (size_t i = 0; i < len; i++)
 		{
-			data[i] = f(i);
+			data[i] = f(data[i]);
 		}
 	}
 
