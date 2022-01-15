@@ -90,7 +90,14 @@ namespace zmath
 		const T& operator()(VecInt pos) const;
 		T& operator()(VecInt pos);
 
-		void Clear(const T& val);
+		void Clear(T val);
+		void FillBorder(int thickness, T val);
+		void Fill(VecInt min, VecInt max, T val);
+
+		template <typename FUNC>
+		void Apply(FUNC f);
+		template <typename FUNC>
+		void ApplyCoords(FUNC f);
 
 		void CopyInRange(const Sampleable2D& samp, VecInt min, VecInt max, VecInt to = VecInt(0, 0));
 		void CopyNotInRange(const Sampleable2D& samp, VecInt min, VecInt max, VecInt to = VecInt(0, 0));
@@ -295,12 +302,65 @@ namespace zmath
 	}
 
 	template <typename T>
-	inline void Sampleable2D<T>::Clear(const T& val)
+	inline void Sampleable2D<T>::Clear(T val)
 	{
 		size_t size = bounds.Area();
 		for (size_t i = 0; i < size; i++)
 		{
 			data[i] = val;
+		}
+	}
+
+	template <typename T>
+	inline void Sampleable2D<T>::FillBorder(int thickness, T val)
+	{
+		thickness = std::min(thickness, bounds.Min());
+		// Left
+		Fill({ 0, 0 }, { thickness, bounds.Y }, val);
+		// Right
+		Fill({ bounds.X - thickness, 0 }, { bounds.X, bounds.Y }, val);
+		// Top (no corners)
+		Fill({ thickness, bounds.Y - thickness }, { bounds.X - thickness, bounds.Y }, val);
+		// Bottom (no corners)
+		Fill({ thickness, 0 }, { bounds.X - thickness, thickness }, val);
+	}
+
+	template <typename T>
+	inline void Sampleable2D<T>::Fill(VecInt min, VecInt max, T val)
+	{
+		min = VecInt::Max(min, VecInt(0, 0));
+		max = VecInt::Min(max, bounds);
+		for (int x = min.X; x < max.X; x++)
+		{
+			for (int y = min.Y; y < max.Y; y++)
+			{
+				at_itl(x, y) = val;
+			}
+		}
+	}
+
+	template <typename T>
+	template <typename FUNC>
+	void Sampleable2D<T>::Apply(FUNC f)
+	{
+		size_t len = bounds.Area();
+		for (size_t i = 0; i < len; i++)
+		{
+			data[i] = f(i);
+		}
+	}
+
+	template <typename T>
+	template <typename FUNC>
+	void Sampleable2D<T>::ApplyCoords(FUNC f)
+	{
+		size_t len = bounds.Area();
+		for (int x = 0; x < bounds.X; x++)
+		{
+			for (int y = 0; y < bounds.Y; y++)
+			{
+				at_itl(x, y) = f(x, y);
+			}
 		}
 	}
 

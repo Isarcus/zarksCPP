@@ -17,8 +17,8 @@ namespace zmath
 		void SetSigma(const Vec& val);
 		void SetCenter(const Vec& val);
 
-		double Sample(const Vec& pos) const;
-		double Sample(double x, double y) const;
+		double operator()(const Vec& pos) const;
+		double operator()(double x, double y) const;
 
 		std::vector<std::pair<Vec, double>> Points(double radius, int resolution) const;
 		std::vector<std::pair<VecInt, double>> Points(int radius) const;

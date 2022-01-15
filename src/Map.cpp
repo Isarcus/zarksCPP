@@ -222,47 +222,9 @@ Map& Map::Abs()
 	return *this;
 }
 
-Map& Map::FillBorder(int thickness, double val)
-{
-	thickness = std::min(thickness, bounds.Min());
-	// Left
-	Fill({ 0, 0 }, { thickness, bounds.Y }, val);
-	// Right
-	Fill({ bounds.X - thickness, 0 }, { bounds.X, bounds.Y }, val);
-	// Top (no corners)
-	Fill({ thickness, bounds.Y - thickness }, { bounds.X - thickness, bounds.Y }, val);
-	// Bottom (no corners)
-	Fill({ thickness, 0 }, { bounds.X - thickness, thickness }, val);
-	return *this;
-}
-
-Map& Map::Fill(VecInt min, VecInt max, double val)
-{
-	for (int x = min.X; x < max.X; x++)
-	{
-		for (int y = min.Y; y < max.Y; y++)
-		{
-			at_itl(x, y) = val;
-		}
-	}
-	return *this;
-}
-
 Map& Map::Replace(double val, double with)
 {
 	LOOP_MAP if (at_itl(x, y) == val) at_itl(x, y) = with;
-	return *this;
-}
-
-Map& Map::Apply(const GaussField& gauss)
-{
-	LOOP_MAP at_itl(x, y) += gauss.Sample(x, y);
-	return *this;
-}
-
-Map& Map::Apply(double(*calculation)(double))
-{
-	LOOP_MAP at_itl(x, y) = calculation(at_itl(x, y));
 	return *this;
 }
 
@@ -270,7 +232,7 @@ Map Map::SlopeMap()
 {
 	Map m(bounds);
 
-	LOOP_MAP m.At(x, y) = SlopeAt(VecInt(x, y));
+	LOOP_MAP m.at_itl(x, y) = SlopeAt(VecInt(x, y));
 
 	return m;
 }

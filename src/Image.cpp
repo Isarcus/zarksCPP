@@ -465,7 +465,7 @@ Image& Image::WarpGaussian(const Map& map, double sigma, double amplitude)
                     // Skip any out of bounds points
                     if (resultPoint.Min() >= 0 && resultPoint.X < bounds.X && resultPoint.Y < bounds.Y)
 					{
-						Vec weightVec = Vec(offsetVec) * gauss.Sample(dx, dy) * map.Sample(mapPoint);
+						Vec weightVec = Vec(offsetVec) * gauss(dx, dy) * map.Sample(mapPoint);
 						auto& elem = result.At(resultPoint);
 						elem.first += weightVec;
 						elem.second++;

@@ -44,11 +44,7 @@ namespace zmath
 		Map& Clear(double val = 0);
 		Map& Interpolate(double newMin, double newMax);
 		Map& Abs();
-		Map& FillBorder(int thickness, double val);
-		Map& Fill(VecInt min, VecInt max, double val);
 		Map& Replace(double val, double with);
-		Map& Apply(const GaussField& gauss);
-		Map& Apply(double(*calculation)(double));
 
 		Map SlopeMap();
 		Map& BoundMax(double newMax);

@@ -2,7 +2,7 @@
 
 #include <cmath>
 
-constexpr static const double ACCEPTABLE_FLOAT_ERROR = 0.0000001;
+static constexpr double ACCEPTABLE_FLOAT_ERROR = 0.0000001;
 
 namespace zmath
 {
@@ -38,12 +38,12 @@ void GaussField::SetCenter(const Vec& val)
 	center = val;
 }
 
-double GaussField::Sample(const Vec& pos) const
+double GaussField::operator()(const Vec& pos) const
 {
-	return Sample(pos.X, pos.Y);
+	return (*this)(pos.X, pos.Y);
 }
 
-double GaussField::Sample(double x, double y) const
+double GaussField::operator()(double x, double y) const
 {
 	return amplitude * std::exp(-1.0 * computeDimensionalWeights(x, y).Sum());
 }
@@ -62,7 +62,7 @@ std::vector<std::pair<Vec, double>> GaussField::Points(double radius, int resolu
 			{
 				pos *= radius;
 
-				points.push_back({pos, Sample(pos)});
+				points.push_back({pos, (*this)(pos)});
 			}
 		}
 	}
@@ -82,7 +82,7 @@ std::vector<std::pair<VecInt, double>> GaussField::Points(int radius) const
 
 			if (pos.DistForm() <= radius + ACCEPTABLE_FLOAT_ERROR)
 			{
-				points.push_back({ pos + center, Sample(pos + center) });
+				points.push_back({ pos + center, (*this)(pos + center) });
 			}
 		}
 	}
