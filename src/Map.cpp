@@ -202,16 +202,15 @@ Map& Map::Clear(double val)
 Map& Map::Interpolate(double newMin, double newMax)
 {
 	auto old = GetMinMax();
-	double oldRange = old.second - old.first;
-	if (oldRange == 0)
+	if (old.first == old.second)
 	{
-		LOOP_MAP at_itl(x, y) = newMin;
-		return *this;
+		// Avoid zero division errors
+		Clear(newMin);
 	}
-
-	double newRange = newMax - newMin;
-
-	LOOP_MAP at_itl(x, y) = (at_itl(x, y) - old.first) / oldRange * newRange + newMin;
+	else
+	{
+		Apply(getInterpolator(old.first, old.second, newMin, newMax));
+	}
 
 	return *this;
 }

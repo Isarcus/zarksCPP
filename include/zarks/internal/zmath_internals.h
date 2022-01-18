@@ -39,6 +39,14 @@ constexpr T DistForm(const std::array<T, N>& arr)
 // MATH //
 //      //
 
+inline auto getInterpolator(double oldMin, double oldMax, double newMin, double newMax)
+{
+	const double ratio = (newMax - newMin) / (oldMax - oldMin);
+	return [=](double val) -> double {
+		return (val - oldMin) * ratio + newMin;
+	};
+}
+
 constexpr double interpLinear(double val0, double val1, double t)
 {
 	return t * val1 + (1.0 - t) * val0;
