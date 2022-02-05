@@ -39,10 +39,8 @@ namespace zmath
 
 		// Chainable manipulation functions
 
-		Map& Clear(double val = 0);
 		Map& Interpolate(double newMin, double newMax);
 		Map& Abs();
-		Map& Replace(double val, double with);
 
 		Map SlopeMap();
 		Map& BoundMax(double newMax);

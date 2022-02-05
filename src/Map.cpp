@@ -11,7 +11,6 @@
 #include <exception>
 
 #define LOOP_MAP for (int x = 0; x < bounds.X; x++) for (int y = 0; y < bounds.Y; y++)
-#define BOUNDABORT( m ) if (bounds != m.bounds) throw std::runtime_error("Map bounds don't match!")
 
 namespace zmath
 {
@@ -193,12 +192,6 @@ Map Map::Copy(VecInt min, VecInt max) const
 	return m;
 }
 
-Map& Map::Clear(double val)
-{
-	LOOP_MAP at_itl(x, y) = val;
-	return *this;
-}
-
 Map& Map::Interpolate(double newMin, double newMax)
 {
 	auto old = GetMinMax();
@@ -217,13 +210,7 @@ Map& Map::Interpolate(double newMin, double newMax)
 
 Map& Map::Abs()
 {
-	LOOP_MAP at_itl(x, y) = std::abs(at_itl(x, y));
-	return *this;
-}
-
-Map& Map::Replace(double val, double with)
-{
-	LOOP_MAP if (at_itl(x, y) == val) at_itl(x, y) = with;
+	Apply(std::abs);
 	return *this;
 }
 
@@ -256,7 +243,7 @@ Map& Map::Bound(double newMin, double newMax)
 
 Map& Map::operator+=(const Map& m)
 {
-	BOUNDABORT(m);
+	assertSameSize(m);
 
 	LOOP_MAP at_itl(x, y) += m.at_itl(x, y);
 		
@@ -265,7 +252,7 @@ Map& Map::operator+=(const Map& m)
 
 Map& Map::operator-=(const Map& m)
 {
-	BOUNDABORT(m);
+	assertSameSize(m);
 
 	LOOP_MAP at_itl(x, y) -= m.at_itl(x, y);
 
@@ -274,7 +261,7 @@ Map& Map::operator-=(const Map& m)
 
 Map& Map::operator*=(const Map& m)
 {
-	BOUNDABORT(m);
+	assertSameSize(m);
 
 	LOOP_MAP at_itl(x, y) *= m.at_itl(x, y);
 
@@ -283,7 +270,7 @@ Map& Map::operator*=(const Map& m)
 
 Map& Map::operator/=(const Map& m)
 {
-	BOUNDABORT(m);
+	assertSameSize(m);
 
 	LOOP_MAP
 	{
@@ -354,7 +341,7 @@ void Map::MatMul(const Map& m, Map& result) const
 	VecInt newBounds = getMatrixBounds(bounds, m.bounds);
 	if (result.bounds == newBounds)
 	{
-		result.Clear();
+		result.Clear(0);
 	}
 	else
 	{

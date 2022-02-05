@@ -167,23 +167,6 @@ Image& Image::operator=(Image&& img)
 	return *this;
 }
 
-Image& Image::Paste(const Image& img, VecInt at)
-{
-	for (int x = 0; x < img.bounds.X; x++)
-	{
-		for (int y = 0; y < img.bounds.Y; y++)
-		{
-			VecInt thisCoord = at + VecInt(x, y);
-			if (ContainsCoord(thisCoord))
-			{
-				at_itl(thisCoord.X, thisCoord.Y) = img.at_itl(x, y);
-			}
-		}
-	}
-
-	return *this;
-}
-
 Image& Image::Tile(const Image& tile, VecInt tileSize, VecInt offset)
 {
 	Image tileAdj = tile;
@@ -207,9 +190,9 @@ Image& Image::Tile(const Image& tile, VecInt tileSize, VecInt offset)
 	return *this;
 }
 
-Image& Image::Resize(VecInt to_bounds)
+Image& Image::Resize(VecInt toBounds)
 {
-	Image img(to_bounds);
+	Image img(toBounds);
 
 	Vec scale =  Vec(bounds) / Vec(img.bounds);
 
@@ -229,16 +212,6 @@ Image& Image::Resize(VecInt to_bounds)
 Image& Image::Resize(double scaleFactor)
 {
 	return Resize(Vec(bounds) * scaleFactor);
-}
-
-Image& Image::Clear(RGBA col)
-{
-	LOOP_IMAGE
-	{
-		at_itl(x, y) = col;
-	}
-
-	return *this;
 }
 
 Image& Image::Negative()
