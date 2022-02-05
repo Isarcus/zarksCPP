@@ -1,9 +1,12 @@
 #pragma once
 
 #include <zarks/math/VecT.h>
+#include <zarks/math/RecT.h>
 #include <zarks/internal/zmath_internals.h>
 
 #include <exception>
+#include <cstring>
+#include <sstream>
 
 namespace zmath
 {
@@ -12,14 +15,21 @@ namespace zmath
 	{
 	protected:
 		VecInt bounds;
-		T** data;
-		
-		Sampleable2D();
+		size_t capacity;
+		T* data;
 
-		void BoundCheck(Vec check) const;
-		void BoundCheck(VecInt check) const;
+		void assertContains(Vec check) const;
+		void assertContains(VecInt check) const;
 
-		virtual void FreeData();
+		template <typename W>
+		void assertSameSize(const Sampleable2D<W>& samp) const;
+
+		size_t idx_of(int x, int y) const;
+		size_t idx_of(VecInt vec) const;
+		T& at_itl(int x, int y);
+		const T& at_itl(int x, int y) const;
+		T& at_itl(VecInt vec);
+		const T& at_itl(VecInt vec) const;
 
 		class Iterator
 		{
@@ -54,8 +64,14 @@ namespace zmath
 		};
 
 	public:
+		Sampleable2D();
 		Sampleable2D(int x, int y, const T& val = T());
 		Sampleable2D(VecInt bounds, const T& val = T());
+
+		Sampleable2D(const Sampleable2D& s);
+		Sampleable2D(Sampleable2D&& s);
+		Sampleable2D& operator=(const Sampleable2D& s);
+		Sampleable2D& operator=(Sampleable2D&& s);
 		
 		virtual ~Sampleable2D();
 
@@ -74,8 +90,21 @@ namespace zmath
 		const T& At(VecInt pos) const;
 		T& At(VecInt pos);
 
-		const T* operator[](int x) const;
-		T* operator[](int x);
+		const T& operator()(int x, int y) const;
+		T& operator()(int x, int y);
+		const T& operator()(VecInt pos) const;
+		T& operator()(VecInt pos);
+
+		void Clear(T val);
+		void Replace(T val, T with);
+		void FillBorder(int thickness, T val);
+		void Fill(VecInt min, VecInt max, T val);
+		void Paste(const Sampleable2D& samp, VecInt at);
+
+		template <typename FUNC = T(*)(T)>
+		void Apply(FUNC f);
+		template <typename FUNC>
+		void ApplyCoords(FUNC f);
 
 		void CopyInRange(const Sampleable2D& samp, VecInt min, VecInt max, VecInt to = VecInt(0, 0));
 		void CopyNotInRange(const Sampleable2D& samp, VecInt min, VecInt max, VecInt to = VecInt(0, 0));
@@ -96,14 +125,18 @@ namespace zmath
 
 	template<typename T>
 	inline Sampleable2D<T>::Sampleable2D()
-		: data(nullptr)
+		: bounds(0, 0)
+		, capacity(0)
+		, data(nullptr)
 	{}
 
 	template<typename T>
 	inline Sampleable2D<T>::Sampleable2D(VecInt bounds, const T& val)
 		: bounds(VecInt::Max(bounds, VecInt(0, 0)))
+		, capacity(bounds.Area())
+		, data(new T[capacity])
 	{
-		data = alloc2d<T>(this->bounds.X, this->bounds.Y, val);
+		Clear(val);
 	}
 
 	template<typename T>
@@ -112,9 +145,69 @@ namespace zmath
 	{}
 
 	template<typename T>
+	inline Sampleable2D<T>::Sampleable2D(const Sampleable2D& s)
+		: bounds(s.bounds)
+		, capacity(s.bounds.Area())
+		, data(new T[capacity])
+	{
+		memcpy(data, s.data, capacity * sizeof(T));
+	}
+
+	template<typename T>
+	inline Sampleable2D<T>::Sampleable2D(Sampleable2D&& s)
+		: bounds(s.bounds)
+		, capacity(s.capacity)
+		, data(s.data)
+	{
+		s.bounds = VecInt(0, 0);
+		s.capacity = 0;
+		s.data = nullptr;
+	}
+
+	template<typename T>
+	inline Sampleable2D<T>& Sampleable2D<T>::operator=(const Sampleable2D& s)
+	{
+		if (this != &s)
+		{
+			size_t reqCapacity = s.bounds.Area();
+			if (capacity < reqCapacity)
+			{
+				delete[] data;
+				data = new T[reqCapacity];
+				capacity = reqCapacity;
+			}
+			memcpy(data, s.data, reqCapacity * sizeof(T));
+			bounds = s.bounds;
+		}
+
+		return *this;
+	}
+
+	template<typename T>
+	inline Sampleable2D<T>& Sampleable2D<T>::operator=(Sampleable2D&& s)
+	{
+		if (this != &s)
+		{
+			delete[] data;
+			data = s.data;
+			capacity = s.capacity;
+			bounds = s.bounds;
+
+			s.data = nullptr;
+			s.capacity = 0;
+			s.bounds = VecInt(0, 0);
+		}
+
+		return *this;
+	}
+
+	template<typename T>
 	inline Sampleable2D<T>::~Sampleable2D()
 	{
-		free2d(data, bounds.X);
+		bounds = VecInt(0, 0);
+		capacity = 0;
+		delete[] data;
+		data = nullptr;
 	}
 
 	template<typename T>
@@ -138,9 +231,9 @@ namespace zmath
 	template<typename T>
 	inline void Sampleable2D<T>::Set(int x, int y, const T& val)
 	{
-		BoundCheck(VecInt(x, y));
+		assertContains(VecInt(x, y));
 
-		data[x][y] = val;
+		data[idx_of(x, y)] = val;
 	}
 
 	template<typename T>
@@ -164,45 +257,143 @@ namespace zmath
 	template<typename T>
 	inline const T& Sampleable2D<T>::At(int x, int y) const
 	{
-		BoundCheck(VecInt(x, y));
+		assertContains(VecInt(x, y));
 
-		return data[x][y];
+		return data[idx_of(x, y)];
 	}
 
 	template<typename T>
 	inline T& Sampleable2D<T>::At(int x, int y)
 	{
-		BoundCheck(VecInt(x, y));
+		assertContains(VecInt(x, y));
 
-		return data[x][y];
+		return data[idx_of(x, y)];
 	}
 
 	template<typename T>
 	inline const T& Sampleable2D<T>::At(VecInt pos) const
 	{
-		return At(pos.X, pos.Y);
+		assertContains(pos);
+		return data[idx_of(pos)];
 	}
 
 	template<typename T>
 	inline T& Sampleable2D<T>::At(VecInt pos)
 	{
-		return At(pos.X, pos.Y);
+		assertContains(pos);
+		return data[idx_of(pos)];
 	}
 
 	template<typename T>
-	inline const T* Sampleable2D<T>::operator[](int x) const
+	inline const T& Sampleable2D<T>::operator()(int x, int y) const
 	{
-		return data[x];
+		return data[idx_of(x, y)];
 	}
 
 	template<typename T>
-	inline T* Sampleable2D<T>::operator[](int x)
+	inline T& Sampleable2D<T>::operator()(int x, int y)
 	{
-		return data[x];
+		return data[idx_of(x, y)];
 	}
 
 	template<typename T>
-	void Sampleable2D<T>::CopyInRange(const Sampleable2D<T>& samp, VecInt min, VecInt max, VecInt to)
+	inline const T& Sampleable2D<T>::operator()(VecInt pos) const
+	{
+		return data[idx_of(pos)];
+	}
+
+	template<typename T>
+	inline T& Sampleable2D<T>::operator()(VecInt pos)
+	{
+		return data[idx_of(pos)];
+	}
+
+	template <typename T>
+	inline void Sampleable2D<T>::Clear(T val)
+	{
+		size_t size = bounds.Area();
+		for (size_t i = 0; i < size; i++)
+		{
+			data[i] = val;
+		}
+	}
+
+	template <typename T>
+	inline void Sampleable2D<T>::Replace(T val, T with)
+	{
+		Apply([=](T v){
+			return (v == val) ? with : v;
+		});
+	}
+
+	template <typename T>
+	inline void Sampleable2D<T>::FillBorder(int thickness, T val)
+	{
+		thickness = std::min(thickness, bounds.Min());
+		// Left
+		Fill({ 0, 0 }, { thickness, bounds.Y }, val);
+		// Right
+		Fill({ bounds.X - thickness, 0 }, { bounds.X, bounds.Y }, val);
+		// Top (no corners)
+		Fill({ thickness, bounds.Y - thickness }, { bounds.X - thickness, bounds.Y }, val);
+		// Bottom (no corners)
+		Fill({ thickness, 0 }, { bounds.X - thickness, thickness }, val);
+	}
+
+	template <typename T>
+	inline void Sampleable2D<T>::Fill(VecInt min, VecInt max, T val)
+	{
+		min = VecInt::Max(min, VecInt(0, 0));
+		max = VecInt::Min(max, bounds);
+		for (int x = min.X; x < max.X; x++)
+		{
+			for (int y = min.Y; y < max.Y; y++)
+			{
+				at_itl(x, y) = val;
+			}
+		}
+	}
+
+	template <typename T>
+	inline void Sampleable2D<T>::Paste(const Sampleable2D<T>& samp, VecInt at)
+	{
+		RectInt r = RectInt(bounds).Intersection(at, at + samp.bounds);
+		for (int x = r.Min().X; x < r.Max().X; x++)
+		{
+			for (int y = r.Min().Y; y < r.Max().Y; y++)
+			{
+				at_itl(x, y) = samp.at_itl(VecInt(x, y) - at);
+			}
+		}
+	}
+
+	template <typename T>
+	template <typename FUNC>
+	inline void Sampleable2D<T>::Apply(FUNC f)
+	{
+		size_t len = bounds.Area();
+		for (size_t i = 0; i < len; i++)
+		{
+			data[i] = f(data[i]);
+		}
+	}
+
+	template <typename T>
+	template <typename FUNC>
+	inline void Sampleable2D<T>::ApplyCoords(FUNC f)
+	{
+		size_t len = bounds.Area();
+		for (int x = 0; x < bounds.X; x++)
+		{
+			for (int y = 0; y < bounds.Y; y++)
+			{
+				at_itl(x, y) = f(x, y);
+			}
+		}
+	}
+
+	template<typename T>
+	inline void Sampleable2D<T>::CopyInRange(const Sampleable2D<T>& samp, VecInt min, VecInt max, VecInt to)
 	{
 		VecInt setCoord = Vec::Max(Vec(0, 0), to);
 		for (int x = min.X; x < max.X && setCoord.X < bounds.X; x++, setCoord.X++)
@@ -217,7 +408,7 @@ namespace zmath
 	}
 
 	template<typename T>
-	void Sampleable2D<T>::CopyNotInRange(const Sampleable2D<T>& samp, VecInt min, VecInt max, VecInt to)
+	inline void Sampleable2D<T>::CopyNotInRange(const Sampleable2D<T>& samp, VecInt min, VecInt max, VecInt to)
 	{
 		const VecInt otherBounds(samp.bounds);
 		VecInt otherCoord(0, 0);
@@ -258,33 +449,33 @@ namespace zmath
 		const VecInt max = Vec::Min(min + Vec(1, 1), bounds - Vec(1, 1));
 		const Vec within = pos - min;
 
-		T y0 = interp5(data[min.X][min.Y], data[max.X][min.Y], within.X);
-		T y1 = interp5(data[min.X][max.Y], data[max.X][max.Y], within.X);
+		T y0 = interp5(data[idx_of(min.X, min.Y)], data[idx_of(max.X, min.Y)], within.X);
+		T y1 = interp5(data[idx_of(min.X, max.Y)], data[idx_of(max.X, max.Y)], within.X);
 		T z = interp5(y0, y1, within.Y);
 
 		return T(z);
 	}
 
 	template<typename T>
-	void  Sampleable2D<T>::FlipVertical()
+	inline void  Sampleable2D<T>::FlipVertical()
 	{
 		for (int x = 0; x < bounds.X; x++)
 		{
 			for (int y = 0; y < bounds.Y / 2; y++)
 			{
-				std::swap(data[x][y], data[x][bounds.Y - 1 - y]);
+				std::swap(data[idx_of(x, y)], data[idx_of(x, bounds.Y - 1 - y)]);
 			}
 		}
 	}
 
 	template<typename T>
-	void  Sampleable2D<T>::FlipHorizontal()
+	inline void  Sampleable2D<T>::FlipHorizontal()
 	{
 		for (int x = 0; x < bounds.X / 2; x++)
 		{
 			for (int y = 0; y < bounds.Y; y++)
 			{
-				std::swap(data[x][y], data[bounds.X - 1 - x][y]);
+				std::swap(data[idx_of(x, y)], data[idx_of(bounds.X - 1 - x, y)]);
 			}
 		}
 	}
@@ -302,28 +493,75 @@ namespace zmath
 	}
 
 	template<typename T>
-	inline void Sampleable2D<T>::BoundCheck(Vec check) const
+	inline void Sampleable2D<T>::assertContains(Vec check) const
 	{
 		if (!ContainsCoord(check))
 		{
-			throw std::runtime_error("Out of bounds grid access!");
+			std::ostringstream os;
+			os << "Sampleable2D out of bounds error: bounds = "
+			   << bounds << ", but point = " << check; 
+			throw std::runtime_error(os.str());
 		}
 	}
 
 	template<typename T>
-	inline void Sampleable2D<T>::BoundCheck(VecInt check) const
+	inline void Sampleable2D<T>::assertContains(VecInt check) const
 	{
 		if (!ContainsCoord(check))
 		{
-			throw std::runtime_error("Out of bounds grid access!");
+			std::ostringstream os;
+			os << "Sampleable2D out of bounds error: bounds = "
+			   << bounds << ", but point = " << check; 
+			throw std::runtime_error(os.str());
+		}
+	}
+
+	template <typename T>
+	template <typename W>
+	inline void Sampleable2D<T>::assertSameSize(const Sampleable2D<W>& samp) const
+	{
+		if (bounds != samp.Bounds())
+		{
+			std::ostringstream os;
+			os << "Sampleable2D bounds mismatch: " << bounds << " vs. " << samp.bounds;
+			throw std::runtime_error(os.str());
 		}
 	}
 
 	template<typename T>
-	inline void Sampleable2D<T>::FreeData()
+	inline size_t Sampleable2D<T>::idx_of(int x, int y) const
 	{
-		free2d<T>(data, bounds.X);
-		bounds = VecInt(0, 0);
+		return x * bounds.Y + y;
+	}
+
+	template<typename T>
+	inline size_t Sampleable2D<T>::idx_of(VecInt vec) const
+	{
+		return vec.X * bounds.Y + vec.Y;
+	}
+
+	template<typename T>
+	inline T& Sampleable2D<T>::at_itl(int x, int y)
+	{
+		return data[idx_of(x, y)];
+	}
+
+	template<typename T>
+	inline const T& Sampleable2D<T>::at_itl(int x, int y) const
+	{
+		return data[idx_of(x, y)];
+	}
+
+	template<typename T>
+	inline T& Sampleable2D<T>::at_itl(VecInt vec)
+	{
+		return data[idx_of(vec)];
+	}
+
+	template<typename T>
+	inline const T& Sampleable2D<T>::at_itl(VecInt vec) const
+	{
+		return data[idx_of(vec)];
 	}
 
 	//          //

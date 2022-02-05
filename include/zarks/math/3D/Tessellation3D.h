@@ -9,14 +9,6 @@
 
 namespace zmath
 {
-	/* Class Tesselation3D:
-	* This class was an experiment with creating a 3D representation of a shape with triangles,
-	* such that it could easily be converted into an STL file. However, errors arise in scaling
-	* and shifting shapes with this class and its presets upon conversion to STL. So, while this
-	* class remains helpful for its STL encoding, all of its static presets should be considered
-	* deprecated, and the class '' is preferred for its gap-less assignment of triangle
-	* vertices and therefore (mostly) error-less STL encoding.
-	*/
 	class Tessellation3D {
 	public:
 		Tessellation3D() noexcept;

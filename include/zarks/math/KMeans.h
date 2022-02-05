@@ -154,11 +154,11 @@ namespace zmath
                 for (int y = 0; y < bounds.Y; y++)
                 {
                     // Compute new mean location for this datum
-                    size_t newMeanLoc = ComputeNearestMean<T, DISTANCE_CALC>(means, data[x][y]);
+                    size_t newMeanLoc = ComputeNearestMean<T, DISTANCE_CALC>(means, data(x, y));
                     // See if the new mean location is different from the last one
-                    if (newMeanLoc != meanLocs[x][y]) changes++;
+                    if (newMeanLoc != meanLocs(x, y)) changes++;
                     // Assign new mean location
-                    meanLocs[x][y] = newMeanLoc;
+                    meanLocs(x, y) = newMeanLoc;
                 }
             }
 
@@ -173,9 +173,9 @@ namespace zmath
             {
                 for (int y = 0; y < bounds.Y; y++)
                 {
-                    auto& sum = sums[meanLocs[x][y]];
+                    auto& sum = sums[meanLocs(x, y)];
                     sum.first++;
-                    sum.second += data[x][y];
+                    sum.second += data(x, y);
                 }
             }
 

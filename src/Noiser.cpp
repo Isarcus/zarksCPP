@@ -50,7 +50,7 @@ void Noiser::AddOctave(Map& map, int octave)
         for (int y = 0; y < dim.Y; y++)
         {
             const Vec point = Vec(x, y) * scale;
-            map[x][y] += octInfluence * noiseFunc(point, hash);
+            map(x, y) += octInfluence * noiseFunc(point, hash);
         }
     }
 }

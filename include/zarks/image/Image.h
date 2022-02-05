@@ -23,21 +23,14 @@ namespace zmath
 		Image(Image&& img);
 		Image();
 
-		~Image();
-
 		Image& operator=(const Image& img);
 		Image& operator=(Image&& img);
 
-		// Copy/paste
-
-		Image& Paste(const Image& img, VecInt at);
-		Image& Tile(const Image& tile, VecInt tileSize, VecInt offset = VecInt(0, 0));
-
-		// Manipulators
+		// Image-specific functions
 		
-		Image& Resize(VecInt to_bounds);
+		Image& Tile(const Image& tile, VecInt tileSize, VecInt offset = VecInt(0, 0));
+		Image& Resize(VecInt toBounds);
 		Image& Resize(double scaleFactor);
-		Image& Clear(RGBA col = RGBA::Black());
 		Image& Negative();
 		Image& RestrictPalette(const std::vector<RGBA>& palette);
 		Image& Fractalify(int octaves);
@@ -51,4 +44,5 @@ namespace zmath
 		void Save(std::string path, unsigned int channels = 3) const;
 		void SaveMNIST(std::string path_images, std::string path_labels, int columns, int emptyBorderSize = 2) const;
 	};
-}
+
+} // namespace zmath

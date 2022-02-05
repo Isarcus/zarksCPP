@@ -35,44 +35,17 @@ constexpr T DistForm(const std::array<T, N>& arr)
 	return std::sqrt(sum);
 }
 
-//        //
-// MEMORY //
-//        //
-
-template <typename T>
-T** alloc2d(int width, int height, const T& fill = T())
-{
-	T** data = new T * [width];
-	for (int x = 0; x < width; x++)
-	{
-		data[x] = new T[height];
-		for (int y = 0; y < height; y++)
-		{
-			data[x][y] = fill;
-		}
-	}
-
-	return data;
-}
-
-template <typename T>
-void free2d(T**& data, int width)
-{
-	if (data)
-	{
-		for (int x = 0; x < width; x++)
-		{
-			delete[] data[x];
-		}
-		delete[] data;
-
-		data = nullptr;
-	}
-}
-
 //      //
 // MATH //
 //      //
+
+inline auto getInterpolator(double oldMin, double oldMax, double newMin, double newMax)
+{
+	const double ratio = (newMax - newMin) / (oldMax - oldMin);
+	return [=](double val) -> double {
+		return (val - oldMin) * ratio + newMin;
+	};
+}
 
 constexpr double interpLinear(double val0, double val1, double t)
 {

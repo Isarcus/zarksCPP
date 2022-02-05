@@ -45,8 +45,9 @@ namespace zmath
 		static Shape3D Cube(Vec3 min, double size);
 		static Shape3D Prism(int sides, double radius, double height, Vec3 baseCenter);
 
-		/* @param acceptOrder: Should be true iff vertices are supplied such that (0, 1, 2) create a counterclockwise triangle
-		*  when viewed from the outside and (3) is behind that triangle. */
+		// @param acceptOrder: Should be true iff vertices are supplied such that (0, 1, 2)
+		//                     creates a counterclockwise triangle when viewed from the outside
+		//                     and (3) is behind that triangle.
 		static Shape3D TriangularPyramid(const std::array<Vec3, 4>& vertices, bool acceptOrder = false);
 
 		static Shape3D Sphere(int resolution, double radius, Vec3 center = Vec3());
