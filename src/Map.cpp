@@ -69,7 +69,6 @@ std::pair<double, double> Map::GetMinMax() const
 {
 	std::pair<double, double> minmax;
 
-	// I'm the only one who has to read this code I'm the only one who has to read this code I'm the only one who has to read this code I'm the only 
 	LOOP_MAP
 	{
 		minmax.first = std::min(minmax.first, at_itl(x, y));

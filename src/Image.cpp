@@ -87,8 +87,8 @@ Image::Image(std::string path)
 	int width, height, channels = -1;
 	uint8_t* stbImg = stbi_load(path.c_str(), &width, &height, &channels, 0);
 
-	// Abort if it fails to load, or you'll crash the damn computer again
-	if (!stbImg || channels == -1) // I included the 'channels == -1' check bc I'm paranoid
+	// Abort if it fails to load
+	if (!stbImg || channels == -1)
 	{
 		std::cout << "[ERROR] Could not load image at " << path << "\n";
 
@@ -98,10 +98,7 @@ Image::Image(std::string path)
 	}
 
 	bounds = VecInt(width, height);
-
-	// Allocate data
 	data = new RGBA[bounds.Area()];
-
 	int stbIdx = 0;
 	LOOP_IMAGE_HORIZONTAL
 	{
@@ -385,7 +382,6 @@ Image& Image::PixelateGaussian(const Map& map, double sigma)
 			if (map.ContainsCoord(pointPos) && point.second*map(x, y) > transforms.At(pointPos).second)
 			{
 				transforms.At(pointPos) = { imgPos, point.second*map(x, y) };
-				//std::cout << "set " << point.first << " to " << imgPos << " " << point.second << "\n";
 			}
 		}
 	}
@@ -401,7 +397,6 @@ Image& Image::PixelateGaussian(const Map& map, double sigma)
 			samplePos = Vec::Max(VecInt(0, 0), Vec::Min(bounds - 1, samplePos));
 		}
 		imgNew(x, y) = At(samplePos);
-		//std::cout << "setting " << Vec(x, y) << " to " << samplePos << "\n";
 	}
 
 	*this = imgNew;
@@ -539,7 +534,6 @@ void Image::SaveMNIST(std::string path_images, std::string path_labels, int colu
 		return;
 	}
 	Image copy(*this);
-	//copy.BlurGaussian(1.0, false);
 	copy.Resize(minBounds);
 
 	// Open files, check if ok, and write empty headers
@@ -583,8 +577,6 @@ void Image::SaveMNIST(std::string path_images, std::string path_labels, int colu
 			map.Interpolate(1, 0);
 			map.FillBorder(emptyBorderSize, 0);
 			map.Interpolate(0, 1);
-			//Image im_ex(map);
-			//im_ex.Save("test/" + std::to_string(row) + "_" + std::to_string(col) + ".png");
 
 			// Write map
 			unsigned char bytes[MNIST_IMG_SIZE];
