@@ -24,6 +24,7 @@ namespace zmath
 		template <typename W>
 		void assertSameSize(const Sampleable2D<W>& samp) const;
 
+		VecInt pos_of(int idx) const;
 		size_t idx_of(int x, int y) const;
 		size_t idx_of(VecInt vec) const;
 		T& at_itl(int x, int y);
@@ -31,36 +32,45 @@ namespace zmath
 		T& at_itl(VecInt vec);
 		const T& at_itl(VecInt vec) const;
 
-		class Iterator
+		class IteratorBase
 		{
 		public:
-			Iterator(Sampleable2D* source, VecInt pos);
-			T& operator*() const;
+			IteratorBase(Sampleable2D* source, T* datum);
 
-			int& X();
-			int& Y();
+			VecInt Pos() const;
+
 			void Shift(VecInt by);
 			T& At(VecInt relativePos) const;
 
-		private:
-			VecInt pos;
+			IteratorBase& operator++();
+			IteratorBase operator++(int);
+
+			bool operator==(const IteratorBase& iter);
+			bool operator!=(const IteratorBase& iter);
+
+		protected:
 			Sampleable2D* source;
+			T* datum;
 		};
 
-		class ConstIterator
+		class Iterator : public IteratorBase
 		{
 		public:
-			ConstIterator(const Sampleable2D* source, VecInt pos);
-			const T& operator*() const;
+			Iterator(Sampleable2D* source, T* datum);
 
-			int& X();
-			int& Y();
-			void Shift(VecInt by);
-			const T& At(VecInt relativePos) const;
-			
-		private:
-			VecInt pos;
-			const Sampleable2D* source;
+			T& operator*() const;
+			Iterator& operator++();
+			Iterator operator++(int);
+		};
+
+		class ConstIterator : public IteratorBase
+		{
+		public:
+			ConstIterator(const Sampleable2D* source, const T* datum);
+
+			const T& operator*() const;
+			ConstIterator& operator++();
+			ConstIterator operator++(int);
 		};
 
 	public:
@@ -117,20 +127,26 @@ namespace zmath
 
 		Iterator GetIterator(VecInt pos);
 		ConstIterator GetIterator(VecInt pos) const;
+
+		Iterator begin();
+		ConstIterator begin() const;
+
+		Iterator end();
+		ConstIterator end() const;
 	};
 
 	//              //
 	// Sampleable2D //
 	//              //
 
-	template<typename T>
+	template <typename T>
 	inline Sampleable2D<T>::Sampleable2D()
 		: bounds(0, 0)
 		, capacity(0)
 		, data(nullptr)
 	{}
 
-	template<typename T>
+	template <typename T>
 	inline Sampleable2D<T>::Sampleable2D(VecInt bounds, const T& val)
 		: bounds(VecInt::Max(bounds, VecInt(0, 0)))
 		, capacity(bounds.Area())
@@ -139,12 +155,12 @@ namespace zmath
 		Clear(val);
 	}
 
-	template<typename T>
+	template <typename T>
 	inline Sampleable2D<T>::Sampleable2D(int x, int y, const T& val)
 		: Sampleable2D(VecInt(x, y), val)
 	{}
 
-	template<typename T>
+	template <typename T>
 	inline Sampleable2D<T>::Sampleable2D(const Sampleable2D& s)
 		: bounds(s.bounds)
 		, capacity(s.bounds.Area())
@@ -153,7 +169,7 @@ namespace zmath
 		memcpy(data, s.data, capacity * sizeof(T));
 	}
 
-	template<typename T>
+	template <typename T>
 	inline Sampleable2D<T>::Sampleable2D(Sampleable2D&& s)
 		: bounds(s.bounds)
 		, capacity(s.capacity)
@@ -164,7 +180,7 @@ namespace zmath
 		s.data = nullptr;
 	}
 
-	template<typename T>
+	template <typename T>
 	inline Sampleable2D<T>& Sampleable2D<T>::operator=(const Sampleable2D& s)
 	{
 		if (this != &s)
@@ -183,7 +199,7 @@ namespace zmath
 		return *this;
 	}
 
-	template<typename T>
+	template <typename T>
 	inline Sampleable2D<T>& Sampleable2D<T>::operator=(Sampleable2D&& s)
 	{
 		if (this != &s)
@@ -201,7 +217,7 @@ namespace zmath
 		return *this;
 	}
 
-	template<typename T>
+	template <typename T>
 	inline Sampleable2D<T>::~Sampleable2D()
 	{
 		bounds = VecInt(0, 0);
@@ -210,25 +226,25 @@ namespace zmath
 		data = nullptr;
 	}
 
-	template<typename T>
+	template <typename T>
 	inline bool Sampleable2D<T>::ContainsCoord(Vec pos) const
 	{
 		return (pos >= Vec(0, 0) && pos < bounds);
 	}
 
-	template<typename T>
+	template <typename T>
 	inline bool Sampleable2D<T>::ContainsCoord(VecInt pos) const
 	{
 		return (pos >= VecInt(0, 0) && pos < bounds);
 	}
 
-	template<typename T>
+	template <typename T>
 	inline VecInt Sampleable2D<T>::Bounds() const
 	{
 		return bounds;
 	}
 
-	template<typename T>
+	template <typename T>
 	inline void Sampleable2D<T>::Set(int x, int y, const T& val)
 	{
 		assertContains(VecInt(x, y));
@@ -236,25 +252,25 @@ namespace zmath
 		data[idx_of(x, y)] = val;
 	}
 
-	template<typename T>
+	template <typename T>
 	inline void Sampleable2D<T>::Set(int x, int y, T&& val)
 	{
 		Set(x, y, val);
 	}
 
-	template<typename T>
+	template <typename T>
 	inline void Sampleable2D<T>::Set(VecInt pos, const T& val)
 	{
 		Set(pos.X, pos.Y, val);
 	}
 
-	template<typename T>
+	template <typename T>
 	inline void Sampleable2D<T>::Set(VecInt pos, T&& val)
 	{
 		Set(pos.X, pos.Y, val);
 	}
 
-	template<typename T>
+	template <typename T>
 	inline const T& Sampleable2D<T>::At(int x, int y) const
 	{
 		assertContains(VecInt(x, y));
@@ -262,7 +278,7 @@ namespace zmath
 		return data[idx_of(x, y)];
 	}
 
-	template<typename T>
+	template <typename T>
 	inline T& Sampleable2D<T>::At(int x, int y)
 	{
 		assertContains(VecInt(x, y));
@@ -270,39 +286,39 @@ namespace zmath
 		return data[idx_of(x, y)];
 	}
 
-	template<typename T>
+	template <typename T>
 	inline const T& Sampleable2D<T>::At(VecInt pos) const
 	{
 		assertContains(pos);
 		return data[idx_of(pos)];
 	}
 
-	template<typename T>
+	template <typename T>
 	inline T& Sampleable2D<T>::At(VecInt pos)
 	{
 		assertContains(pos);
 		return data[idx_of(pos)];
 	}
 
-	template<typename T>
+	template <typename T>
 	inline const T& Sampleable2D<T>::operator()(int x, int y) const
 	{
 		return data[idx_of(x, y)];
 	}
 
-	template<typename T>
+	template <typename T>
 	inline T& Sampleable2D<T>::operator()(int x, int y)
 	{
 		return data[idx_of(x, y)];
 	}
 
-	template<typename T>
+	template <typename T>
 	inline const T& Sampleable2D<T>::operator()(VecInt pos) const
 	{
 		return data[idx_of(pos)];
 	}
 
-	template<typename T>
+	template <typename T>
 	inline T& Sampleable2D<T>::operator()(VecInt pos)
 	{
 		return data[idx_of(pos)];
@@ -392,7 +408,7 @@ namespace zmath
 		}
 	}
 
-	template<typename T>
+	template <typename T>
 	inline void Sampleable2D<T>::CopyInRange(const Sampleable2D<T>& samp, VecInt min, VecInt max, VecInt to)
 	{
 		VecInt setCoord = Vec::Max(Vec(0, 0), to);
@@ -407,7 +423,7 @@ namespace zmath
 		}
 	}
 
-	template<typename T>
+	template <typename T>
 	inline void Sampleable2D<T>::CopyNotInRange(const Sampleable2D<T>& samp, VecInt min, VecInt max, VecInt to)
 	{
 		const VecInt otherBounds(samp.bounds);
@@ -431,13 +447,13 @@ namespace zmath
 		}
 	}
 
-	template<typename T>
+	template <typename T>
 	inline T Sampleable2D<T>::Sample(VecInt pos) const
 	{
 		return At(pos.X, pos.Y);
 	}
 
-	template<typename T>
+	template <typename T>
 	inline T Sampleable2D<T>::Sample(Vec pos) const
 	{
 		if (pos == pos.Floor())
@@ -456,7 +472,7 @@ namespace zmath
 		return T(z);
 	}
 
-	template<typename T>
+	template <typename T>
 	inline void  Sampleable2D<T>::FlipVertical()
 	{
 		for (int x = 0; x < bounds.X; x++)
@@ -468,7 +484,7 @@ namespace zmath
 		}
 	}
 
-	template<typename T>
+	template <typename T>
 	inline void  Sampleable2D<T>::FlipHorizontal()
 	{
 		for (int x = 0; x < bounds.X / 2; x++)
@@ -480,19 +496,43 @@ namespace zmath
 		}
 	}
 
-	template<typename T>
+	template <typename T>
 	inline typename Sampleable2D<T>::Iterator Sampleable2D<T>::GetIterator(VecInt pos)
 	{
-		return Iterator(this, pos);
+		return Iterator(this, &At(pos));
 	}
 
-	template<typename T>
+	template <typename T>
 	inline typename Sampleable2D<T>::ConstIterator Sampleable2D<T>::GetIterator(VecInt pos) const
 	{
-		return ConstIterator(this, pos);
+		return ConstIterator(this, &At(pos));
 	}
 
-	template<typename T>
+	template <typename T>
+	inline typename Sampleable2D<T>::Iterator Sampleable2D<T>::begin()
+	{
+		return GetIterator(VecInt(0, 0));
+	}
+	
+	template <typename T>
+	inline typename Sampleable2D<T>::ConstIterator Sampleable2D<T>::begin() const
+	{
+		return GetIterator(VecInt(0, 0));
+	}
+
+	template <typename T>
+	inline typename Sampleable2D<T>::Iterator Sampleable2D<T>::end()
+	{
+		return Iterator(this, nullptr);
+	}
+
+	template <typename T>
+	inline typename Sampleable2D<T>::ConstIterator Sampleable2D<T>::end() const
+	{
+		return ConstIterator(this, nullptr);
+	}
+
+	template <typename T>
 	inline void Sampleable2D<T>::assertContains(Vec check) const
 	{
 		if (!ContainsCoord(check))
@@ -504,7 +544,7 @@ namespace zmath
 		}
 	}
 
-	template<typename T>
+	template <typename T>
 	inline void Sampleable2D<T>::assertContains(VecInt check) const
 	{
 		if (!ContainsCoord(check))
@@ -528,120 +568,171 @@ namespace zmath
 		}
 	}
 
-	template<typename T>
+	template <typename T>
+	inline VecInt Sampleable2D<T>::pos_of(int idx) const
+	{
+		return VecInt(
+			idx / bounds.Y,
+			idx % bounds.Y
+		);
+	}
+
+	template <typename T>
 	inline size_t Sampleable2D<T>::idx_of(int x, int y) const
 	{
 		return x * bounds.Y + y;
 	}
 
-	template<typename T>
+	template <typename T>
 	inline size_t Sampleable2D<T>::idx_of(VecInt vec) const
 	{
 		return vec.X * bounds.Y + vec.Y;
 	}
 
-	template<typename T>
+	template <typename T>
 	inline T& Sampleable2D<T>::at_itl(int x, int y)
 	{
 		return data[idx_of(x, y)];
 	}
 
-	template<typename T>
+	template <typename T>
 	inline const T& Sampleable2D<T>::at_itl(int x, int y) const
 	{
 		return data[idx_of(x, y)];
 	}
 
-	template<typename T>
+	template <typename T>
 	inline T& Sampleable2D<T>::at_itl(VecInt vec)
 	{
 		return data[idx_of(vec)];
 	}
 
-	template<typename T>
+	template <typename T>
 	inline const T& Sampleable2D<T>::at_itl(VecInt vec) const
 	{
 		return data[idx_of(vec)];
+	}
+
+	//              //
+	// IteratorBase //
+	//              //
+
+	template <typename T>
+	inline Sampleable2D<T>::IteratorBase::IteratorBase(Sampleable2D<T>* source, T* datum)
+		: source(source)
+		, datum(datum)
+	{}
+
+	template <typename T>
+	inline VecInt Sampleable2D<T>::IteratorBase::Pos() const
+	{
+		return source->pos_of(datum - source->data);
+	}
+
+	template <typename T>
+	inline void Sampleable2D<T>::IteratorBase::Shift(VecInt by)
+	{
+		datum = &source->At(Pos() + by);
+	}
+
+	template <typename T>
+	inline T& Sampleable2D<T>::IteratorBase::At(VecInt relativePos) const
+	{
+		return source->At(Pos() + relativePos);
+	}
+
+	template <typename T>
+	inline typename Sampleable2D<T>::IteratorBase& Sampleable2D<T>::IteratorBase::operator++()
+	{
+		if (datum)
+		{
+			datum++;
+			if (!source->ContainsCoord(Pos()))
+			{
+				datum = nullptr;
+			}
+		}
+		return *this;
+	}
+
+	template <typename T>
+	inline typename Sampleable2D<T>::IteratorBase Sampleable2D<T>::IteratorBase::operator++(int)
+	{
+		IteratorBase iter = *this;
+		++(*this);
+		return iter;
+	}
+
+	template <typename T>
+	inline bool Sampleable2D<T>::IteratorBase::operator==(const IteratorBase& iter)
+	{
+		return datum == iter.datum;
+	}
+
+	template <typename T>
+	inline bool Sampleable2D<T>::IteratorBase::operator!=(const IteratorBase& iter)
+	{
+		return !(*this == iter); 
 	}
 
 	//          //
 	// Iterator //
 	//          //
 
-	template<typename T>
-	inline Sampleable2D<T>::Iterator::Iterator(Sampleable2D* source, VecInt pos)
-		: source(source)
-		, pos(pos)
+	template <typename T>
+	inline Sampleable2D<T>::Iterator::Iterator(Sampleable2D<T>* source, T* datum)
+		: IteratorBase(source, datum)
 	{}
 
-	template<typename T>
+	template <typename T>
 	inline T& Sampleable2D<T>::Iterator::operator*() const
 	{
-		return source->At(pos);
+		return *this->datum;
 	}
 
-	template<typename T>
-	inline int& Sampleable2D<T>::Iterator::X()
+	template <typename T>
+	inline typename Sampleable2D<T>::Iterator& Sampleable2D<T>::Iterator::operator++()
 	{
-		return pos.X;
+		++(*static_cast<IteratorBase*>(this));
+		return *this;
 	}
 
-	template<typename T>
-	inline int& Sampleable2D<T>::Iterator::Y()
+	template <typename T>
+	inline typename Sampleable2D<T>::Iterator Sampleable2D<T>::Iterator::operator++(int)
 	{
-		return pos.Y;
+		Iterator iter = *this;
+		++(*static_cast<IteratorBase*>(this));
+		return iter;
 	}
 
-	template<typename T>
-	inline void Sampleable2D<T>::Iterator::Shift(VecInt by)
-	{
-		pos += by;
-	}
-
-	template<typename T>
-	inline T& Sampleable2D<T>::Iterator::At(VecInt relativePos) const
-	{
-		return source->At(pos + relativePos);
-	}
-
-	//               //
+	//      	     //
 	// ConstIterator //
-	//               //
+	//          	 //
 
-	template<typename T>
-	inline Sampleable2D<T>::ConstIterator::ConstIterator(const Sampleable2D* source, VecInt pos)
-		: source(source)
-		, pos(pos)
+	template <typename T>
+	inline Sampleable2D<T>::ConstIterator::ConstIterator(const Sampleable2D<T>* source, const T* datum)
+		: IteratorBase(const_cast<Sampleable2D<T>*>(source), const_cast<T*>(datum))
 	{}
 
-	template<typename T>
+	template <typename T>
 	inline const T& Sampleable2D<T>::ConstIterator::operator*() const
 	{
-		return source->At(pos);
+		return *this->datum;
 	}
 
-	template<typename T>
-	inline int& Sampleable2D<T>::ConstIterator::X()
+	template <typename T>
+	inline typename Sampleable2D<T>::ConstIterator& Sampleable2D<T>::ConstIterator::operator++()
 	{
-		return pos.X;
+		++(*static_cast<IteratorBase*>(this));
+		return *this;
 	}
 
-	template<typename T>
-	inline int& Sampleable2D<T>::ConstIterator::Y()
+	template <typename T>
+	inline typename Sampleable2D<T>::ConstIterator Sampleable2D<T>::ConstIterator::operator++(int)
 	{
-		return pos.Y;
-	}
-
-	template<typename T>
-	inline void Sampleable2D<T>::ConstIterator::Shift(VecInt by)
-	{
-		pos += by;
-	}
-
-	template<typename T>
-	inline const T& Sampleable2D<T>::ConstIterator::At(VecInt relativePos) const
-	{
-		return source->At(pos + relativePos);
+		ConstIterator iter = *this;
+		++(*static_cast<IteratorBase*>(this));
+		return iter;
 	}
 
 } // namespace zmath
