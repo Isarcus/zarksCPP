@@ -22,6 +22,8 @@ namespace zmath
 		uint8_t operator[] (int i) const;
 		bool operator== (RGBA c) const;
 
+		RGBA operator* (double factor);
+
 		double Brightness(bool accountForAlpha = false) const;
 
 		static RGBA Black();

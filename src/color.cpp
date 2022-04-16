@@ -88,6 +88,16 @@ bool RGBA::operator==(RGBA c) const
 	return R == c.R && G == c.G && B == c.B && A == c.A;
 }
 
+RGBA RGBA::operator* (double factor)
+{
+	return RGBA(
+		std::max(0.0, std::min(R*factor, 255.0)),
+		std::max(0.0, std::min(G*factor, 255.0)),
+		std::max(0.0, std::min(B*factor, 255.0)),
+		A
+	);
+}
+
 double RGBA::Brightness(bool accountForAlpha) const
 {
 	return ((int)R + (int)G + (int)B) * (accountForAlpha ? (A / 255.0) : 1) / 765.0;
