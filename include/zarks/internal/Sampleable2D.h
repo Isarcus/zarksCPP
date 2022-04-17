@@ -115,6 +115,12 @@ namespace zmath
 		void Apply(FUNC f);
 		template <typename FUNC>
 		void ApplyCoords(FUNC f);
+		template <typename FUNC>
+		void ApplyCoordsThis(FUNC f);
+		template <typename W, typename FUNC>
+		void ApplySample(const Sampleable2D<W>& samp, FUNC f);
+		template <typename W, typename FUNC>
+		void ApplySampleThis(const Sampleable2D<W>& samp, FUNC f);
 
 		void CopyInRange(const Sampleable2D& samp, VecInt min, VecInt max, VecInt to = VecInt(0, 0));
 		void CopyNotInRange(const Sampleable2D& samp, VecInt min, VecInt max, VecInt to = VecInt(0, 0));
@@ -405,6 +411,45 @@ namespace zmath
 			{
 				at_itl(x, y) = f(x, y);
 			}
+		}
+	}
+
+	template <typename T>
+	template <typename FUNC>
+	inline void Sampleable2D<T>::ApplyCoordsThis(FUNC f)
+	{
+		size_t len = bounds.Area();
+		for (int x = 0; x < bounds.X; x++)
+		{
+			for (int y = 0; y < bounds.Y; y++)
+			{
+				at_itl(x, y) = f(x, y, at_itl(x, y));
+			}
+		}
+	}
+
+	template <typename T>
+	template <typename W, typename FUNC>
+	inline void Sampleable2D<T>::ApplySample(const Sampleable2D<W>& samp, FUNC f)
+	{
+		auto this_it = begin(), this_end = end();
+		auto samp_it = samp.begin(), samp_end = samp.end();
+		while (this_it != this_end && samp_it != samp_end)
+		{
+			*this_it++ = f(*samp_it++);
+		}
+	}
+
+	template <typename T>
+	template <typename W, typename FUNC>
+	inline void Sampleable2D<T>::ApplySampleThis(const Sampleable2D<W>& samp, FUNC f)
+	{
+		auto this_it = begin(), this_end = end();
+		auto samp_it = samp.begin(), samp_end = samp.end();
+		while (this_it != this_end && samp_it != samp_end)
+		{
+			const T& datum = *this_it;
+			*this_it++ = f(*samp_it++, datum);
 		}
 	}
 
