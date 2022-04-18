@@ -14,10 +14,10 @@ namespace zmath
 
         // @return The current stream offset relative to when this
         //         StreamKeeper's constructor was called
-        std::istream::streamoff Offset() const;
+        std::streamoff Offset() const;
 
     private:
         std::istream& is;
-        const std::istream::streampos startpos;
+        const std::streampos startpos;
     };
 }

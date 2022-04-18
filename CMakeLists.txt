@@ -6,7 +6,7 @@ project(zarks VERSION 0.2)
 string(TOUPPER ${CMAKE_BUILD_TYPE} CMAKE_BUILD_TYPE)
 
 # General C++ options
-set(CMAKE_CXX_STANDARD 14)
+set(CMAKE_CXX_STANDARD 17)
 set(CMAKE_CXX_STANDARD_REQUIRED True)
 add_compile_options(-Werror -Wall -Wextra -Wno-unused-parameter -pedantic)
 

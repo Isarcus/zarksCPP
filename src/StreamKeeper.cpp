@@ -13,7 +13,7 @@ StreamKeeper::~StreamKeeper()
     is.seekg(startpos);
 }
 
-std::istream::streamoff StreamKeeper::Offset() const
+std::streamoff StreamKeeper::Offset() const
 {
     return is.tellg() - startpos;
 }
