@@ -67,7 +67,7 @@ double Map::GetMax() const
 
 std::pair<double, double> Map::GetMinMax() const
 {
-	std::pair<double, double> minmax;
+	std::pair<double, double> minmax(data[0], data[0]);
 
 	LOOP_MAP
 	{
