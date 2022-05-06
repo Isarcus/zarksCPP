@@ -9,8 +9,16 @@ int main()
 {
     const VecInt bounds(20, 20);
 
+    // Check constructors
+    Sampleable2D<int>(20, 20, [](){ static int x = 3; return x++; });
+    Sampleable2D<int>(bounds, [](){ static int x = 3; return x++; });
+    Sampleable2D<int>(20, 20, [](int x, int y){ return x*y; });
+    Sampleable2D<int>(bounds, [](int x, int y){ return ((x/2 + y/2) % 2) ? 0 : 1; });
+    Sampleable2D<int>(Sampleable2D<bool>(bounds), [](bool b) { return b ? 1 : -1; });
+
     // Check all overloads of Apply
     Sampleable2D<double> s1(bounds, 1.0);
+    s1.Apply([](){ static int i = -4; return i *= -1.25; });
     s1.Apply([](double v){ return v * 2; });
     s1.Apply([](int v){ return v * 2; });
     s1.Apply([](int x, int y, double v){ return ((x + y) % 2) ? x + y : v; });
@@ -27,13 +35,9 @@ int main()
         return v.DistManhattan(Vec(d, d));
     });
 
-    // Copy-ish constructor from Sampleable2D of a different type
-    Sampleable2D<int> s3(Sampleable2D<bool>(bounds), [](bool b) { return b ? 1 : -1; });
-    std::cout << s3(19, 19) << '\n';
-
     // Type deduction for overloaded functions
     s1.Apply(std::cos);
     s1.Apply(std::abs);
-    s1.ApplySample(s3, std::abs);
+    s1.ApplySample(Sampleable2D<int>(bounds), std::abs);
     Sampleable2D<unsigned> s4(s1, std::abs);
 }

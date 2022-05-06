@@ -82,6 +82,14 @@ namespace zmath
 		Sampleable2D(const Sampleable2D& s);
 		Sampleable2D(Sampleable2D&& s);
 
+		template <typename FUNC = T(*)(), std::enable_if_t<std::is_invocable_v<FUNC>, bool> = true>
+		Sampleable2D(int x, int y, FUNC f);
+		template <typename FUNC = T(*)(), std::enable_if_t<std::is_invocable_v<FUNC>, bool> = true>
+		Sampleable2D(VecInt bounds, FUNC f);
+		template <typename FUNC = T(*)(int, int), std::enable_if_t<std::is_invocable_v<FUNC, int, int>, bool> = true>
+		Sampleable2D(int x, int y, FUNC f);
+		template <typename FUNC = T(*)(int, int), std::enable_if_t<std::is_invocable_v<FUNC, int, int>, bool> = true>
+		Sampleable2D(VecInt bounds, FUNC f);
 		template <typename W, typename FUNC = W(*)(W), std::enable_if_t<std::is_invocable_v<FUNC, W>, bool> = true>
 		Sampleable2D(const Sampleable2D<W>& s, FUNC f);
 
@@ -119,10 +127,13 @@ namespace zmath
 		// Apply a function to each element in this. The passed-in function
 		// must return a type that is implicitly convertible to T. The
 		// function's arguments may fall into any one of the following
-		// categories: 
-		// 1. (T)           : A function of the current datum
-		// 2. (int, int)    : A function of coordinates only
-		// 3. (int, int, T) : A function of coordinates and the current datum
+		// categories:
+		// 1. ()            : No inputs
+		// 2. (T)           : A function of the current datum
+		// 3. (int, int)    : A function of coordinates only
+		// 4. (int, int, T) : A function of coordinates and the current datum
+		template <typename FUNC = T(*)(), std::enable_if_t<std::is_invocable_v<FUNC>, bool> = true>
+		void Apply(FUNC f);
 		template <typename FUNC = T(*)(T), std::enable_if_t<std::is_invocable_v<FUNC, T>, bool> = true>
 		void Apply(FUNC f);
 		template <typename FUNC, std::enable_if_t<std::is_invocable_v<FUNC, int, int>, bool> = true>
@@ -206,6 +217,38 @@ namespace zmath
 		s.bounds = VecInt(0, 0);
 		s.capacity = 0;
 		s.data = nullptr;
+	}
+
+	template <typename T>
+	template <typename FUNC, std::enable_if_t<std::is_invocable_v<FUNC>, bool>>
+	inline Sampleable2D<T>::Sampleable2D(int x, int y, FUNC f)
+		: Sampleable2D(x, y)
+	{
+		Apply(f);
+	}
+
+	template <typename T>
+	template <typename FUNC, std::enable_if_t<std::is_invocable_v<FUNC>, bool>>
+	inline Sampleable2D<T>::Sampleable2D(VecInt bounds, FUNC f)
+		: Sampleable2D(bounds)
+	{
+		Apply(f);
+	}
+
+	template <typename T>
+	template <typename FUNC, std::enable_if_t<std::is_invocable_v<FUNC, int, int>, bool>>
+	inline Sampleable2D<T>::Sampleable2D(int x, int y, FUNC f)
+		: Sampleable2D(x, y)
+	{
+		Apply(f);
+	}
+
+	template <typename T>
+	template <typename FUNC, std::enable_if_t<std::is_invocable_v<FUNC, int, int>, bool>>
+	inline Sampleable2D<T>::Sampleable2D(VecInt bounds, FUNC f)
+		: Sampleable2D(bounds)
+	{
+		Apply(f);
 	}
 
 	template <typename T>
@@ -412,6 +455,17 @@ namespace zmath
 			{
 				at_itl(x, y) = samp.at_itl(VecInt(x, y) - at);
 			}
+		}
+	}
+
+	template <typename T>
+	template <typename FUNC, std::enable_if_t<std::is_invocable_v<FUNC>, bool>>
+	inline void Sampleable2D<T>::Apply(FUNC f)
+	{
+		size_t len = bounds.Area();
+		for (size_t i = 0; i < len; i++)
+		{
+			data[i] = f();
 		}
 	}
 
