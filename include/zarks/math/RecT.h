@@ -7,12 +7,12 @@
 namespace zmath
 {
     // forward declare RecT
-	template <typename>
-	struct RecT;
+    template <typename>
+    struct RecT;
 
-	// forward declare operator<<
-	template <typename T>
-	std::ostream& operator<<(std::ostream&, const RecT<T>&);
+    // forward declare operator<<
+    template <typename T>
+    std::ostream& operator<<(std::ostream&, const RecT<T>&);
 
     template <typename T>
     class RecT

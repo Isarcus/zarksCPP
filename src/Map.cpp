@@ -16,299 +16,299 @@ namespace zmath
 {
 
 Map::Map()
-	: Sampleable2D()
+    : Sampleable2D()
 {}
 
 Map::Map(VecInt bounds)
-	: Sampleable2D(bounds)
+    : Sampleable2D(bounds)
 {}
 
 Map::Map(int x, int y)
-	: Map(VecInt(x, y))
+    : Map(VecInt(x, y))
 {}
 
 Map::Map(const Map& map)
-	: Sampleable2D(map)
+    : Sampleable2D(map)
 {}
 
 Map::Map(Map&& map)
-	: Sampleable2D(std::move(map))
+    : Sampleable2D(std::move(map))
 {}
 
 Map& Map::operator=(const Map& rhs)
 {
-	Sampleable2D::operator=(rhs);
-	return *this;
+    Sampleable2D::operator=(rhs);
+    return *this;
 }
 
 Map& Map::operator=(Map&& rhs)
 {
-	Sampleable2D::operator=(std::move(rhs));
-	return *this;
+    Sampleable2D::operator=(std::move(rhs));
+    return *this;
 }
 
 double Map::GetMin() const
 {
-	double min = data[0];
+    double min = data[0];
 
-	LOOP_MAP min = std::min(min, at_itl(x, y));
+    LOOP_MAP min = std::min(min, at_itl(x, y));
 
-	return min;
+    return min;
 }
 
 double Map::GetMax() const
 {
-	double max = data[0];
+    double max = data[0];
 
-	LOOP_MAP max = std::max(max, at_itl(x, y));
+    LOOP_MAP max = std::max(max, at_itl(x, y));
 
-	return max;
+    return max;
 }
 
 std::pair<double, double> Map::GetMinMax() const
 {
-	std::pair<double, double> minmax(data[0], data[0]);
+    std::pair<double, double> minmax(data[0], data[0]);
 
-	LOOP_MAP
-	{
-		minmax.first = std::min(minmax.first, at_itl(x, y));
-		minmax.second = std::max(minmax.second, at_itl(x, y));
-	}
+    LOOP_MAP
+    {
+        minmax.first = std::min(minmax.first, at_itl(x, y));
+        minmax.second = std::max(minmax.second, at_itl(x, y));
+    }
 
-	return minmax;
+    return minmax;
 }
 
 double Map::Sum() const
 {
-	double sum = 0;
-	LOOP_MAP sum += at_itl(x, y);
-	return sum;
+    double sum = 0;
+    LOOP_MAP sum += at_itl(x, y);
+    return sum;
 }
 
 double Map::Mean() const
 {
-	return Sum() / (double)bounds.Area();
+    return Sum() / (double)bounds.Area();
 }
 
 double Map::Variance() const
 {
-	double mean = Mean();
-	double variance = 0;
+    double mean = Mean();
+    double variance = 0;
 
-	LOOP_MAP variance += std::pow(mean - at_itl(x, y), 2);
+    LOOP_MAP variance += std::pow(mean - at_itl(x, y), 2);
 
-	return variance / (double)(bounds.Area() - 1);
+    return variance / (double)(bounds.Area() - 1);
 }
 
 double Map::Std() const
 {
-	return std::sqrt(Variance());
+    return std::sqrt(Variance());
 }
 
 Vec Map::DerivativeAt(VecInt pos) const
 {
-	if (!ContainsCoord(pos)) return Vec();
+    if (!ContainsCoord(pos)) return Vec();
 
-	bool posX = ContainsCoord(pos + VecInt( 1,  0));
-	bool posY = ContainsCoord(pos + VecInt( 0,  1));
-	bool negX = ContainsCoord(pos + VecInt(-1,  0));
-	bool negY = ContainsCoord(pos + VecInt( 0, -1));
+    bool posX = ContainsCoord(pos + VecInt( 1,  0));
+    bool posY = ContainsCoord(pos + VecInt( 0,  1));
+    bool negX = ContainsCoord(pos + VecInt(-1,  0));
+    bool negY = ContainsCoord(pos + VecInt( 0, -1));
 
-	Vec dh;
-	Vec weight;
+    Vec dh;
+    Vec weight;
 
-	double val = At(pos);
+    double val = At(pos);
 
-	if (posX) {
-		dh.X += 2.0 * (At(pos + Vec(1, 0)) - val);
-		weight.X += 2;
+    if (posX) {
+        dh.X += 2.0 * (At(pos + Vec(1, 0)) - val);
+        weight.X += 2;
 
-		if (posY) {
-			dh.X += At(pos + VecInt(1, 1)) - val;
-			dh.Y += At(pos + VecInt(1, 1)) - val;
+        if (posY) {
+            dh.X += At(pos + VecInt(1, 1)) - val;
+            dh.Y += At(pos + VecInt(1, 1)) - val;
 
-			weight.X++;
-			weight.Y++;
-		}
-		if (negY) {
-			dh.X += At(pos + VecInt(1, -1)) - val;
-			dh.Y -= At(pos + VecInt(1, -1)) - val;
+            weight.X++;
+            weight.Y++;
+        }
+        if (negY) {
+            dh.X += At(pos + VecInt(1, -1)) - val;
+            dh.Y -= At(pos + VecInt(1, -1)) - val;
 
-			weight.X++;
-			weight.Y++;
-		}
-	}
+            weight.X++;
+            weight.Y++;
+        }
+    }
 
-	if (negX) {
-		dh.X -= 2.0 * (At(pos + Vec(-1, 0)) - val);
-		weight.X += 2;
+    if (negX) {
+        dh.X -= 2.0 * (At(pos + Vec(-1, 0)) - val);
+        weight.X += 2;
 
-		if (posY) {
-			dh.X -= At(pos + Vec(-1, 1)) - val;
-			dh.Y += At(pos + Vec(-1, 1)) - val;
+        if (posY) {
+            dh.X -= At(pos + Vec(-1, 1)) - val;
+            dh.Y += At(pos + Vec(-1, 1)) - val;
 
-			weight.X++;
-			weight.Y++;
-		}
-		if (negY) {
-			dh.X -= At(pos + Vec(-1, -1)) - val;
-			dh.Y -= At(pos + Vec(-1, -1)) - val;
+            weight.X++;
+            weight.Y++;
+        }
+        if (negY) {
+            dh.X -= At(pos + Vec(-1, -1)) - val;
+            dh.Y -= At(pos + Vec(-1, -1)) - val;
 
-			weight.X++;
-			weight.Y++;
-		}
-	}
-	if (posY) {
-		dh.Y += 2.0 * (At(pos + Vec(0, 1)) - val);
-		weight.Y += 2;
-	}
-	if (negY) {
-		dh.Y -= 2.0 * (At(pos + Vec(0, -1)) - val);
-		weight.Y += 2;
-	}
+            weight.X++;
+            weight.Y++;
+        }
+    }
+    if (posY) {
+        dh.Y += 2.0 * (At(pos + Vec(0, 1)) - val);
+        weight.Y += 2;
+    }
+    if (negY) {
+        dh.Y -= 2.0 * (At(pos + Vec(0, -1)) - val);
+        weight.Y += 2;
+    }
 
-	return dh / weight;
+    return dh / weight;
 }
 
 double Map::SlopeAt(VecInt pos) const
 {
-	return DerivativeAt(pos).DistForm();
+    return DerivativeAt(pos).DistForm();
 }
 
 Map Map::Copy(VecInt min, VecInt max) const
 {
-	min = VecInt::Max(min, VecInt(0, 0));
-	max = VecInt::Min(max, bounds);
-	Map m(max - min);
-	for (int x = min.X; x < max.X; x++)
-	{
-		for (int y = min.Y; y < max.Y; y++)
-		{
-			m(VecInt(x, y) - min) = at_itl(x, y);
-		}
-	}
+    min = VecInt::Max(min, VecInt(0, 0));
+    max = VecInt::Min(max, bounds);
+    Map m(max - min);
+    for (int x = min.X; x < max.X; x++)
+    {
+        for (int y = min.Y; y < max.Y; y++)
+        {
+            m(VecInt(x, y) - min) = at_itl(x, y);
+        }
+    }
 
-	return m;
+    return m;
 }
 
 Map& Map::Interpolate(double newMin, double newMax)
 {
-	auto old = GetMinMax();
-	if (old.first == old.second)
-	{
-		// Avoid zero division errors
-		Clear(newMin);
-	}
-	else
-	{
-		Apply(getInterpolator(old.first, old.second, newMin, newMax));
-	}
+    auto old = GetMinMax();
+    if (old.first == old.second)
+    {
+        // Avoid zero division errors
+        Clear(newMin);
+    }
+    else
+    {
+        Apply(getInterpolator(old.first, old.second, newMin, newMax));
+    }
 
-	return *this;
+    return *this;
 }
 
 Map& Map::Abs()
 {
-	Apply(std::abs);
-	return *this;
+    Apply(std::abs);
+    return *this;
 }
 
 Map Map::SlopeMap()
 {
-	Map m(bounds);
+    Map m(bounds);
 
-	LOOP_MAP m.at_itl(x, y) = SlopeAt(VecInt(x, y));
+    LOOP_MAP m.at_itl(x, y) = SlopeAt(VecInt(x, y));
 
-	return m;
+    return m;
 }
 
 Map& Map::BoundMax(double newMax)
 {
-	LOOP_MAP at_itl(x, y) = std::min(newMax, at_itl(x, y));
-	return *this;
+    LOOP_MAP at_itl(x, y) = std::min(newMax, at_itl(x, y));
+    return *this;
 }
 
 Map& Map::BoundMin(double newMin)
 {
-	LOOP_MAP at_itl(x, y) = std::max(newMin, at_itl(x, y));
-	return *this;
+    LOOP_MAP at_itl(x, y) = std::max(newMin, at_itl(x, y));
+    return *this;
 }
 
 Map& Map::Bound(double newMin, double newMax)
 {
-	LOOP_MAP at_itl(x, y) = std::min(newMax, std::max(newMin, at_itl(x, y)));
-	return *this;
+    LOOP_MAP at_itl(x, y) = std::min(newMax, std::max(newMin, at_itl(x, y)));
+    return *this;
 }
 
 Map& Map::operator+=(const Map& m)
 {
-	assertSameSize(m);
+    assertSameSize(m);
 
-	LOOP_MAP at_itl(x, y) += m.at_itl(x, y);
-		
-	return *this;
+    LOOP_MAP at_itl(x, y) += m.at_itl(x, y);
+        
+    return *this;
 }
 
 Map& Map::operator-=(const Map& m)
 {
-	assertSameSize(m);
+    assertSameSize(m);
 
-	LOOP_MAP at_itl(x, y) -= m.at_itl(x, y);
+    LOOP_MAP at_itl(x, y) -= m.at_itl(x, y);
 
-	return *this;
+    return *this;
 }
 
 Map& Map::operator*=(const Map& m)
 {
-	assertSameSize(m);
+    assertSameSize(m);
 
-	LOOP_MAP at_itl(x, y) *= m.at_itl(x, y);
+    LOOP_MAP at_itl(x, y) *= m.at_itl(x, y);
 
-	return *this;
+    return *this;
 }
 
 Map& Map::operator/=(const Map& m)
 {
-	assertSameSize(m);
+    assertSameSize(m);
 
-	LOOP_MAP
-	{
-		if (m.at_itl(x, y) == 0)
-		{
-			if (at_itl(x, y) > 0) at_itl(x, y) = DOUBLEMAX;
-			else if (at_itl(x, y) < 0) at_itl(x, y) = DOUBLEMIN;
-		}
-		else
-		{
-			at_itl(x, y) /= m.at_itl(x, y);
-		}
-	}
+    LOOP_MAP
+    {
+        if (m.at_itl(x, y) == 0)
+        {
+            if (at_itl(x, y) > 0) at_itl(x, y) = DOUBLEMAX;
+            else if (at_itl(x, y) < 0) at_itl(x, y) = DOUBLEMIN;
+        }
+        else
+        {
+            at_itl(x, y) /= m.at_itl(x, y);
+        }
+    }
 
-	return *this;
+    return *this;
 }
 
 Map& Map::operator+=(double val)
 {
-	LOOP_MAP at_itl(x, y) += val;
-	return *this;
+    LOOP_MAP at_itl(x, y) += val;
+    return *this;
 }
 
 Map& Map::operator-=(double val)
 {
-	LOOP_MAP at_itl(x, y) -= val;
-	return *this;
+    LOOP_MAP at_itl(x, y) -= val;
+    return *this;
 }
 
 Map& Map::operator*=(double val)
 {
-	LOOP_MAP at_itl(x, y) *= val;
-	return *this;
+    LOOP_MAP at_itl(x, y) *= val;
+    return *this;
 }
 
 Map& Map::operator/=(double val)
 {
-	if (val != 0) LOOP_MAP at_itl(x, y) /= val;
-	return *this;
+    if (val != 0) LOOP_MAP at_itl(x, y) /= val;
+    return *this;
 }
 
 Map& Map::Add(const Map& m) { return *this += m; }
@@ -323,188 +323,188 @@ Map& Map::Div(double val) { return *this /= val; }
 
 Map& Map::Pow(double exp)
 {
-	LOOP_MAP at_itl(x, y) = std::pow(at_itl(x, y), exp);
-	return *this;
+    LOOP_MAP at_itl(x, y) = std::pow(at_itl(x, y), exp);
+    return *this;
 }
 
 Map Map::MatMul(const Map& m) const
 {
-	Map result;
-	MatMul(m, result);
-	return result;
+    Map result;
+    MatMul(m, result);
+    return result;
 }
 
 void Map::MatMul(const Map& m, Map& result) const
 {
-	// Ensure result is the right size
-	VecInt newBounds = getMatrixBounds(bounds, m.bounds);
-	if (result.bounds == newBounds)
-	{
-		result.Clear(0);
-	}
-	else
-	{
-		result = Map(newBounds);
-	}
+    // Ensure result is the right size
+    VecInt newBounds = getMatrixBounds(bounds, m.bounds);
+    if (result.bounds == newBounds)
+    {
+        result.Clear(0);
+    }
+    else
+    {
+        result = Map(newBounds);
+    }
 
-	// Loop through multiplication of M x N and N x P matrices 
-	for (int N = 0; N < bounds.Y; N++)
-	{
-		for (int M = 0; M < bounds.X; M++)
-		{
-			for (int P = 0; P < newBounds.Y; P++)
-			{
-				result.at_itl(M, P) += at_itl(M, N) * m.at_itl(N, P);
-			}
-		}
-	}
+    // Loop through multiplication of M x N and N x P matrices 
+    for (int N = 0; N < bounds.Y; N++)
+    {
+        for (int M = 0; M < bounds.X; M++)
+        {
+            for (int P = 0; P < newBounds.Y; P++)
+            {
+                result.at_itl(M, P) += at_itl(M, N) * m.at_itl(N, P);
+            }
+        }
+    }
 }
 
 Map Map::Transpose() const
 {
-	Map result;
-	Transpose(result);
-	return result;
+    Map result;
+    Transpose(result);
+    return result;
 }
 
 void Map::Transpose(Map& result) const
 {
-	// Ensure result is the right size
-	VecInt newBounds = bounds.Flip();
-	if (result.bounds != newBounds)
-	{
-		result = Map(newBounds);
-	}
+    // Ensure result is the right size
+    VecInt newBounds = bounds.Flip();
+    if (result.bounds != newBounds)
+    {
+        result = Map(newBounds);
+    }
 
-	// Loop through transposition
-	LOOP_MAP
-	{
-		result.at_itl(y, x) = at_itl(x, y);
-	}
+    // Loop through transposition
+    LOOP_MAP
+    {
+        result.at_itl(y, x) = at_itl(x, y);
+    }
 }
 
 void Map::Save(std::string path)
 {
-	std::ofstream file;
+    std::ofstream file;
 
-	file.open(path, std::ios::binary | std::ios::out);
+    file.open(path, std::ios::binary | std::ios::out);
 
-	uint8_t header[64];
+    uint8_t header[64];
 
-	uint32_t uintX = bounds.X;
-	uint32_t uintY = bounds.Y;
+    uint32_t uintX = bounds.X;
+    uint32_t uintY = bounds.Y;
 
-	// Write header & bounds data
-	file.write((char*)header, sizeof(header));
-	WriteBuf(file, uintX, Endian::Little);
-	WriteBuf(file, uintY, Endian::Little);
+    // Write header & bounds data
+    file.write((char*)header, sizeof(header));
+    WriteBuf(file, uintX, Endian::Little);
+    WriteBuf(file, uintY, Endian::Little);
 
-	// Write the actual map data, little-endian
-	LOOP_MAP
-	{
-		WriteBuf(file, at_itl(x, y), Endian::Little);
-	}
-		
-	LOG_INFO("File saved at " << path << "\n");
+    // Write the actual map data, little-endian
+    LOOP_MAP
+    {
+        WriteBuf(file, at_itl(x, y), Endian::Little);
+    }
+        
+    LOG_INFO("File saved at " << path << "\n");
 }
 
 void Map::PrintMatrix(std::ostream& os) const
 {
-	// Skip printing anything if empty
-	if (bounds == VecInt(0, 0))
-	{
-		return;
-	}
+    // Skip printing anything if empty
+    if (bounds == VecInt(0, 0))
+    {
+        return;
+    }
 
-	// General formatting settings
-	static const int maxPrintDim = 10;
-	static const int maxPrintPartial = 4;
-	VecT<bool> skipMid(
-		bounds.X > maxPrintDim,
-		bounds.Y > maxPrintDim
-	);
+    // General formatting settings
+    static const int maxPrintDim = 10;
+    static const int maxPrintPartial = 4;
+    VecT<bool> skipMid(
+        bounds.X > maxPrintDim,
+        bounds.Y > maxPrintDim
+    );
 
-	// Formatting specifics for this map
-	int maxRowIdxLen = std::to_string(bounds.X - 1).size();
-	int maxColIdxLen = std::to_string(bounds.Y - 1).size();
-	int datumWidth = std::max(maxColIdxLen + 1, 6);
+    // Formatting specifics for this map
+    int maxRowIdxLen = std::to_string(bounds.X - 1).size();
+    int maxColIdxLen = std::to_string(bounds.Y - 1).size();
+    int datumWidth = std::max(maxColIdxLen + 1, 6);
 
-	// Set stream precision and alignment
-	auto flags = os.flags();
-	os << std::setprecision(3) << std::left;
+    // Set stream precision and alignment
+    auto flags = os.flags();
+    os << std::setprecision(3) << std::left;
 
-	// Print column indices
-	os << std::string(maxRowIdxLen + 3, ' ');
-	for (int y = 0; y < bounds.Y; y++)
-	{
-		if (skipMid.Y && y == maxPrintPartial)
-		{
-			y = bounds.Y - maxPrintPartial;
-			os << std::string(8, ' ');
-		}
-		os << std::setw(datumWidth) << y;
-	}
-	os << '\n';
+    // Print column indices
+    os << std::string(maxRowIdxLen + 3, ' ');
+    for (int y = 0; y < bounds.Y; y++)
+    {
+        if (skipMid.Y && y == maxPrintPartial)
+        {
+            y = bounds.Y - maxPrintPartial;
+            os << std::string(8, ' ');
+        }
+        os << std::setw(datumWidth) << y;
+    }
+    os << '\n';
 
-	// Print table header line
-	os << std::string(maxRowIdxLen + 2, ' ');
-	os.fill('-');
-	for (int y = 0; y < bounds.Y; y++)
-	{
-		if (skipMid.Y && y == maxPrintPartial)
-		{
-			y = bounds.Y - maxPrintPartial;
-			os << std::string(8, '-');
-		}
-		os << std::setw(datumWidth) << '-';
-	}
-	os << '\n';
+    // Print table header line
+    os << std::string(maxRowIdxLen + 2, ' ');
+    os.fill('-');
+    for (int y = 0; y < bounds.Y; y++)
+    {
+        if (skipMid.Y && y == maxPrintPartial)
+        {
+            y = bounds.Y - maxPrintPartial;
+            os << std::string(8, '-');
+        }
+        os << std::setw(datumWidth) << '-';
+    }
+    os << '\n';
 
-	// Print all data
-	os.fill(' ');
-	for (int x = 0; x < bounds.X; x++)
-	{
-		// See if rows should be skipped
-		if (skipMid.X && x == maxPrintPartial)
-		{
-			x = bounds.X - maxPrintPartial;
-			os << ".\n.\n";
-		}
+    // Print all data
+    os.fill(' ');
+    for (int x = 0; x < bounds.X; x++)
+    {
+        // See if rows should be skipped
+        if (skipMid.X && x == maxPrintPartial)
+        {
+            x = bounds.X - maxPrintPartial;
+            os << ".\n.\n";
+        }
 
-		// Print row index
-		os << std::setw(maxRowIdxLen) << x << " | ";
+        // Print row index
+        os << std::setw(maxRowIdxLen) << x << " | ";
 
-		for (int y = 0; y < bounds.Y; y++)
-		{
-			// See if columns should be skipped
-			if (skipMid.Y && y == maxPrintPartial)
-			{
-				y = bounds.Y - maxPrintPartial;
-				os << " . . .  ";
-			}
+        for (int y = 0; y < bounds.Y; y++)
+        {
+            // See if columns should be skipped
+            if (skipMid.Y && y == maxPrintPartial)
+            {
+                y = bounds.Y - maxPrintPartial;
+                os << " . . .  ";
+            }
 
-			// Print this item
-			os << std::setw(datumWidth) << at_itl(x, y);
-		}
+            // Print this item
+            os << std::setw(datumWidth) << at_itl(x, y);
+        }
 
-		// Print newline for new row
-		os << '\n';
-	}
+        // Print newline for new row
+        os << '\n';
+    }
 
-	// Reset stream formatting
-	os.flags(flags);
+    // Reset stream formatting
+    os.flags(flags);
 }
 
 VecInt Map::getMatrixBounds(VecInt lhs, VecInt rhs)
 {
-	if (lhs.Y != rhs.X)
-	{
-		std::ostringstream os;
-		os << "Matrix bounds mismatch: " << lhs << " and " << rhs;
-		throw std::runtime_error(os.str());
-	}
+    if (lhs.Y != rhs.X)
+    {
+        std::ostringstream os;
+        os << "Matrix bounds mismatch: " << lhs << " and " << rhs;
+        throw std::runtime_error(os.str());
+    }
 
-	return VecInt(lhs.X, rhs.Y);
+    return VecInt(lhs.X, rhs.Y);
 }
 
 } // namespace zmath

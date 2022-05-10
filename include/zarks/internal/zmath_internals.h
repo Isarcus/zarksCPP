@@ -27,12 +27,12 @@ class VecT;
 template <typename T, int N>
 constexpr T DistForm(const std::array<T, N>& arr)
 {
-	T sum = 0;
-	for (const T& elem : arr)
-	{
-		sum += std::pow(elem, 2);
-	}
-	return std::sqrt(sum);
+    T sum = 0;
+    for (const T& elem : arr)
+    {
+        sum += std::pow(elem, 2);
+    }
+    return std::sqrt(sum);
 }
 
 //      //
@@ -41,44 +41,44 @@ constexpr T DistForm(const std::array<T, N>& arr)
 
 inline auto getInterpolator(double oldMin, double oldMax, double newMin, double newMax)
 {
-	const double ratio = (newMax - newMin) / (oldMax - oldMin);
-	return [=](double val) -> double {
-		return (val - oldMin) * ratio + newMin;
-	};
+    const double ratio = (newMax - newMin) / (oldMax - oldMin);
+    return [=](double val) -> double {
+        return (val - oldMin) * ratio + newMin;
+    };
 }
 
 constexpr double interpLinear(double val0, double val1, double t)
 {
-	return t * val1 + (1.0 - t) * val0;
+    return t * val1 + (1.0 - t) * val0;
 }
 
 template <typename T>
 T interpLinear(const T& val0, const T& val1, double t)
 {
-	return T::Interpolate(val0, val1, t);
+    return T::Interpolate(val0, val1, t);
 }
 
 constexpr double interp5(double t)
 {
-	return 6 * std::pow(t, 5) - 15 * std::pow(t, 4) + 10 * std::pow(t, 3);
+    return 6 * std::pow(t, 5) - 15 * std::pow(t, 4) + 10 * std::pow(t, 3);
 }
 
 template <typename T>
 T interp5(const T& val0, const T& val1, double t)
 {
-	return interpLinear(val0, val1, interp5(t));
+    return interpLinear(val0, val1, interp5(t));
 }
 
 template <typename T>
 T AbsT(const T& val)
 {
-	return std::abs(val);
+    return std::abs(val);
 }
 
 template <typename T>
 VecT<T> AbsT(const VecT<T>& val)
 {
-	return val.Abs();
+    return val.Abs();
 }
 
 } // namespace zmath
