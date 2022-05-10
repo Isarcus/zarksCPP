@@ -131,14 +131,14 @@ namespace zmath
         // 1. ()            : No inputs
         // 2. (T)           : A function of the current datum
         // 3. (int, int)    : A function of coordinates only
-        // 4. (int, int, T) : A function of coordinates and the current datum
+        // 4. (T, int, int) : A function of the current datum and coordinates
         template <typename FUNC = T(*)(), std::enable_if_t<std::is_invocable_v<FUNC>, bool> = true>
         void Apply(FUNC f);
         template <typename FUNC = T(*)(T), std::enable_if_t<std::is_invocable_v<FUNC, T>, bool> = true>
         void Apply(FUNC f);
         template <typename FUNC, std::enable_if_t<std::is_invocable_v<FUNC, int, int>, bool> = true>
         void Apply(FUNC f);
-        template <typename FUNC, std::enable_if_t<std::is_invocable_v<FUNC, int, int, T>, bool> = true>
+        template <typename FUNC, std::enable_if_t<std::is_invocable_v<FUNC, T, int, int>, bool> = true>
         void Apply(FUNC f);
 
         // Apply a function to each element in this, based on another
@@ -148,11 +148,11 @@ namespace zmath
         // fall into any one of the following categories:
         // 1. (W)    : A function of the corresponding datum of the passed
         //             Sampleable2D
-        // 2. (W, T) : A function of the current datum, as well as the
+        // 2. (T, W) : A function of the current datum, as well as the
         //             corresponding datum of the passed Sampleable2D 
         template <typename W, typename FUNC = W(*)(W), std::enable_if_t<std::is_invocable_v<FUNC, W>, bool> = true>
         void ApplySample(const Sampleable2D<W>& samp, FUNC f);
-        template <typename W, typename FUNC, std::enable_if_t<std::is_invocable_v<FUNC, W, T>, bool> = true>
+        template <typename W, typename FUNC, std::enable_if_t<std::is_invocable_v<FUNC, T, W>, bool> = true>
         void ApplySample(const Sampleable2D<W>& samp, FUNC f);
 
         void CopyInRange(const Sampleable2D& samp, VecInt min, VecInt max, VecInt to = VecInt(0, 0));
@@ -494,14 +494,14 @@ namespace zmath
     }
 
     template <typename T>
-    template <typename FUNC, std::enable_if_t<std::is_invocable_v<FUNC, int, int, T>, bool>>
+    template <typename FUNC, std::enable_if_t<std::is_invocable_v<FUNC, T, int, int>, bool>>
     inline void Sampleable2D<T>::Apply(FUNC f)
     {
         for (int x = 0; x < bounds.X; x++)
         {
             for (int y = 0; y < bounds.Y; y++)
             {
-                at_itl(x, y) = f(x, y, at_itl(x, y));
+                at_itl(x, y) = f(at_itl(x, y), x, y);
             }
         }
     }
@@ -519,7 +519,7 @@ namespace zmath
     }
 
     template <typename T>
-    template <typename W, typename FUNC, std::enable_if_t<std::is_invocable_v<FUNC, W, T>, bool>>
+    template <typename W, typename FUNC, std::enable_if_t<std::is_invocable_v<FUNC, T, W>, bool>>
     inline void Sampleable2D<T>::ApplySample(const Sampleable2D<W>& samp, FUNC f)
     {
         auto this_it = begin(), this_end = end();
@@ -527,7 +527,7 @@ namespace zmath
         while (this_it != this_end && samp_it != samp_end)
         {
             const T& datum = *this_it;
-            *this_it++ = f(*samp_it++, datum);
+            *this_it++ = f(datum, *samp_it++);
         }
     }
 

@@ -282,7 +282,7 @@ Image& Image::Fractalify(int octaves)
 
 Image& Image::Droppify(const std::array<Vec, 3>& origins, const std::array<double, 3>& periods)
 {
-    Apply([=](int x, int y, RGBA pix){
+    Apply([=](RGBA pix, int x, int y){
         // Calculate weights
         std::array<double, 3> weights;
         for (int i = 0; i < 3; i++)

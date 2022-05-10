@@ -21,17 +21,17 @@ int main()
     s1.Apply([](){ static int i = -4; return i *= -1.25; });
     s1.Apply([](double v){ return v * 2; });
     s1.Apply([](int v){ return v * 2; });
-    s1.Apply([](int x, int y, double v){ return ((x + y) % 2) ? x + y : v; });
-    std::cout << s1(0, 0) << '\n'; // 4
-    std::cout << s1(2, 9) << '\n'; // 11
+    s1.Apply([](double v, int x, int y){ return ((x + y) % 2) ? x + y : v; });
+    std::cout << s1(0, 0) << '\n';
+    std::cout << s1(2, 9) << '\n';
     s1.Apply([](int x, int y) { return x * y; });
 
     // Check all overloads of ApplySample
     Sampleable2D<Vec> s2(bounds, Vec(1.0, 1.0));
-    s2.ApplySample<double>(s1, [](double d){
+    s2.ApplySample(s1, [](double d){
         return Vec::UnitVector(d);
     });
-    s1.ApplySample(s2, [](Vec v, double d) {
+    s1.ApplySample(s2, [](double d, Vec v) {
         return v.DistManhattan(Vec(d, d));
     });
 
