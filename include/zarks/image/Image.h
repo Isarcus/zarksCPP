@@ -16,8 +16,8 @@ namespace zmath
     public:
         Image(int width, int height, RGBA col = RGBA::Black());
         Image(VecInt bounds_in, RGBA col = RGBA::Black());
-        Image(const Map& m);
-        Image(const Map& m, Scheme scheme);
+        Image(const Sampleable2D<double>& samp);
+        Image(const Sampleable2D<double>& samp, const Scheme& scheme);
         Image(std::string path);
         Image(const Image& img);
         Image(Image&& img);

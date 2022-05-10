@@ -35,18 +35,14 @@ Image::Image(VecInt bounds_in, RGBA col)
     : Image(bounds_in.X, bounds_in.Y, col)
 {}
 
-Image::Image(const Map& m)
-    : Image(m.Bounds())
+Image::Image(const Sampleable2D<double>& samp)
+    : Image(samp.Bounds())
 {
-    LOOP_IMAGE
-    {
-        uint8_t shade = 255.999 * m(x, y);
-        at_itl(x, y) = RGBA(shade, shade, shade);
-    }
+    ApplySample(samp, [](double d){ return RGBA(255.999 * d); });
 }
 
-Image::Image(const Map& m, Scheme scheme)
-    : Image(m.Bounds())
+Image::Image(const Sampleable2D<double>& samp, const Scheme& scheme)
+    : Image(samp.Bounds())
 {
     // Create an accurate thresholds array
     std::vector<double> thresholds(scheme.colors.size());
@@ -57,14 +53,12 @@ Image::Image(const Map& m, Scheme scheme)
     }
 
     // Loop and assign colors
-    LOOP_IMAGE
+    ApplySample(samp, [&](double d)
     {
-        double val = m(x, y);
-
         int idxUpper = 0;
         for (unsigned i = 0; i < scheme.colors.size(); i++)
         {
-            if (val < thresholds[i])
+            if (d < thresholds[i])
             {
                 idxUpper = i;
                 break;
@@ -74,17 +68,17 @@ Image::Image(const Map& m, Scheme scheme)
         double min = thresholds[idxUpper - 1];
         double range = thresholds[idxUpper] - min;
 
-        at_itl(x, y) = RGBA::Interpolate(
+        return RGBA::Interpolate(
             scheme.colors[idxUpper - 1],
             scheme.colors[idxUpper],
-            (val - min) / range
+            (d - min) / range
         );
-    }
+    });
 }
 
 Image::Image(std::string path)
 {
-    int width, height, channels = -1;
+int width, height, channels = -1;
     uint8_t* stbImg = stbi_load(path.c_str(), &width, &height, &channels, 0);
 
     // Abort if it fails to load
@@ -213,7 +207,7 @@ Image& Image::Resize(double scaleFactor)
 
 Image& Image::Negative()
 {
-    LOOP_IMAGE at_itl(x, y) = at_itl(x, y).Negative();
+    Apply([](RGBA c){ return c.Negative(); });
 
     return *this;
 }
@@ -222,14 +216,13 @@ Image& Image::RestrictPalette(const std::vector<RGBA>& palette)
 {
     assert(palette.size());
 
-    LOOP_IMAGE
-    {
+    Apply([&](RGBA col){
         int idx_min = -1;
         double val_min = 500000; // higher than max distance between colors
 
         for (unsigned i = 0; i < palette.size(); i++)
         {
-            double min = RGBA::Distance(at_itl(x, y), palette[i]);
+            double min = RGBA::Distance(col, palette[i]);
 
             if (min < val_min)
             {
@@ -238,8 +231,8 @@ Image& Image::RestrictPalette(const std::vector<RGBA>& palette)
             }
         }
 
-        at_itl(x, y) = palette.at(idx_min);
-    }
+        return palette.at(idx_min);
+    });
 
     return *this;
 }
@@ -289,15 +282,12 @@ Image& Image::Fractalify(int octaves)
 
 Image& Image::Droppify(const std::array<Vec, 3>& origins, const std::array<double, 3>& periods)
 {
-    LOOP_IMAGE
-    {
-        Vec pos(x, y);
-
+    Apply([=](int x, int y, RGBA pix){
         // Calculate weights
         std::array<double, 3> weights;
         for (int i = 0; i < 3; i++)
         {
-            weights[i] = std::sin(2.0 * PI * origins[i].DistForm(pos) / periods[i]);
+            weights[i] = std::sin(2.0 * PI * origins[i].DistForm(Vec(x, y)) / periods[i]);
             weights[i] = (1.0 + weights[i]) / 2.0;
         }
 
@@ -306,12 +296,13 @@ Image& Image::Droppify(const std::array<Vec, 3>& origins, const std::array<doubl
         for (auto& w : weights) w /= intensity;
 
         // Apply weights
-        RGBA& pix = at_itl(x, y);
         for (int i = 0; i < 3; i++)
         {
             pix[i] = (double)pix[i] * weights[i];
         }
-    }
+
+        return pix;
+    });
 
     return *this;
 }
