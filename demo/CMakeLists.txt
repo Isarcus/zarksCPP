@@ -1,5 +1,6 @@
 link_libraries(${ZARKS_LIB_NAME})
 
+add_executable(automaton automaton.cpp)
 add_executable(cool_graph cool_graph.cpp)
 add_executable(fractal_gif fractal_gif.cpp)
 add_executable(heightmaps heightmaps.cpp)
