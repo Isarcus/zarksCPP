@@ -118,6 +118,8 @@ namespace zmath
         const T& operator()(VecInt pos) const;
         T& operator()(VecInt pos);
 
+        void Resize(int x, int y, T clearVal = T());
+        void Resize(VecInt newBounds, T clearVal = T());
         void Clear(T val);
         void Replace(T val, T with);
         void FillBorder(int thickness, T val);
@@ -401,6 +403,27 @@ namespace zmath
     inline T& Sampleable2D<T>::operator()(VecInt pos)
     {
         return data[idx_of(pos)];
+    }
+
+    template <typename T>
+    inline void Sampleable2D<T>::Resize(int x, int y, T clearVal)
+    {
+        Resize(VecInt(x, y), clearVal);
+    }
+
+    template <typename T>
+    inline void Sampleable2D<T>::Resize(VecInt newBounds, T clearVal)
+    {
+        size_t req_capacity = newBounds.Area();
+        if (req_capacity > capacity)
+        {
+            delete[] data;
+            data = new T[req_capacity];
+            capacity = req_capacity;
+        }
+        
+        bounds = newBounds;
+        Clear(clearVal);
     }
 
     template <typename T>
