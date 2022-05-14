@@ -11,6 +11,14 @@
 
 namespace zmath
 {
+    class Indices;
+
+    template <typename>
+    class IndicesRef;
+
+    template <typename>
+    class IndicesConstRef;
+
     template <typename T>
     class Sampleable2D
     {
@@ -32,6 +40,10 @@ namespace zmath
         const T& at_itl(int x, int y) const;
         T& at_itl(VecInt vec);
         const T& at_itl(VecInt vec) const;
+
+        //           //
+        // Iterators //
+        //           //
 
         class IteratorBase
         {
@@ -98,15 +110,20 @@ namespace zmath
         
         virtual ~Sampleable2D();
 
+        Indices operator==(T val) const;
+        Indices operator!=(T val) const;
+        Indices operator< (T val) const;
+        Indices operator> (T val) const;
+        Indices operator<=(T val) const;
+        Indices operator>=(T val) const;
+
         bool ContainsCoord(Vec pos) const;
         bool ContainsCoord(VecInt pos) const;
 
         VecInt Bounds() const;
 
-        void Set(int x, int y, const T& val);
-        void Set(int x, int y, T&& val);
-        void Set(VecInt pos, const T& val);
-        void Set(VecInt pos, T&& val);
+        void Set(int x, int y, T val);
+        void Set(VecInt pos, T val);
 
         const T& At(int x, int y) const;
         T& At(int x, int y);
@@ -117,6 +134,12 @@ namespace zmath
         T& operator()(int x, int y);
         const T& operator()(VecInt pos) const;
         T& operator()(VecInt pos);
+
+        IndicesRef<T> operator()(const Indices& indices);
+        IndicesRef<T> operator()(Indices&& indices);
+
+        IndicesConstRef<T> operator()(const Indices& indices) const;
+        IndicesConstRef<T> operator()(Indices&& indices) const;
 
         void Resize(int x, int y, T clearVal = T());
         void Resize(VecInt newBounds, T clearVal = T());
@@ -148,13 +171,18 @@ namespace zmath
         // need to match that of the called Sampleable2D. Where W represents
         // the datum type of the passed object, The function's arguments may
         // fall into any one of the following categories:
-        // 1. (W)    : A function of the corresponding datum of the passed
-        //             Sampleable2D
-        // 2. (T, W) : A function of the current datum, as well as the
-        //             corresponding datum of the passed Sampleable2D 
+        // 1. (W)              : A function of the corresponding datum of the passed
+        //                       Sampleable2D
+        // 2. (T, W)           : A function of the current datum, as well as the
+        //                       corresponding datum of the passed Sampleable2D
+        // 3. (T, W, int, int) : A function of the current datum, the corresponding
+        //                       datum of the passed Sampleable2D, and the current
+        //                       coordinate.
         template <typename W, typename FUNC = W(*)(W), std::enable_if_t<std::is_invocable_v<FUNC, W>, bool> = true>
         void ApplySample(const Sampleable2D<W>& samp, FUNC f);
         template <typename W, typename FUNC, std::enable_if_t<std::is_invocable_v<FUNC, T, W>, bool> = true>
+        void ApplySample(const Sampleable2D<W>& samp, FUNC f);
+        template <typename W, typename FUNC, std::enable_if_t<std::is_invocable_v<FUNC, T, W, int, int>, bool> = true>
         void ApplySample(const Sampleable2D<W>& samp, FUNC f);
 
         void CopyInRange(const Sampleable2D& samp, VecInt min, VecInt max, VecInt to = VecInt(0, 0));
@@ -174,6 +202,77 @@ namespace zmath
 
         Iterator end();
         ConstIterator end() const;
+    };
+
+    //         //
+    // Indices //
+    //         //
+
+    class Indices : public Sampleable2D<bool>
+    {
+    public:
+        template <typename T>
+        Indices(const Sampleable2D<T>& source, bool(*func)(T, T), T val);
+
+        Indices operator&& (const Indices& rhs) const;
+        Indices operator|| (const Indices& rhs) const;
+        Indices operator^ (const Indices& rhs) const;
+        Indices operator&& (Indices&& rhs) const;
+        Indices operator|| (Indices&& rhs) const;
+        Indices operator^ (Indices&& rhs) const;
+
+        template <typename T>
+        static bool EQ(T val1, T val2);
+        template <typename T>
+        static bool NE(T val1, T val2);
+        template <typename T>
+        static bool LT(T val1, T val2);
+        template <typename T>
+        static bool GT(T val1, T val2);
+        template <typename T>
+        static bool LE(T val1, T val2);
+        template <typename T>
+        static bool GE(T val1, T val2);
+    };
+
+    template <typename T>
+    class IndicesRefBase
+    {
+    protected:
+        Indices indices;
+        Sampleable2D<T>& ref;
+
+        IndicesRefBase(const Indices& indices, Sampleable2D<T>& samp);
+        IndicesRefBase(Indices&& indices, Sampleable2D<T>& samp);
+    };
+
+    template <typename T>
+    class IndicesRef : public IndicesRefBase<T>
+    {
+    public:
+        IndicesRef(const Indices& indices, Sampleable2D<T>& samp);
+        IndicesRef(Indices&& indices, Sampleable2D<T>& samp);
+
+        void operator=  (T val);
+        void operator+= (T val);
+        void operator-= (T val);
+        void operator*= (T val);
+        void operator/= (T val);
+        
+        void operator=  (const Sampleable2D<T>& samp);
+        void operator+= (const Sampleable2D<T>& samp);
+        void operator-= (const Sampleable2D<T>& samp);
+        void operator*= (const Sampleable2D<T>& samp);
+        void operator/= (const Sampleable2D<T>& samp);
+
+    };
+
+    template <typename T>
+    class IndicesConstRef : public IndicesRefBase<T>
+    {
+    public:
+        IndicesConstRef(const Indices& indices, Sampleable2D<T>& samp);
+        IndicesConstRef(Indices&& indices, Sampleable2D<T>& samp);
     };
 
     //              //
@@ -310,6 +409,42 @@ namespace zmath
     }
 
     template <typename T>
+    inline Indices Sampleable2D<T>::operator==(T val) const
+    {
+        return Indices(*this, Indices::EQ, val);
+    }
+
+    template <typename T>
+    inline Indices Sampleable2D<T>::operator!=(T val) const
+    {
+        return Indices(*this, Indices::NE, val);
+    }
+
+    template <typename T>
+    inline Indices Sampleable2D<T>::operator< (T val) const
+    {
+        return Indices(*this, Indices::LT, val);
+    }
+    
+    template <typename T>
+    inline Indices Sampleable2D<T>::operator> (T val) const
+    {
+        return Indices(*this, Indices::GT, val);
+    }
+    
+    template <typename T>
+    inline Indices Sampleable2D<T>::operator<=(T val) const
+    {
+        return Indices(*this, Indices::LE, val);
+    }
+
+    template <typename T>
+    inline Indices Sampleable2D<T>::operator>=(T val) const
+    {
+        return Indices(*this, Indices::GE, val);
+    }
+
+    template <typename T>
     inline bool Sampleable2D<T>::ContainsCoord(Vec pos) const
     {
         return (pos >= Vec(0, 0) && pos < bounds);
@@ -328,7 +463,7 @@ namespace zmath
     }
 
     template <typename T>
-    inline void Sampleable2D<T>::Set(int x, int y, const T& val)
+    inline void Sampleable2D<T>::Set(int x, int y, T val)
     {
         assertContains(VecInt(x, y));
 
@@ -336,19 +471,7 @@ namespace zmath
     }
 
     template <typename T>
-    inline void Sampleable2D<T>::Set(int x, int y, T&& val)
-    {
-        Set(x, y, val);
-    }
-
-    template <typename T>
-    inline void Sampleable2D<T>::Set(VecInt pos, const T& val)
-    {
-        Set(pos.X, pos.Y, val);
-    }
-
-    template <typename T>
-    inline void Sampleable2D<T>::Set(VecInt pos, T&& val)
+    inline void Sampleable2D<T>::Set(VecInt pos, T val)
     {
         Set(pos.X, pos.Y, val);
     }
@@ -403,6 +526,30 @@ namespace zmath
     inline T& Sampleable2D<T>::operator()(VecInt pos)
     {
         return data[idx_of(pos)];
+    }
+
+    template <typename T>
+    inline IndicesRef<T> Sampleable2D<T>::operator()(const Indices& indices)
+    {
+        return IndicesRef<T>(indices, *this);
+    }
+
+    template <typename T>
+    inline IndicesRef<T> Sampleable2D<T>::operator()(Indices&& indices)
+    {
+        return IndicesRef<T>(std::move(indices), *this);
+    }
+
+    template <typename T>
+    inline IndicesConstRef<T> Sampleable2D<T>::operator()(const Indices& indices) const
+    {
+        return IndicesConstRef<T>(indices, *this);
+    }
+
+    template <typename T>
+    inline IndicesConstRef<T> Sampleable2D<T>::operator()(Indices&& indices) const
+    {
+        return IndicesConstRef<T>(std::move(indices), *this);
     }
 
     template <typename T>
@@ -538,6 +685,20 @@ namespace zmath
         while (this_it != this_end && samp_it != samp_end)
         {
             *this_it++ = f(*samp_it++);
+        }
+    }
+
+    template <typename T>
+    template <typename W, typename FUNC, std::enable_if_t<std::is_invocable_v<FUNC, T, W, int, int>, bool>>
+    inline void Sampleable2D<T>::ApplySample(const Sampleable2D<W>& samp, FUNC f)
+    {
+        assertSameSize(samp);
+        for (int x = 0; x < bounds.X; x++)
+        {
+            for (int y = 0; y < bounds.Y; y++)
+            {
+                at_itl(x, y) = f(at_itl(x, y), samp(x, y), x, y);
+            }
         }
     }
 
@@ -709,7 +870,7 @@ namespace zmath
         if (bounds != samp.Bounds())
         {
             std::ostringstream os;
-            os << "Sampleable2D bounds mismatch: " << bounds << " vs. " << samp.bounds;
+            os << "Sampleable2D bounds mismatch: " << bounds << " vs. " << samp.Bounds();
             throw std::runtime_error(os.str());
         }
     }
@@ -880,5 +1041,258 @@ namespace zmath
         ++(*static_cast<IteratorBase*>(this));
         return iter;
     }
+
+    //         //
+    // Indices //
+    //         //
+
+    template <typename T>
+    inline Indices::Indices(const Sampleable2D<T>& source, bool (*func)(T, T), T val)
+        : Sampleable2D(source, [=](T sval) { return func(sval, val); })
+    {}
+
+    inline Indices Indices::operator&& (const Indices& rhs) const
+    {
+        Indices ret(rhs);
+        ret.ApplySample(*this, [](bool b1, bool b2){
+            return b1 && b2;
+        });
+        return ret;
+    }
+
+    inline Indices Indices::operator|| (const Indices& rhs) const
+    {
+        Indices ret(rhs);
+        ret.ApplySample(*this, [](bool b1, bool b2){
+            return b1 || b2;
+        });
+        return ret;
+    }
+
+    inline Indices Indices::operator^ (const Indices& rhs) const
+    {
+        Indices ret(rhs);
+        ret.ApplySample(*this, [](bool b1, bool b2){
+            return b1 != b2;
+        });
+        return ret;
+    }
+
+    inline Indices Indices::operator&& (Indices&& rhs) const
+    {
+        Indices ret(std::move(rhs));
+        ret.ApplySample(*this, [](bool b1, bool b2){
+            return b1 && b2;
+        });
+        return ret;
+    }
+
+    inline Indices Indices::operator|| (Indices&& rhs) const
+    {
+        Indices ret(std::move(rhs));
+        ret.ApplySample(*this, [](bool b1, bool b2){
+            return b1 || b2;
+        });
+        return ret;
+    }
+
+    inline Indices Indices::operator^ (Indices&& rhs) const
+    {
+        Indices ret(std::move(rhs));
+        ret.ApplySample(*this, [](bool b1, bool b2){
+            return b1 != b2;
+        });
+        return ret;
+    }
+
+    template <typename T>
+    inline bool Indices::EQ(T val1, T val2)
+    {
+        return val1 == val2;
+    }
+
+    template <typename T>
+    inline bool Indices::NE(T val1, T val2)
+    {
+        return val1 != val2;
+    }
+
+    template <typename T>
+    inline bool Indices::LT(T val1, T val2)
+    {
+        return val1 < val2;
+    }
+
+    template <typename T>
+    inline bool Indices::GT(T val1, T val2)
+    {
+        return val1 > val2;
+    }
+
+    template <typename T>
+    inline bool Indices::LE(T val1, T val2)
+    {
+        return val1 <= val2;
+    }
+
+    template <typename T>
+    inline bool Indices::GE(T val1, T val2)
+    {
+        return val1 >= val2;
+    }
+
+    //                               //
+    // IndicesRefBase Implementation //
+    //                               //
+
+    template <typename T>
+    IndicesRefBase<T>::IndicesRefBase(const Indices& indices, Sampleable2D<T>& samp)
+        : indices(indices)
+        , ref(samp)
+    {}
+
+    template <typename T>
+    IndicesRefBase<T>::IndicesRefBase(Indices&& indices, Sampleable2D<T>& samp)
+        : indices(std::move(indices))
+        , ref(samp)
+    {}
+
+    //                           //
+    // IndicesRef Implementation //
+    //                           //
+
+    template <typename T>
+    IndicesRef<T>::IndicesRef(const Indices& indices, Sampleable2D<T>& samp)
+        : IndicesRefBase<T>(indices, samp)
+    {}
+
+    template <typename T>
+    IndicesRef<T>::IndicesRef(Indices&& indices, Sampleable2D<T>& samp)
+        : IndicesRefBase<T>(std::move(indices), samp)
+    {}
+
+    template <typename T>
+    inline void IndicesRef<T>::operator= (T val)
+    {
+        IndicesRefBase<T>::ref.ApplySample(
+            IndicesRefBase<T>::indices,
+            [=](T cur, bool cond){
+                return (cond) ? val : cur;
+            }
+        );
+    }
+
+    template <typename T>
+    inline void IndicesRef<T>::operator+= (T val)
+    {
+        IndicesRefBase<T>::ref.ApplySample(
+            IndicesRefBase<T>::indices,
+            [=](T cur, bool cond){
+                return (cond) ? cur + val : cur;
+            }
+        );
+    }
+
+    template <typename T>
+    inline void IndicesRef<T>::operator-= (T val)
+    {
+        IndicesRefBase<T>::ref.ApplySample(
+            IndicesRefBase<T>::indices,
+            [=](T cur, bool cond){
+                return (cond) ? cur - val : cur;
+            }
+        );
+    }
+
+    template <typename T>
+    inline void IndicesRef<T>::operator*= (T val)
+    {
+        IndicesRefBase<T>::ref.ApplySample(
+            IndicesRefBase<T>::indices,
+            [=](T cur, bool cond){
+                return (cond) ? cur * val : cur;
+            }
+        );
+    }
+
+    template <typename T>
+    inline void IndicesRef<T>::operator/= (T val)
+    {
+        IndicesRefBase<T>::ref.ApplySample(
+            IndicesRefBase<T>::indices,
+            [=](T cur, bool cond){
+                return (cond) ? cur / val : cur;
+            }
+        );
+    }
+
+    template <typename T>
+    inline void IndicesRef<T>::operator= (const Sampleable2D<T>& samp)
+    {
+        IndicesRefBase<T>::ref.ApplySample(
+            IndicesRefBase<T>::indices,
+            [=](T cur, bool cond, int x, int y){
+                return (cond) ? samp(x, y) : cur;
+            }
+        );
+    }
+
+    template <typename T>
+    inline void IndicesRef<T>::operator+= (const Sampleable2D<T>& samp)
+    {
+        IndicesRefBase<T>::ref.ApplySample(
+            IndicesRefBase<T>::indices,
+            [=](T cur, bool cond, int x, int y){
+                return (cond) ? cur + samp(x, y) : cur;
+            }
+        );
+    }
+
+    template <typename T>
+    inline void IndicesRef<T>::operator-= (const Sampleable2D<T>& samp)
+    {
+        IndicesRefBase<T>::ref.ApplySample(
+            IndicesRefBase<T>::indices,
+            [=](T cur, bool cond, int x, int y){
+                return (cond) ? cur - samp(x, y) : cur;
+            }
+        );
+    }
+
+    template <typename T>
+    inline void IndicesRef<T>::operator*= (const Sampleable2D<T>& samp)
+    {
+        IndicesRefBase<T>::ref.ApplySample(
+            IndicesRefBase<T>::indices,
+            [=](T cur, bool cond, int x, int y){
+                return (cond) ? cur * samp(x, y) : cur;
+            }
+        );
+    }
+
+    template <typename T>
+    inline void IndicesRef<T>::operator/= (const Sampleable2D<T>& samp)
+    {
+        IndicesRefBase<T>::ref.ApplySample(
+            IndicesRefBase<T>::indices,
+            [=](T cur, bool cond, int x, int y){
+                return (cond) ? cur / samp(x, y) : cur;
+            }
+        );
+    }
+
+    //                                //
+    // IndicesConstRef Implementation //
+    //                                //
+
+    template <typename T>
+    IndicesConstRef<T>::IndicesConstRef(const Indices& indices, Sampleable2D<T>& samp)
+        : IndicesRefBase<T>(indices, samp)
+    {}
+
+    template <typename T>
+    IndicesConstRef<T>::IndicesConstRef(Indices&& indices, Sampleable2D<T>& samp)
+        : IndicesRefBase<T>(std::move(indices), samp)
+    {}
 
 } // namespace zmath
