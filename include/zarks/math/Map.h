@@ -16,6 +16,8 @@ namespace zmath
         Map(int x, int y);
         Map(const Map& map);
         Map(Map&& map);
+        Map(const Mat2D<double>& mat);
+        Map(Mat2D<double>&& mat);
 
         Map& operator= (const Map& m);
         Map& operator= (Map&& m);

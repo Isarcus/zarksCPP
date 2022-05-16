@@ -35,6 +35,14 @@ Map::Map(Map&& map)
     : Mat2D(std::move(map))
 {}
 
+Map::Map(const Mat2D<double>& mat)
+    : Mat2D(mat)
+{}
+
+Map::Map(Mat2D<double>&& mat)
+    : Mat2D(std::move(mat))
+{}
+
 Map& Map::operator=(const Map& rhs)
 {
     Mat2D::operator=(rhs);
