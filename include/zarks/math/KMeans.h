@@ -1,6 +1,6 @@
 #pragma once
 
-#include <zarks/internal/Sampleable2D.h>
+#include <zarks/internal/Mat2D.h>
 
 #include <vector>
 
@@ -36,7 +36,7 @@ namespace zmath
     std::vector<size_t> ComputeKMeans(std::vector<T>& means, const std::vector<T>& data);
 
     template <typename T, typename DISTANCE_CALC, typename SUM_T = T>
-    Sampleable2D<size_t> ComputeKMeans(std::vector<T>& means, const Sampleable2D<T>& data);
+    Mat2D<size_t> ComputeKMeans(std::vector<T>& means, const Mat2D<T>& data);
 
     //                //
     // Implementation //
@@ -137,10 +137,10 @@ namespace zmath
     }
 
     template <typename T, typename DISTANCE_CALC, typename SUM_T = T>
-    Sampleable2D<size_t> ComputeKMeans(std::vector<T>& means, const Sampleable2D<T>& data)
+    Mat2D<size_t> ComputeKMeans(std::vector<T>& means, const Mat2D<T>& data)
     {
         VecInt bounds = data.Bounds();
-        Sampleable2D<size_t> meanLocs(bounds);
+        Mat2D<size_t> meanLocs(bounds);
 
         // Run main algorithm as long as needed
         while (true)

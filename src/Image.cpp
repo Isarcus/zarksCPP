@@ -24,25 +24,25 @@ namespace zmath
 {
 
 Image::Image()
-    : Sampleable2D()
+    : Mat2D()
 {}
 
 Image::Image(int width, int height, RGBA col)
-    : Sampleable2D(VecInt::Max(VecInt(width, height), VecInt(1, 1)), col)
+    : Mat2D(VecInt::Max(VecInt(width, height), VecInt(1, 1)), col)
 {}
 
 Image::Image(VecInt bounds_in, RGBA col)
     : Image(bounds_in.X, bounds_in.Y, col)
 {}
 
-Image::Image(const Sampleable2D<double>& samp)
-    : Image(samp.Bounds())
+Image::Image(const Mat2D<double>& mat)
+    : Image(mat.Bounds())
 {
-    ApplySample(samp, [](double d){ return RGBA(255.999 * d); });
+    ApplySample(mat, [](double d){ return RGBA(255.999 * d); });
 }
 
-Image::Image(const Sampleable2D<double>& samp, const Scheme& scheme)
-    : Image(samp.Bounds())
+Image::Image(const Mat2D<double>& mat, const Scheme& scheme)
+    : Image(mat.Bounds())
 {
     // Create an accurate thresholds array
     std::vector<double> thresholds(scheme.colors.size());
@@ -53,7 +53,7 @@ Image::Image(const Sampleable2D<double>& samp, const Scheme& scheme)
     }
 
     // Loop and assign colors
-    ApplySample(samp, [&](double d)
+    ApplySample(mat, [&](double d)
     {
         int idxUpper = 0;
         for (unsigned i = 0; i < scheme.colors.size(); i++)
@@ -137,23 +137,23 @@ int width, height, channels = -1;
 }
 
 Image::Image(const Image& img)
-    : Sampleable2D(img)
+    : Mat2D(img)
 {}
 
 Image::Image(Image&& img)
-    : Sampleable2D(std::move(img))
+    : Mat2D(std::move(img))
 {}
 
 Image& Image::operator=(const Image& img)
 {
-    Sampleable2D::operator=(img);
+    Mat2D::operator=(img);
 
     return *this;
 }
 
 Image& Image::operator=(Image&& img)
 {
-    Sampleable2D::operator=(std::move(img));
+    Mat2D::operator=(std::move(img));
 
     return *this;
 }
@@ -185,7 +185,7 @@ Image& Image::Resize(VecInt toBounds)
 {
     Image img(toBounds);
 
-    Vec scale =  Vec(bounds) / Vec(img.bounds);
+    Vec scale = Vec(bounds) / Vec(img.bounds);
 
     for (int x = 0; x < img.bounds.X; x++)
     {
@@ -351,7 +351,7 @@ Image& Image::BlurGaussian(double sigma, bool blurAlpha)
 
 Image& Image::PixelateGaussian(const Map& map, double sigma)
 {
-    Sampleable2D<std::pair<Vec, double>> transforms(bounds);
+    Mat2D<std::pair<Vec, double>> transforms(bounds);
 
     int radius = sigma * 2.0;
     GaussField gauss(sigma, 1.0, Vec());
@@ -406,7 +406,7 @@ Image& Image::WarpGaussian(const Map& map, double sigma, double amplitude)
     const GaussField gauss(scaleSigma, amplitude);
 
     // Generate warp map
-    Sampleable2D<std::pair<Vec, int>> result(bounds, {Vec(), 0});
+    Mat2D<std::pair<Vec, int>> result(bounds, {Vec(), 0});
     for (int x = 0; x < bounds.X; x++)
     {
         for (int y = 0; y < bounds.Y; y++)

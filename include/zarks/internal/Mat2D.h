@@ -20,7 +20,7 @@ namespace zmath
     class IndicesConstRef;
 
     template <typename T>
-    class Sampleable2D
+    class Mat2D
     {
     protected:
         VecInt bounds;
@@ -31,7 +31,7 @@ namespace zmath
         void assertContains(VecInt check) const;
 
         template <typename W>
-        void assertSameSize(const Sampleable2D<W>& samp) const;
+        void assertSameSize(const Mat2D<W>& mat) const;
 
         VecInt pos_of(int idx) const;
         size_t idx_of(int x, int y) const;
@@ -48,7 +48,7 @@ namespace zmath
         class IteratorBase
         {
         public:
-            IteratorBase(Sampleable2D* source, T* datum);
+            IteratorBase(Mat2D* source, T* datum);
 
             VecInt Pos() const;
 
@@ -62,14 +62,14 @@ namespace zmath
             bool operator!=(const IteratorBase& iter);
 
         protected:
-            Sampleable2D* source;
+            Mat2D* source;
             T* datum;
         };
 
         class Iterator : public IteratorBase
         {
         public:
-            Iterator(Sampleable2D* source, T* datum);
+            Iterator(Mat2D* source, T* datum);
 
             T& operator*() const;
             Iterator& operator++();
@@ -79,7 +79,7 @@ namespace zmath
         class ConstIterator : public IteratorBase
         {
         public:
-            ConstIterator(const Sampleable2D* source, const T* datum);
+            ConstIterator(const Mat2D* source, const T* datum);
 
             const T& operator*() const;
             ConstIterator& operator++();
@@ -87,28 +87,28 @@ namespace zmath
         };
 
     public:
-        Sampleable2D();
-        Sampleable2D(int x, int y, const T& val = T());
-        Sampleable2D(VecInt bounds, const T& val = T());
+        Mat2D();
+        Mat2D(int x, int y, const T& val = T());
+        Mat2D(VecInt bounds, const T& val = T());
 
-        Sampleable2D(const Sampleable2D& s);
-        Sampleable2D(Sampleable2D&& s);
+        Mat2D(const Mat2D& s);
+        Mat2D(Mat2D&& s);
 
         template <typename FUNC = T(*)(), std::enable_if_t<std::is_invocable_v<FUNC>, bool> = true>
-        Sampleable2D(int x, int y, FUNC f);
+        Mat2D(int x, int y, FUNC f);
         template <typename FUNC = T(*)(), std::enable_if_t<std::is_invocable_v<FUNC>, bool> = true>
-        Sampleable2D(VecInt bounds, FUNC f);
+        Mat2D(VecInt bounds, FUNC f);
         template <typename FUNC = T(*)(int, int), std::enable_if_t<std::is_invocable_v<FUNC, int, int>, bool> = true>
-        Sampleable2D(int x, int y, FUNC f);
+        Mat2D(int x, int y, FUNC f);
         template <typename FUNC = T(*)(int, int), std::enable_if_t<std::is_invocable_v<FUNC, int, int>, bool> = true>
-        Sampleable2D(VecInt bounds, FUNC f);
+        Mat2D(VecInt bounds, FUNC f);
         template <typename W, typename FUNC = W(*)(W), std::enable_if_t<std::is_invocable_v<FUNC, W>, bool> = true>
-        Sampleable2D(const Sampleable2D<W>& s, FUNC f);
+        Mat2D(const Mat2D<W>& s, FUNC f);
 
-        Sampleable2D& operator=(const Sampleable2D& s);
-        Sampleable2D& operator=(Sampleable2D&& s);
+        Mat2D& operator=(const Mat2D& s);
+        Mat2D& operator=(Mat2D&& s);
         
-        virtual ~Sampleable2D();
+        virtual ~Mat2D();
 
         Indices operator==(T val) const;
         Indices operator!=(T val) const;
@@ -147,7 +147,7 @@ namespace zmath
         void Replace(T val, T with);
         void FillBorder(int thickness, T val);
         void Fill(VecInt min, VecInt max, T val);
-        void Paste(const Sampleable2D& samp, VecInt at);
+        void Paste(const Mat2D& mat, VecInt at);
 
         // Apply a function to each element in this. The passed-in function
         // must return a type that is implicitly convertible to T. The
@@ -166,27 +166,27 @@ namespace zmath
         template <typename FUNC, std::enable_if_t<std::is_invocable_v<FUNC, T, int, int>, bool> = true>
         void Apply(FUNC f);
 
-        // Apply a function to each element in this, based on another
-        // Sampleable2D. The datum type of the passed-in Sampleable2D does not
-        // need to match that of the called Sampleable2D. Where W represents
-        // the datum type of the passed object, The function's arguments may
-        // fall into any one of the following categories:
-        // 1. (W)              : A function of the corresponding datum of the passed
-        //                       Sampleable2D
-        // 2. (T, W)           : A function of the current datum, as well as the
-        //                       corresponding datum of the passed Sampleable2D
-        // 3. (T, W, int, int) : A function of the current datum, the corresponding
-        //                       datum of the passed Sampleable2D, and the current
-        //                       coordinate.
+        // Apply a function to each element in this, based on another Mat2D.
+        // The datum type of the passed-in Mat2D does not need to match that
+        // of the called Mat2D. Where W represents the datum type of the passed
+        // object, The function's arguments may fall into any one of the
+        // following categories:
+        // 1. (W)              : A function of the corresponding datum of the
+        //                       passed Mat2D
+        // 2. (T, W)           : A function of the current datum, as well as
+        //                       the corresponding datum of the passed Mat2D
+        // 3. (T, W, int, int) : A function of the current datum, the
+        //                       corresponding datum of the passed Mat2D, and
+        //                       the current coordinate.
         template <typename W, typename FUNC = W(*)(W), std::enable_if_t<std::is_invocable_v<FUNC, W>, bool> = true>
-        void ApplySample(const Sampleable2D<W>& samp, FUNC f);
+        void ApplySample(const Mat2D<W>& mat, FUNC f);
         template <typename W, typename FUNC, std::enable_if_t<std::is_invocable_v<FUNC, T, W>, bool> = true>
-        void ApplySample(const Sampleable2D<W>& samp, FUNC f);
+        void ApplySample(const Mat2D<W>& mat, FUNC f);
         template <typename W, typename FUNC, std::enable_if_t<std::is_invocable_v<FUNC, T, W, int, int>, bool> = true>
-        void ApplySample(const Sampleable2D<W>& samp, FUNC f);
+        void ApplySample(const Mat2D<W>& mat, FUNC f);
 
-        void CopyInRange(const Sampleable2D& samp, VecInt min, VecInt max, VecInt to = VecInt(0, 0));
-        void CopyNotInRange(const Sampleable2D& samp, VecInt min, VecInt max, VecInt to = VecInt(0, 0));
+        void CopyInRange(const Mat2D& mat, VecInt min, VecInt max, VecInt to = VecInt(0, 0));
+        void CopyNotInRange(const Mat2D& mat, VecInt min, VecInt max, VecInt to = VecInt(0, 0));
 
         T Sample(VecInt pos) const;
         T Sample(Vec pos) const;
@@ -208,11 +208,11 @@ namespace zmath
     // Indices //
     //         //
 
-    class Indices : public Sampleable2D<bool>
+    class Indices : public Mat2D<bool>
     {
     public:
         template <typename T>
-        Indices(const Sampleable2D<T>& source, bool(*func)(T, T), T val);
+        Indices(const Mat2D<T>& source, bool(*func)(T, T), T val);
 
         Indices operator&& (const Indices& rhs) const;
         Indices operator|| (const Indices& rhs) const;
@@ -240,18 +240,18 @@ namespace zmath
     {
     protected:
         Indices indices;
-        Sampleable2D<T>& ref;
+        Mat2D<T>& ref;
 
-        IndicesRefBase(const Indices& indices, Sampleable2D<T>& samp);
-        IndicesRefBase(Indices&& indices, Sampleable2D<T>& samp);
+        IndicesRefBase(const Indices& indices, Mat2D<T>& mat);
+        IndicesRefBase(Indices&& indices, Mat2D<T>& mat);
     };
 
     template <typename T>
     class IndicesRef : public IndicesRefBase<T>
     {
     public:
-        IndicesRef(const Indices& indices, Sampleable2D<T>& samp);
-        IndicesRef(Indices&& indices, Sampleable2D<T>& samp);
+        IndicesRef(const Indices& indices, Mat2D<T>& mat);
+        IndicesRef(Indices&& indices, Mat2D<T>& mat);
 
         void operator=  (T val);
         void operator+= (T val);
@@ -259,11 +259,11 @@ namespace zmath
         void operator*= (T val);
         void operator/= (T val);
         
-        void operator=  (const Sampleable2D<T>& samp);
-        void operator+= (const Sampleable2D<T>& samp);
-        void operator-= (const Sampleable2D<T>& samp);
-        void operator*= (const Sampleable2D<T>& samp);
-        void operator/= (const Sampleable2D<T>& samp);
+        void operator=  (const Mat2D<T>& mat);
+        void operator+= (const Mat2D<T>& mat);
+        void operator-= (const Mat2D<T>& mat);
+        void operator*= (const Mat2D<T>& mat);
+        void operator/= (const Mat2D<T>& mat);
 
     };
 
@@ -271,8 +271,8 @@ namespace zmath
     class IndicesConstRef : public IndicesRefBase<T>
     {
     public:
-        IndicesConstRef(const Indices& indices, Sampleable2D<T>& samp);
-        IndicesConstRef(Indices&& indices, Sampleable2D<T>& samp);
+        IndicesConstRef(const Indices& indices, Mat2D<T>& mat);
+        IndicesConstRef(Indices&& indices, Mat2D<T>& mat);
     };
 
     //              //
@@ -280,14 +280,14 @@ namespace zmath
     //              //
 
     template <typename T>
-    inline Sampleable2D<T>::Sampleable2D()
+    inline Mat2D<T>::Mat2D()
         : bounds(0, 0)
         , capacity(0)
         , data(nullptr)
     {}
 
     template <typename T>
-    inline Sampleable2D<T>::Sampleable2D(VecInt bounds, const T& val)
+    inline Mat2D<T>::Mat2D(VecInt bounds, const T& val)
         : bounds(VecInt::Max(bounds, VecInt(0, 0)))
         , capacity(bounds.Area())
         , data(new T[capacity])
@@ -296,12 +296,12 @@ namespace zmath
     }
 
     template <typename T>
-    inline Sampleable2D<T>::Sampleable2D(int x, int y, const T& val)
-        : Sampleable2D(VecInt(x, y), val)
+    inline Mat2D<T>::Mat2D(int x, int y, const T& val)
+        : Mat2D(VecInt(x, y), val)
     {}
 
     template <typename T>
-    inline Sampleable2D<T>::Sampleable2D(const Sampleable2D& s)
+    inline Mat2D<T>::Mat2D(const Mat2D& s)
         : bounds(s.bounds)
         , capacity(s.bounds.Area())
         , data(new T[capacity])
@@ -310,7 +310,7 @@ namespace zmath
     }
 
     template <typename T>
-    inline Sampleable2D<T>::Sampleable2D(Sampleable2D&& s)
+    inline Mat2D<T>::Mat2D(Mat2D&& s)
         : bounds(s.bounds)
         , capacity(s.capacity)
         , data(s.data)
@@ -322,39 +322,39 @@ namespace zmath
 
     template <typename T>
     template <typename FUNC, std::enable_if_t<std::is_invocable_v<FUNC>, bool>>
-    inline Sampleable2D<T>::Sampleable2D(int x, int y, FUNC f)
-        : Sampleable2D(x, y)
+    inline Mat2D<T>::Mat2D(int x, int y, FUNC f)
+        : Mat2D(x, y)
     {
         Apply(f);
     }
 
     template <typename T>
     template <typename FUNC, std::enable_if_t<std::is_invocable_v<FUNC>, bool>>
-    inline Sampleable2D<T>::Sampleable2D(VecInt bounds, FUNC f)
-        : Sampleable2D(bounds)
+    inline Mat2D<T>::Mat2D(VecInt bounds, FUNC f)
+        : Mat2D(bounds)
     {
         Apply(f);
     }
 
     template <typename T>
     template <typename FUNC, std::enable_if_t<std::is_invocable_v<FUNC, int, int>, bool>>
-    inline Sampleable2D<T>::Sampleable2D(int x, int y, FUNC f)
-        : Sampleable2D(x, y)
+    inline Mat2D<T>::Mat2D(int x, int y, FUNC f)
+        : Mat2D(x, y)
     {
         Apply(f);
     }
 
     template <typename T>
     template <typename FUNC, std::enable_if_t<std::is_invocable_v<FUNC, int, int>, bool>>
-    inline Sampleable2D<T>::Sampleable2D(VecInt bounds, FUNC f)
-        : Sampleable2D(bounds)
+    inline Mat2D<T>::Mat2D(VecInt bounds, FUNC f)
+        : Mat2D(bounds)
     {
         Apply(f);
     }
 
     template <typename T>
     template <typename W, typename FUNC, std::enable_if_t<std::is_invocable_v<FUNC, W>, bool>>
-    inline Sampleable2D<T>::Sampleable2D(const Sampleable2D<W>& s, FUNC f)
+    inline Mat2D<T>::Mat2D(const Mat2D<W>& s, FUNC f)
         : bounds(s.Bounds())
         , capacity(bounds.Area())
         , data(new T[capacity])
@@ -363,7 +363,7 @@ namespace zmath
     }
 
     template <typename T>
-    inline Sampleable2D<T>& Sampleable2D<T>::operator=(const Sampleable2D& s)
+    inline Mat2D<T>& Mat2D<T>::operator=(const Mat2D& s)
     {
         if (this != &s)
         {
@@ -382,7 +382,7 @@ namespace zmath
     }
 
     template <typename T>
-    inline Sampleable2D<T>& Sampleable2D<T>::operator=(Sampleable2D&& s)
+    inline Mat2D<T>& Mat2D<T>::operator=(Mat2D&& s)
     {
         if (this != &s)
         {
@@ -400,7 +400,7 @@ namespace zmath
     }
 
     template <typename T>
-    inline Sampleable2D<T>::~Sampleable2D()
+    inline Mat2D<T>::~Mat2D()
     {
         bounds = VecInt(0, 0);
         capacity = 0;
@@ -409,61 +409,61 @@ namespace zmath
     }
 
     template <typename T>
-    inline Indices Sampleable2D<T>::operator==(T val) const
+    inline Indices Mat2D<T>::operator==(T val) const
     {
         return Indices(*this, Indices::EQ, val);
     }
 
     template <typename T>
-    inline Indices Sampleable2D<T>::operator!=(T val) const
+    inline Indices Mat2D<T>::operator!=(T val) const
     {
         return Indices(*this, Indices::NE, val);
     }
 
     template <typename T>
-    inline Indices Sampleable2D<T>::operator< (T val) const
+    inline Indices Mat2D<T>::operator< (T val) const
     {
         return Indices(*this, Indices::LT, val);
     }
     
     template <typename T>
-    inline Indices Sampleable2D<T>::operator> (T val) const
+    inline Indices Mat2D<T>::operator> (T val) const
     {
         return Indices(*this, Indices::GT, val);
     }
     
     template <typename T>
-    inline Indices Sampleable2D<T>::operator<=(T val) const
+    inline Indices Mat2D<T>::operator<=(T val) const
     {
         return Indices(*this, Indices::LE, val);
     }
 
     template <typename T>
-    inline Indices Sampleable2D<T>::operator>=(T val) const
+    inline Indices Mat2D<T>::operator>=(T val) const
     {
         return Indices(*this, Indices::GE, val);
     }
 
     template <typename T>
-    inline bool Sampleable2D<T>::ContainsCoord(Vec pos) const
+    inline bool Mat2D<T>::ContainsCoord(Vec pos) const
     {
         return (pos >= Vec(0, 0) && pos < bounds);
     }
 
     template <typename T>
-    inline bool Sampleable2D<T>::ContainsCoord(VecInt pos) const
+    inline bool Mat2D<T>::ContainsCoord(VecInt pos) const
     {
         return (pos >= VecInt(0, 0) && pos < bounds);
     }
 
     template <typename T>
-    inline VecInt Sampleable2D<T>::Bounds() const
+    inline VecInt Mat2D<T>::Bounds() const
     {
         return bounds;
     }
 
     template <typename T>
-    inline void Sampleable2D<T>::Set(int x, int y, T val)
+    inline void Mat2D<T>::Set(int x, int y, T val)
     {
         assertContains(VecInt(x, y));
 
@@ -471,95 +471,95 @@ namespace zmath
     }
 
     template <typename T>
-    inline void Sampleable2D<T>::Set(VecInt pos, T val)
+    inline void Mat2D<T>::Set(VecInt pos, T val)
     {
         Set(pos.X, pos.Y, val);
     }
 
     template <typename T>
-    inline const T& Sampleable2D<T>::At(int x, int y) const
+    inline const T& Mat2D<T>::At(int x, int y) const
     {
         assertContains(VecInt(x, y));
         return data[idx_of(x, y)];
     }
 
     template <typename T>
-    inline T& Sampleable2D<T>::At(int x, int y)
+    inline T& Mat2D<T>::At(int x, int y)
     {
         assertContains(VecInt(x, y));
         return data[idx_of(x, y)];
     }
 
     template <typename T>
-    inline const T& Sampleable2D<T>::At(VecInt pos) const
+    inline const T& Mat2D<T>::At(VecInt pos) const
     {
         assertContains(pos);
         return data[idx_of(pos)];
     }
 
     template <typename T>
-    inline T& Sampleable2D<T>::At(VecInt pos)
+    inline T& Mat2D<T>::At(VecInt pos)
     {
         assertContains(pos);
         return data[idx_of(pos)];
     }
 
     template <typename T>
-    inline const T& Sampleable2D<T>::operator()(int x, int y) const
+    inline const T& Mat2D<T>::operator()(int x, int y) const
     {
         return data[idx_of(x, y)];
     }
 
     template <typename T>
-    inline T& Sampleable2D<T>::operator()(int x, int y)
+    inline T& Mat2D<T>::operator()(int x, int y)
     {
         return data[idx_of(x, y)];
     }
 
     template <typename T>
-    inline const T& Sampleable2D<T>::operator()(VecInt pos) const
+    inline const T& Mat2D<T>::operator()(VecInt pos) const
     {
         return data[idx_of(pos)];
     }
 
     template <typename T>
-    inline T& Sampleable2D<T>::operator()(VecInt pos)
+    inline T& Mat2D<T>::operator()(VecInt pos)
     {
         return data[idx_of(pos)];
     }
 
     template <typename T>
-    inline IndicesRef<T> Sampleable2D<T>::operator()(const Indices& indices)
+    inline IndicesRef<T> Mat2D<T>::operator()(const Indices& indices)
     {
         return IndicesRef<T>(indices, *this);
     }
 
     template <typename T>
-    inline IndicesRef<T> Sampleable2D<T>::operator()(Indices&& indices)
+    inline IndicesRef<T> Mat2D<T>::operator()(Indices&& indices)
     {
         return IndicesRef<T>(std::move(indices), *this);
     }
 
     template <typename T>
-    inline IndicesConstRef<T> Sampleable2D<T>::operator()(const Indices& indices) const
+    inline IndicesConstRef<T> Mat2D<T>::operator()(const Indices& indices) const
     {
         return IndicesConstRef<T>(indices, *this);
     }
 
     template <typename T>
-    inline IndicesConstRef<T> Sampleable2D<T>::operator()(Indices&& indices) const
+    inline IndicesConstRef<T> Mat2D<T>::operator()(Indices&& indices) const
     {
         return IndicesConstRef<T>(std::move(indices), *this);
     }
 
     template <typename T>
-    inline void Sampleable2D<T>::Resize(int x, int y, T clearVal)
+    inline void Mat2D<T>::Resize(int x, int y, T clearVal)
     {
         Resize(VecInt(x, y), clearVal);
     }
 
     template <typename T>
-    inline void Sampleable2D<T>::Resize(VecInt newBounds, T clearVal)
+    inline void Mat2D<T>::Resize(VecInt newBounds, T clearVal)
     {
         size_t req_capacity = newBounds.Area();
         if (req_capacity > capacity)
@@ -574,13 +574,13 @@ namespace zmath
     }
 
     template <typename T>
-    inline void Sampleable2D<T>::Clear(T val)
+    inline void Mat2D<T>::Clear(T val)
     {
         Apply([=](T){ return val; });
     }
 
     template <typename T>
-    inline void Sampleable2D<T>::Replace(T val, T with)
+    inline void Mat2D<T>::Replace(T val, T with)
     {
         Apply([=](T v){
             return (v == val) ? with : v;
@@ -588,7 +588,7 @@ namespace zmath
     }
 
     template <typename T>
-    inline void Sampleable2D<T>::FillBorder(int thickness, T val)
+    inline void Mat2D<T>::FillBorder(int thickness, T val)
     {
         thickness = std::min(thickness, bounds.Min());
         // Left
@@ -602,7 +602,7 @@ namespace zmath
     }
 
     template <typename T>
-    inline void Sampleable2D<T>::Fill(VecInt min, VecInt max, T val)
+    inline void Mat2D<T>::Fill(VecInt min, VecInt max, T val)
     {
         min = VecInt::Max(min, VecInt(0, 0));
         max = VecInt::Min(max, bounds);
@@ -616,21 +616,21 @@ namespace zmath
     }
 
     template <typename T>
-    inline void Sampleable2D<T>::Paste(const Sampleable2D<T>& samp, VecInt at)
+    inline void Mat2D<T>::Paste(const Mat2D<T>& mat, VecInt at)
     {
-        RectInt r = RectInt(bounds).Intersection(at, at + samp.bounds);
+        RectInt r = RectInt(bounds).Intersection(at, at + mat.bounds);
         for (int x = r.Min().X; x < r.Max().X; x++)
         {
             for (int y = r.Min().Y; y < r.Max().Y; y++)
             {
-                at_itl(x, y) = samp.at_itl(VecInt(x, y) - at);
+                at_itl(x, y) = mat.at_itl(VecInt(x, y) - at);
             }
         }
     }
 
     template <typename T>
     template <typename FUNC, std::enable_if_t<std::is_invocable_v<FUNC>, bool>>
-    inline void Sampleable2D<T>::Apply(FUNC f)
+    inline void Mat2D<T>::Apply(FUNC f)
     {
         size_t len = bounds.Area();
         for (size_t i = 0; i < len; i++)
@@ -641,7 +641,7 @@ namespace zmath
 
     template <typename T>
     template <typename FUNC, std::enable_if_t<std::is_invocable_v<FUNC, T>, bool>>
-    inline void Sampleable2D<T>::Apply(FUNC f)
+    inline void Mat2D<T>::Apply(FUNC f)
     {
         size_t len = bounds.Area();
         for (size_t i = 0; i < len; i++)
@@ -652,7 +652,7 @@ namespace zmath
 
     template <typename T>
     template <typename FUNC, std::enable_if_t<std::is_invocable_v<FUNC, int, int>, bool>>
-    inline void Sampleable2D<T>::Apply(FUNC f)
+    inline void Mat2D<T>::Apply(FUNC f)
     {
         for (int x = 0; x < bounds.X; x++)
         {
@@ -665,7 +665,7 @@ namespace zmath
 
     template <typename T>
     template <typename FUNC, std::enable_if_t<std::is_invocable_v<FUNC, T, int, int>, bool>>
-    inline void Sampleable2D<T>::Apply(FUNC f)
+    inline void Mat2D<T>::Apply(FUNC f)
     {
         for (int x = 0; x < bounds.X; x++)
         {
@@ -678,45 +678,45 @@ namespace zmath
 
     template <typename T>
     template <typename W, typename FUNC, std::enable_if_t<std::is_invocable_v<FUNC, W>, bool>>
-    inline void Sampleable2D<T>::ApplySample(const Sampleable2D<W>& samp, FUNC f)
+    inline void Mat2D<T>::ApplySample(const Mat2D<W>& mat, FUNC f)
     {
         auto this_it = begin(), this_end = end();
-        auto samp_it = samp.begin(), samp_end = samp.end();
-        while (this_it != this_end && samp_it != samp_end)
+        auto mat_it = mat.begin(), mat_end = mat.end();
+        while (this_it != this_end && mat_it != mat_end)
         {
-            *this_it++ = f(*samp_it++);
+            *this_it++ = f(*mat_it++);
         }
     }
 
     template <typename T>
     template <typename W, typename FUNC, std::enable_if_t<std::is_invocable_v<FUNC, T, W, int, int>, bool>>
-    inline void Sampleable2D<T>::ApplySample(const Sampleable2D<W>& samp, FUNC f)
+    inline void Mat2D<T>::ApplySample(const Mat2D<W>& mat, FUNC f)
     {
-        assertSameSize(samp);
+        assertSameSize(mat);
         for (int x = 0; x < bounds.X; x++)
         {
             for (int y = 0; y < bounds.Y; y++)
             {
-                at_itl(x, y) = f(at_itl(x, y), samp(x, y), x, y);
+                at_itl(x, y) = f(at_itl(x, y), mat(x, y), x, y);
             }
         }
     }
 
     template <typename T>
     template <typename W, typename FUNC, std::enable_if_t<std::is_invocable_v<FUNC, T, W>, bool>>
-    inline void Sampleable2D<T>::ApplySample(const Sampleable2D<W>& samp, FUNC f)
+    inline void Mat2D<T>::ApplySample(const Mat2D<W>& mat, FUNC f)
     {
         auto this_it = begin(), this_end = end();
-        auto samp_it = samp.begin(), samp_end = samp.end();
-        while (this_it != this_end && samp_it != samp_end)
+        auto mat_it = mat.begin(), mat_end = mat.end();
+        while (this_it != this_end && mat_it != mat_end)
         {
             const T& datum = *this_it;
-            *this_it++ = f(datum, *samp_it++);
+            *this_it++ = f(datum, *mat_it++);
         }
     }
 
     template <typename T>
-    inline void Sampleable2D<T>::CopyInRange(const Sampleable2D<T>& samp, VecInt min, VecInt max, VecInt to)
+    inline void Mat2D<T>::CopyInRange(const Mat2D<T>& mat, VecInt min, VecInt max, VecInt to)
     {
         VecInt setCoord = Vec::Max(Vec(0, 0), to);
         for (int x = min.X; x < max.X && setCoord.X < bounds.X; x++, setCoord.X++)
@@ -725,15 +725,15 @@ namespace zmath
             for (int y = min.Y; y < max.Y && setCoord.Y < bounds.Y; y++, setCoord.Y++)
             {
                 VecInt coord(x, y);
-                Set(setCoord, samp.At(coord));
+                Set(setCoord, mat.At(coord));
             }
         }
     }
 
     template <typename T>
-    inline void Sampleable2D<T>::CopyNotInRange(const Sampleable2D<T>& samp, VecInt min, VecInt max, VecInt to)
+    inline void Mat2D<T>::CopyNotInRange(const Mat2D<T>& mat, VecInt min, VecInt max, VecInt to)
     {
-        const VecInt otherBounds(samp.bounds);
+        const VecInt otherBounds(mat.bounds);
         VecInt otherCoord(0, 0);
         for (int x = to.X; x < bounds.X && otherCoord.X < otherBounds.X; x++, otherCoord.X++)
         {
@@ -749,19 +749,19 @@ namespace zmath
                     continue;
                 }
 
-                Set(x, y, samp.At(otherCoord));
+                Set(x, y, mat.At(otherCoord));
             }
         }
     }
 
     template <typename T>
-    inline T Sampleable2D<T>::Sample(VecInt pos) const
+    inline T Mat2D<T>::Sample(VecInt pos) const
     {
         return At(pos.X, pos.Y);
     }
 
     template <typename T>
-    inline T Sampleable2D<T>::Sample(Vec pos) const
+    inline T Mat2D<T>::Sample(Vec pos) const
     {
         if (pos == pos.Floor())
         {
@@ -780,7 +780,7 @@ namespace zmath
     }
 
     template <typename T>
-    inline void  Sampleable2D<T>::FlipVertical()
+    inline void  Mat2D<T>::FlipVertical()
     {
         for (int x = 0; x < bounds.X; x++)
         {
@@ -792,7 +792,7 @@ namespace zmath
     }
 
     template <typename T>
-    inline void  Sampleable2D<T>::FlipHorizontal()
+    inline void  Mat2D<T>::FlipHorizontal()
     {
         for (int x = 0; x < bounds.X / 2; x++)
         {
@@ -804,43 +804,43 @@ namespace zmath
     }
 
     template <typename T>
-    inline typename Sampleable2D<T>::Iterator Sampleable2D<T>::GetIterator(VecInt pos)
+    inline typename Mat2D<T>::Iterator Mat2D<T>::GetIterator(VecInt pos)
     {
         return Iterator(this, &At(pos));
     }
 
     template <typename T>
-    inline typename Sampleable2D<T>::ConstIterator Sampleable2D<T>::GetIterator(VecInt pos) const
+    inline typename Mat2D<T>::ConstIterator Mat2D<T>::GetIterator(VecInt pos) const
     {
         return ConstIterator(this, &At(pos));
     }
 
     template <typename T>
-    inline typename Sampleable2D<T>::Iterator Sampleable2D<T>::begin()
+    inline typename Mat2D<T>::Iterator Mat2D<T>::begin()
     {
         return GetIterator(VecInt(0, 0));
     }
     
     template <typename T>
-    inline typename Sampleable2D<T>::ConstIterator Sampleable2D<T>::begin() const
+    inline typename Mat2D<T>::ConstIterator Mat2D<T>::begin() const
     {
         return GetIterator(VecInt(0, 0));
     }
 
     template <typename T>
-    inline typename Sampleable2D<T>::Iterator Sampleable2D<T>::end()
+    inline typename Mat2D<T>::Iterator Mat2D<T>::end()
     {
         return Iterator(this, nullptr);
     }
 
     template <typename T>
-    inline typename Sampleable2D<T>::ConstIterator Sampleable2D<T>::end() const
+    inline typename Mat2D<T>::ConstIterator Mat2D<T>::end() const
     {
         return ConstIterator(this, nullptr);
     }
 
     template <typename T>
-    inline void Sampleable2D<T>::assertContains(Vec check) const
+    inline void Mat2D<T>::assertContains(Vec check) const
     {
         if (!ContainsCoord(check))
         {
@@ -852,7 +852,7 @@ namespace zmath
     }
 
     template <typename T>
-    inline void Sampleable2D<T>::assertContains(VecInt check) const
+    inline void Mat2D<T>::assertContains(VecInt check) const
     {
         if (!ContainsCoord(check))
         {
@@ -865,18 +865,18 @@ namespace zmath
 
     template <typename T>
     template <typename W>
-    inline void Sampleable2D<T>::assertSameSize(const Sampleable2D<W>& samp) const
+    inline void Mat2D<T>::assertSameSize(const Mat2D<W>& mat) const
     {
-        if (bounds != samp.Bounds())
+        if (bounds != mat.Bounds())
         {
             std::ostringstream os;
-            os << "Sampleable2D bounds mismatch: " << bounds << " vs. " << samp.Bounds();
+            os << "Sampleable2D bounds mismatch: " << bounds << " vs. " << mat.Bounds();
             throw std::runtime_error(os.str());
         }
     }
 
     template <typename T>
-    inline VecInt Sampleable2D<T>::pos_of(int idx) const
+    inline VecInt Mat2D<T>::pos_of(int idx) const
     {
         return VecInt(
             idx / bounds.Y,
@@ -885,37 +885,37 @@ namespace zmath
     }
 
     template <typename T>
-    inline size_t Sampleable2D<T>::idx_of(int x, int y) const
+    inline size_t Mat2D<T>::idx_of(int x, int y) const
     {
         return x * bounds.Y + y;
     }
 
     template <typename T>
-    inline size_t Sampleable2D<T>::idx_of(VecInt vec) const
+    inline size_t Mat2D<T>::idx_of(VecInt vec) const
     {
         return vec.X * bounds.Y + vec.Y;
     }
 
     template <typename T>
-    inline T& Sampleable2D<T>::at_itl(int x, int y)
+    inline T& Mat2D<T>::at_itl(int x, int y)
     {
         return data[idx_of(x, y)];
     }
 
     template <typename T>
-    inline const T& Sampleable2D<T>::at_itl(int x, int y) const
+    inline const T& Mat2D<T>::at_itl(int x, int y) const
     {
         return data[idx_of(x, y)];
     }
 
     template <typename T>
-    inline T& Sampleable2D<T>::at_itl(VecInt vec)
+    inline T& Mat2D<T>::at_itl(VecInt vec)
     {
         return data[idx_of(vec)];
     }
 
     template <typename T>
-    inline const T& Sampleable2D<T>::at_itl(VecInt vec) const
+    inline const T& Mat2D<T>::at_itl(VecInt vec) const
     {
         return data[idx_of(vec)];
     }
@@ -925,31 +925,31 @@ namespace zmath
     //              //
 
     template <typename T>
-    inline Sampleable2D<T>::IteratorBase::IteratorBase(Sampleable2D<T>* source, T* datum)
+    inline Mat2D<T>::IteratorBase::IteratorBase(Mat2D<T>* source, T* datum)
         : source(source)
         , datum(datum)
     {}
 
     template <typename T>
-    inline VecInt Sampleable2D<T>::IteratorBase::Pos() const
+    inline VecInt Mat2D<T>::IteratorBase::Pos() const
     {
         return source->pos_of(datum - source->data);
     }
 
     template <typename T>
-    inline void Sampleable2D<T>::IteratorBase::Shift(VecInt by)
+    inline void Mat2D<T>::IteratorBase::Shift(VecInt by)
     {
         datum = &source->At(Pos() + by);
     }
 
     template <typename T>
-    inline T& Sampleable2D<T>::IteratorBase::At(VecInt relativePos) const
+    inline T& Mat2D<T>::IteratorBase::At(VecInt relativePos) const
     {
         return source->At(Pos() + relativePos);
     }
 
     template <typename T>
-    inline typename Sampleable2D<T>::IteratorBase& Sampleable2D<T>::IteratorBase::operator++()
+    inline typename Mat2D<T>::IteratorBase& Mat2D<T>::IteratorBase::operator++()
     {
         if (datum)
         {
@@ -963,7 +963,7 @@ namespace zmath
     }
 
     template <typename T>
-    inline typename Sampleable2D<T>::IteratorBase Sampleable2D<T>::IteratorBase::operator++(int)
+    inline typename Mat2D<T>::IteratorBase Mat2D<T>::IteratorBase::operator++(int)
     {
         IteratorBase iter = *this;
         ++(*this);
@@ -971,13 +971,13 @@ namespace zmath
     }
 
     template <typename T>
-    inline bool Sampleable2D<T>::IteratorBase::operator==(const IteratorBase& iter)
+    inline bool Mat2D<T>::IteratorBase::operator==(const IteratorBase& iter)
     {
         return datum == iter.datum;
     }
 
     template <typename T>
-    inline bool Sampleable2D<T>::IteratorBase::operator!=(const IteratorBase& iter)
+    inline bool Mat2D<T>::IteratorBase::operator!=(const IteratorBase& iter)
     {
         return !(*this == iter); 
     }
@@ -987,25 +987,25 @@ namespace zmath
     //          //
 
     template <typename T>
-    inline Sampleable2D<T>::Iterator::Iterator(Sampleable2D<T>* source, T* datum)
+    inline Mat2D<T>::Iterator::Iterator(Mat2D<T>* source, T* datum)
         : IteratorBase(source, datum)
     {}
 
     template <typename T>
-    inline T& Sampleable2D<T>::Iterator::operator*() const
+    inline T& Mat2D<T>::Iterator::operator*() const
     {
         return *this->datum;
     }
 
     template <typename T>
-    inline typename Sampleable2D<T>::Iterator& Sampleable2D<T>::Iterator::operator++()
+    inline typename Mat2D<T>::Iterator& Mat2D<T>::Iterator::operator++()
     {
         ++(*static_cast<IteratorBase*>(this));
         return *this;
     }
 
     template <typename T>
-    inline typename Sampleable2D<T>::Iterator Sampleable2D<T>::Iterator::operator++(int)
+    inline typename Mat2D<T>::Iterator Mat2D<T>::Iterator::operator++(int)
     {
         Iterator iter = *this;
         ++(*static_cast<IteratorBase*>(this));
@@ -1017,25 +1017,25 @@ namespace zmath
     //               //
 
     template <typename T>
-    inline Sampleable2D<T>::ConstIterator::ConstIterator(const Sampleable2D<T>* source, const T* datum)
-        : IteratorBase(const_cast<Sampleable2D<T>*>(source), const_cast<T*>(datum))
+    inline Mat2D<T>::ConstIterator::ConstIterator(const Mat2D<T>* source, const T* datum)
+        : IteratorBase(const_cast<Mat2D<T>*>(source), const_cast<T*>(datum))
     {}
 
     template <typename T>
-    inline const T& Sampleable2D<T>::ConstIterator::operator*() const
+    inline const T& Mat2D<T>::ConstIterator::operator*() const
     {
         return *this->datum;
     }
 
     template <typename T>
-    inline typename Sampleable2D<T>::ConstIterator& Sampleable2D<T>::ConstIterator::operator++()
+    inline typename Mat2D<T>::ConstIterator& Mat2D<T>::ConstIterator::operator++()
     {
         ++(*static_cast<IteratorBase*>(this));
         return *this;
     }
 
     template <typename T>
-    inline typename Sampleable2D<T>::ConstIterator Sampleable2D<T>::ConstIterator::operator++(int)
+    inline typename Mat2D<T>::ConstIterator Mat2D<T>::ConstIterator::operator++(int)
     {
         ConstIterator iter = *this;
         ++(*static_cast<IteratorBase*>(this));
@@ -1047,8 +1047,8 @@ namespace zmath
     //         //
 
     template <typename T>
-    inline Indices::Indices(const Sampleable2D<T>& source, bool (*func)(T, T), T val)
-        : Sampleable2D(source, [=](T sval) { return func(sval, val); })
+    inline Indices::Indices(const Mat2D<T>& source, bool (*func)(T, T), T val)
+        : Mat2D(source, [=](T sval) { return func(sval, val); })
     {}
 
     inline Indices Indices::operator&& (const Indices& rhs) const
@@ -1146,15 +1146,15 @@ namespace zmath
     //                               //
 
     template <typename T>
-    IndicesRefBase<T>::IndicesRefBase(const Indices& indices, Sampleable2D<T>& samp)
+    IndicesRefBase<T>::IndicesRefBase(const Indices& indices, Mat2D<T>& mat)
         : indices(indices)
-        , ref(samp)
+        , ref(mat)
     {}
 
     template <typename T>
-    IndicesRefBase<T>::IndicesRefBase(Indices&& indices, Sampleable2D<T>& samp)
+    IndicesRefBase<T>::IndicesRefBase(Indices&& indices, Mat2D<T>& mat)
         : indices(std::move(indices))
-        , ref(samp)
+        , ref(mat)
     {}
 
     //                           //
@@ -1162,13 +1162,13 @@ namespace zmath
     //                           //
 
     template <typename T>
-    IndicesRef<T>::IndicesRef(const Indices& indices, Sampleable2D<T>& samp)
-        : IndicesRefBase<T>(indices, samp)
+    IndicesRef<T>::IndicesRef(const Indices& indices, Mat2D<T>& mat)
+        : IndicesRefBase<T>(indices, mat)
     {}
 
     template <typename T>
-    IndicesRef<T>::IndicesRef(Indices&& indices, Sampleable2D<T>& samp)
-        : IndicesRefBase<T>(std::move(indices), samp)
+    IndicesRef<T>::IndicesRef(Indices&& indices, Mat2D<T>& mat)
+        : IndicesRefBase<T>(std::move(indices), mat)
     {}
 
     template <typename T>
@@ -1227,56 +1227,56 @@ namespace zmath
     }
 
     template <typename T>
-    inline void IndicesRef<T>::operator= (const Sampleable2D<T>& samp)
+    inline void IndicesRef<T>::operator= (const Mat2D<T>& mat)
     {
         IndicesRefBase<T>::ref.ApplySample(
             IndicesRefBase<T>::indices,
             [=](T cur, bool cond, int x, int y){
-                return (cond) ? samp(x, y) : cur;
+                return (cond) ? mat(x, y) : cur;
             }
         );
     }
 
     template <typename T>
-    inline void IndicesRef<T>::operator+= (const Sampleable2D<T>& samp)
+    inline void IndicesRef<T>::operator+= (const Mat2D<T>& mat)
     {
         IndicesRefBase<T>::ref.ApplySample(
             IndicesRefBase<T>::indices,
             [=](T cur, bool cond, int x, int y){
-                return (cond) ? cur + samp(x, y) : cur;
+                return (cond) ? cur + mat(x, y) : cur;
             }
         );
     }
 
     template <typename T>
-    inline void IndicesRef<T>::operator-= (const Sampleable2D<T>& samp)
+    inline void IndicesRef<T>::operator-= (const Mat2D<T>& mat)
     {
         IndicesRefBase<T>::ref.ApplySample(
             IndicesRefBase<T>::indices,
             [=](T cur, bool cond, int x, int y){
-                return (cond) ? cur - samp(x, y) : cur;
+                return (cond) ? cur - mat(x, y) : cur;
             }
         );
     }
 
     template <typename T>
-    inline void IndicesRef<T>::operator*= (const Sampleable2D<T>& samp)
+    inline void IndicesRef<T>::operator*= (const Mat2D<T>& mat)
     {
         IndicesRefBase<T>::ref.ApplySample(
             IndicesRefBase<T>::indices,
             [=](T cur, bool cond, int x, int y){
-                return (cond) ? cur * samp(x, y) : cur;
+                return (cond) ? cur * mat(x, y) : cur;
             }
         );
     }
 
     template <typename T>
-    inline void IndicesRef<T>::operator/= (const Sampleable2D<T>& samp)
+    inline void IndicesRef<T>::operator/= (const Mat2D<T>& mat)
     {
         IndicesRefBase<T>::ref.ApplySample(
             IndicesRefBase<T>::indices,
             [=](T cur, bool cond, int x, int y){
-                return (cond) ? cur / samp(x, y) : cur;
+                return (cond) ? cur / mat(x, y) : cur;
             }
         );
     }
@@ -1286,13 +1286,13 @@ namespace zmath
     //                                //
 
     template <typename T>
-    IndicesConstRef<T>::IndicesConstRef(const Indices& indices, Sampleable2D<T>& samp)
-        : IndicesRefBase<T>(indices, samp)
+    IndicesConstRef<T>::IndicesConstRef(const Indices& indices, Mat2D<T>& mat)
+        : IndicesRefBase<T>(indices, mat)
     {}
 
     template <typename T>
-    IndicesConstRef<T>::IndicesConstRef(Indices&& indices, Sampleable2D<T>& samp)
-        : IndicesRefBase<T>(std::move(indices), samp)
+    IndicesConstRef<T>::IndicesConstRef(Indices&& indices, Mat2D<T>& mat)
+        : IndicesRefBase<T>(std::move(indices), mat)
     {}
 
 } // namespace zmath

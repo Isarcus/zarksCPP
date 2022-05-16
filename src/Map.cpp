@@ -16,11 +16,11 @@ namespace zmath
 {
 
 Map::Map()
-    : Sampleable2D()
+    : Mat2D()
 {}
 
 Map::Map(VecInt bounds)
-    : Sampleable2D(bounds)
+    : Mat2D(bounds)
 {}
 
 Map::Map(int x, int y)
@@ -28,22 +28,22 @@ Map::Map(int x, int y)
 {}
 
 Map::Map(const Map& map)
-    : Sampleable2D(map)
+    : Mat2D(map)
 {}
 
 Map::Map(Map&& map)
-    : Sampleable2D(std::move(map))
+    : Mat2D(std::move(map))
 {}
 
 Map& Map::operator=(const Map& rhs)
 {
-    Sampleable2D::operator=(rhs);
+    Mat2D::operator=(rhs);
     return *this;
 }
 
 Map& Map::operator=(Map&& rhs)
 {
-    Sampleable2D::operator=(std::move(rhs));
+    Mat2D::operator=(std::move(rhs));
     return *this;
 }
 

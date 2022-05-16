@@ -1,6 +1,6 @@
 #pragma once
 
-#include <zarks/internal/Sampleable2D.h>
+#include <zarks/internal/Mat2D.h>
 #include <zarks/math/VecT.h>
 #include <zarks/math/GaussField.h>
 
@@ -8,7 +8,7 @@
 
 namespace zmath
 {
-    class Map : public Sampleable2D<double>
+    class Map : public Mat2D<double>
     {
     public:
         Map();

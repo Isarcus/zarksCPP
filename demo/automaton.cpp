@@ -21,7 +21,7 @@ int main(int argc, char** argv)
     std::cout << "Using rule " << rule << " to generate a " << width
               << "x" << iters << " image\n";
 
-    Sampleable2D<bool> mat(width, iters);
+    Mat2D<bool> mat(width, iters);
     mat(iters, 0) = true;
 
     for (int i = 1; i < iters; i++)
