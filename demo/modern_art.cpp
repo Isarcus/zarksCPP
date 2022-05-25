@@ -46,7 +46,7 @@ int main()
 	zmath::Image img(slope, scheme);
 
 	// Save 3-channel (RGB) image with a creative title
-	img.Save("noise.png", 3);
+	img.Save("noise.png");
 
     return 0;
 }

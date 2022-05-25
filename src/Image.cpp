@@ -483,32 +483,86 @@ Image& Image::EnhanceContrast(double sigma)
     return *this;
 }
 
-void Image::Save(std::string path, unsigned channels) const
+static inline uint8_t* rgba_write_1(uint8_t* ptr, RGBA col)
 {
-    if (channels != 3 && channels != 4)
+    ptr[0] = col.Brightness() * 255.999;
+    return ptr + 1;
+}
+
+static inline uint8_t* rgba_write_2(uint8_t* ptr, RGBA col)
+{
+    ptr[0] = col.Brightness() * 255.999;
+    ptr[1] = col.A;
+    return ptr + 2;
+}
+
+static inline uint8_t* rgba_write_3(uint8_t* ptr, RGBA col)
+{
+    ptr[0] = col.R;
+    ptr[1] = col.G;
+    ptr[2] = col.B;
+    return ptr + 3;
+}
+
+static inline uint8_t* rgba_write_4(uint8_t* ptr, RGBA col)
+{
+    ptr[0] = col.R;
+    ptr[1] = col.G;
+    ptr[2] = col.B;
+    ptr[3] = col.A;
+    return ptr + 4;
+}
+
+std::vector<uint8_t> Image::EncodeRaw(int channels) const
+{
+    if (channels < 1 || channels > 4)
     {
-        throw std::runtime_error("Image: I only know how to save 3- and 4-channel images!");
+        throw std::runtime_error("Invalid number of channels: " + std::to_string(channels));
+    }
+    
+    static uint8_t* (*const funcs[4])(uint8_t*, RGBA){
+        rgba_write_1,
+        rgba_write_2,
+        rgba_write_3,
+        rgba_write_4
+    };
+
+    size_t length = bounds.Area();
+    std::vector<uint8_t> arr(length * channels);
+    auto func = funcs[channels - 1];
+
+    uint8_t* ptr = arr.data();
+    LOOP_IMAGE_HORIZONTAL
+    {
+        ptr = func(ptr, at_itl(x, y));
     }
 
-    uint8_t* pixels = new uint8_t[(uint64_t)bounds.X * (uint64_t)bounds.Y * channels];
+    return arr;
+}
 
-    int index = 0;
-    for (int y = 0; y < bounds.Y; y++)
+void Image::Save(std::string path, Format format, int channels) const
+{
+    static constexpr int MAX_JPG_QUALITY = 100;
+
+    std::vector<uint8_t> arr = EncodeRaw(channels);
+
+    switch (format)
     {
-        for (int x = 0; x < bounds.X; x++)
-        {
-            RGBA col = at_itl(x, y);
+    case Format::PNG:
+        stbi_write_png(path.c_str(), bounds.X, bounds.Y, channels, arr.data(), bounds.X * channels);
+        break;
 
-            pixels[index++] = col.R;
-            pixels[index++] = col.G;
-            pixels[index++] = col.B;
-            if (channels == 4) pixels[index++] = col.A;
-        }
+    case Format::JPG:
+        stbi_write_jpg(path.c_str(), bounds.X, bounds.Y, channels, arr.data(), MAX_JPG_QUALITY);
+        break;
+
+    case Format::BMP:
+        stbi_write_bmp(path.c_str(), bounds.X, bounds.Y, channels, arr.data());
+        break;
+
+    default:
+        throw std::runtime_error("Unrecognized image format: " + std::to_string((int)format));
     }
-
-    stbi_write_png(path.c_str(), bounds.X, bounds.Y, channels, pixels, bounds.X * channels);
-
-    delete[] pixels;
 }
 
 void Image::SaveMNIST(std::string path_images, std::string path_labels, int columns, int emptyBorderSize) const
@@ -540,7 +594,7 @@ void Image::SaveMNIST(std::string path_images, std::string path_labels, int colu
         std::cout << "[ERROR] Couldn't create file at " << path_labels << "\n";
         return;
     }
-    char header_empty[16];
+    char header_empty[16]{};
     fout_images.write(header_empty, 16);
     fout_labels.write(header_empty, 8);
 

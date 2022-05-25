@@ -40,8 +40,23 @@ namespace zmath
         Image& WarpGaussian(const Map& map, double sigma, double amplitude);
         Image& EnhanceContrast(double sigma);
 
+        // Allowable saving formats
+        enum class Format{
+            PNG,
+            JPG,
+            BMP
+        };
+
+        // Encode image to raw uncompressed binary data. 'channels' may take
+        // any value from 0 to 4:
+        // 1: Brightness
+        // 2: Brightness, Alpha
+        // 3: R, G, B
+        // 4: R, G, B, A
+        std::vector<uint8_t> EncodeRaw(int channels) const;
+
         // Save an image using STBI
-        void Save(std::string path, unsigned int channels = 3) const;
+        void Save(std::string path, Format format = Format::PNG, int channels = 3) const;
         void SaveMNIST(std::string path_images, std::string path_labels, int columns, int emptyBorderSize = 2) const;
     };
 
