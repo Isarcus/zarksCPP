@@ -37,13 +37,12 @@ int main()
 	// Create a color scheme to color an image with
 	std::vector<RGBA> colors{
 		RGBA(0, 0, 0),      // Color where map values are 0
-		// RGBA(0, 0, 255), // This would be the color where map values are 0.5
+		RGBA(0, 0, 255),    // This would be the color where map values are 0.5
 		RGBA(255, 255, 255) // Color where map values are 1
 	};
-	zmath::Scheme scheme(colors);
 
 	// Create an image from the slope map and color scheme
-	zmath::Image img(slope, scheme);
+	Image img(slope, colors);
 
 	// Save 3-channel (RGB) image with a creative title
 	img.Save("noise.png");

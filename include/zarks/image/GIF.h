@@ -1,6 +1,5 @@
 #pragma once
 
-#include <zarks/image/color.h>
 #include <zarks/image/Image.h>
 #include <zarks/image/GIFStructs.h>
 

@@ -1,7 +1,7 @@
 #pragma once
 
 #include <zarks/internal/Mat2D.h>
-#include <zarks/image/color.h>
+#include <zarks/image/RGBA.h>
 #include <zarks/math/Map.h>
 #include <zarks/math/VecT.h>
 
@@ -17,7 +17,7 @@ namespace zmath
         Image(int width, int height, RGBA col = RGBA::Black());
         Image(VecInt bounds_in, RGBA col = RGBA::Black());
         Image(const Mat2D<double>& mat);
-        Image(const Mat2D<double>& mat, const Scheme& scheme);
+        Image(const Mat2D<double>& mat, const std::vector<RGBA>& colors, const std::vector<double>& thresholds = {});
         Image(std::string path);
         Image(const Image& img);
         Image(Image&& img);

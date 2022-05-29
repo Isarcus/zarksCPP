@@ -14,6 +14,7 @@
 
 #include <iostream>
 #include <fstream>
+#include <algorithm>
 
 #define LOOP_IMAGE for (int x = 0; x < bounds.X; x++) for (int y = 0; y < bounds.Y; y++)
 #define LOOP_IMAGE_HORIZONTAL for (int y = 0; y < bounds.Y; y++) for (int x = 0; x < bounds.X; x++)
@@ -41,54 +42,86 @@ Image::Image(const Mat2D<double>& mat)
     ApplySample(mat, [](double d){ return RGBA(255.999 * d); });
 }
 
-Image::Image(const Mat2D<double>& mat, const Scheme& scheme)
+Image::Image(const Mat2D<double>& mat, const std::vector<RGBA>& colors, const std::vector<double>& thresholds)
     : Image(mat.Bounds())
 {
-    // Create an accurate thresholds array
-    std::vector<double> thresholds(scheme.colors.size());
-    thresholds.back() = 1;
-    for (unsigned i = 1; i < scheme.colors.size() - 1; i++)
+    const size_t numColors = colors.size();
+
+    std::vector<double> thresh_final;
+    if (numColors == 0)
     {
-        thresholds[i] = scheme.thresholds[i - 1];
+        throw std::runtime_error("Must provide at least one color");
+    }
+    else if (numColors == 1)
+    {
+        Clear(colors[0]);
+    }
+    else if (thresholds.empty())
+    {
+        // Use evenly spaced thresholds if none provided
+        std::pair<double, double> minmax = mat.GetMinMax();
+        double range = minmax.second - minmax.first;
+        thresh_final.reserve(2*numColors - 1);
+        for (size_t i = 0; i < numColors*2 - 1; i++)
+        {
+            thresh_final.push_back(minmax.first + (i*range) / (numColors*2 - 2));
+        }
+    }
+    else if (thresholds.size() == numColors*2 - 1)
+    {
+        thresh_final = thresholds;
+        std::sort(thresh_final.begin(), thresh_final.end());
+    }
+    else
+    {
+        throw std::runtime_error("Number of thresholds must be two times the number of colors, minus one");
     }
 
-    // Loop and assign colors
+    // Create final color vector
+    std::vector<RGBA> use_colors;
+    use_colors.reserve(2*numColors - 1);
+    use_colors.push_back(colors.front());
+    for (size_t i = 1; i < numColors; i++)
+    {
+        use_colors.push_back(RGBA::Interpolate(
+            colors[i - 1],
+            colors[i],
+            0.5
+        ));
+        use_colors.push_back(colors[i]);
+    }
+
+    const auto iter_begin = thresh_final.begin();
+    const auto iter_end = thresh_final.end();
     ApplySample(mat, [&](double d)
     {
-        int idxUpper = 0;
-        for (unsigned i = 0; i < scheme.colors.size(); i++)
-        {
-            if (d < thresholds[i])
-            {
-                idxUpper = i;
-                break;
-            }
-        }
+        auto iter = std::lower_bound(iter_begin, iter_end, d);
+        if (iter == iter_begin)
+            return use_colors.front();
+        else if (iter == iter_end)
+            return use_colors.back();
 
-        double min = thresholds[idxUpper - 1];
-        double range = thresholds[idxUpper] - min;
-
+        // Interpolate between neighboring colors
+        size_t diff = iter - iter_begin;
+        double thresh_upper = *iter;
+        double thresh_lower = *(iter - 1);
         return RGBA::Interpolate(
-            scheme.colors[idxUpper - 1],
-            scheme.colors[idxUpper],
-            (d - min) / range
+            use_colors[diff - 1],
+            use_colors[diff],
+            (d - thresh_lower) / (thresh_upper - thresh_lower)
         );
     });
 }
 
 Image::Image(std::string path)
 {
-int width, height, channels = -1;
+    int width, height, channels = -1;
     uint8_t* stbImg = stbi_load(path.c_str(), &width, &height, &channels, 0);
 
     // Abort if it fails to load
     if (!stbImg || channels == -1)
     {
-        std::cout << "[ERROR] Could not load image at " << path << "\n";
-
-        data = nullptr;
-        bounds = Vec();
-        return;
+        throw std::runtime_error("Could not load image at " + path);
     }
 
     bounds = VecInt(width, height);

@@ -1,4 +1,4 @@
-#include <zarks/image/color.h>
+#include <zarks/image/RGBA.h>
 
 #include <cmath>
 #include <exception>
@@ -131,25 +131,6 @@ double RGBA::Distance(RGBA c0, RGBA c1)
         std::pow((int)c0.G - (int)c1.G, 2) +
         std::pow((int)c0.B - (int)c1.B, 2)
     );
-}
-
-//              //
-//    SCHEME    //
-//              //
-
-Scheme::Scheme(const std::vector<RGBA>& colors, const std::vector<double>& thresholds)
-    : colors(colors)
-    , thresholds(thresholds)
-{}
-
-Scheme::Scheme(const std::vector<RGBA>& colors)
-    : colors(colors)
-{
-    thresholds = std::vector<double>(std::max(0, (int)colors.size() - 2));
-    for (unsigned i = 0; i < thresholds.size(); i++)
-    {
-        thresholds[i] = (i + 1) / (double)(colors.size() - 1);
-    }
 }
 
 std::ostream& operator<<(std::ostream& os, RGBA c)

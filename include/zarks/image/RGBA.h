@@ -34,12 +34,4 @@ namespace zmath
 
         friend std::ostream& operator<<(std::ostream& os, RGBA c);
     } RGBA;
-
-    typedef struct Scheme {
-        Scheme(const std::vector<RGBA>& colors, const std::vector<double>& thresholds);
-        Scheme(const std::vector<RGBA>& colors);
-
-        std::vector<RGBA> colors;
-        std::vector<double> thresholds; // should always be n-2
-    } Scheme;
 }

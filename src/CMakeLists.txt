@@ -1,6 +1,5 @@
 add_library(${ZARKS_LIB_NAME}
     BitBuffer.cpp
-    color.cpp
     fractals.cpp
     GaussField.cpp
     GIF.cpp
@@ -14,6 +13,7 @@ add_library(${ZARKS_LIB_NAME}
     NoiseHash.cpp
     Noiser.cpp
     numerals.cpp
+    RGBA.cpp
     Shape3D.cpp
     StreamKeeper.cpp
     Tessellation3D.cpp
