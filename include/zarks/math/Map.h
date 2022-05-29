@@ -24,10 +24,6 @@ namespace zmath
 
         // Map characteristics
 
-        double GetMin() const;
-        double GetMax() const;
-        std::pair<double, double> GetMinMax() const;
-
         double Sum() const;
         double Mean() const;
         double Variance() const;

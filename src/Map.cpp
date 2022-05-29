@@ -55,37 +55,6 @@ Map& Map::operator=(Map&& rhs)
     return *this;
 }
 
-double Map::GetMin() const
-{
-    double min = data[0];
-
-    LOOP_MAP min = std::min(min, at_itl(x, y));
-
-    return min;
-}
-
-double Map::GetMax() const
-{
-    double max = data[0];
-
-    LOOP_MAP max = std::max(max, at_itl(x, y));
-
-    return max;
-}
-
-std::pair<double, double> Map::GetMinMax() const
-{
-    std::pair<double, double> minmax(data[0], data[0]);
-
-    LOOP_MAP
-    {
-        minmax.first = std::min(minmax.first, at_itl(x, y));
-        minmax.second = std::max(minmax.second, at_itl(x, y));
-    }
-
-    return minmax;
-}
-
 double Map::Sum() const
 {
     double sum = 0;

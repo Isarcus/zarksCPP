@@ -121,6 +121,7 @@ namespace zmath
         bool ContainsCoord(VecInt pos) const;
 
         VecInt Bounds() const;
+        size_t Area() const;
 
         void Set(int x, int y, T val);
         void Set(VecInt pos, T val);
@@ -140,6 +141,13 @@ namespace zmath
 
         IndicesConstRef<T> operator()(const Indices& indices) const;
         IndicesConstRef<T> operator()(Indices&& indices) const;
+
+        template <typename LESS = std::less<T>>
+        T GetMin(LESS less = LESS()) const;
+        template <typename LESS = std::less<T>>
+        T GetMax(LESS less = LESS()) const;
+        template <typename LESS = std::less<T>>
+        std::pair<T, T> GetMinMax(LESS less = LESS()) const;
 
         void Resize(int x, int y, T clearVal = T());
         void Resize(VecInt newBounds, T clearVal = T());
@@ -275,9 +283,9 @@ namespace zmath
         IndicesConstRef(Indices&& indices, Mat2D<T>& mat);
     };
 
-    //              //
-    // Sampleable2D //
-    //              //
+    //       //
+    // Mat2D //
+    //       //
 
     template <typename T>
     inline Mat2D<T>::Mat2D()
@@ -463,6 +471,12 @@ namespace zmath
     }
 
     template <typename T>
+    inline size_t Mat2D<T>::Area() const
+    {
+        return bounds.Area();
+    }
+
+    template <typename T>
     inline void Mat2D<T>::Set(int x, int y, T val)
     {
         assertContains(VecInt(x, y));
@@ -550,6 +564,47 @@ namespace zmath
     inline IndicesConstRef<T> Mat2D<T>::operator()(Indices&& indices) const
     {
         return IndicesConstRef<T>(std::move(indices), *this);
+    }
+    
+    template <typename T>
+    template <typename LESS>
+    inline T Mat2D<T>::GetMin(LESS less) const
+    {
+        T min = At(0, 0);
+        size_t area = Area();
+        for (size_t i = 0; i < area; i++)
+        {
+            min = less(data[i], min) ? data[i] : min;
+        }
+        return min;
+    }
+    
+    template <typename T>
+    template <typename LESS>
+    inline T Mat2D<T>::GetMax(LESS less) const
+    {
+        T max = At(0, 0);
+        size_t area = Area();
+        for (size_t i = 0; i < area; i++)
+        {
+            max = less(max, data[i]) ? data[i] : max;
+        }
+        return max; 
+    }
+    
+    template <typename T>
+    template <typename LESS>
+    inline std::pair<T, T> Mat2D<T>::GetMinMax(LESS less) const
+    {
+        T min, max;
+        min = max = At(0, 0);
+        size_t area = Area();
+        for (size_t i = 0; i < area; i++)
+        {
+            min = less(data[i], min) ? data[i] : min;
+            max = less(max, data[i]) ? data[i] : max;
+        }
+        return {min, max};
     }
 
     template <typename T>
@@ -845,7 +900,7 @@ namespace zmath
         if (!ContainsCoord(check))
         {
             std::ostringstream os;
-            os << "Sampleable2D out of bounds error: bounds = "
+            os << "Mat2D out of bounds error: bounds = "
                << bounds << ", but point = " << check; 
             throw std::runtime_error(os.str());
         }
@@ -857,7 +912,7 @@ namespace zmath
         if (!ContainsCoord(check))
         {
             std::ostringstream os;
-            os << "Sampleable2D out of bounds error: bounds = "
+            os << "Mat2D out of bounds error: bounds = "
                << bounds << ", but point = " << check; 
             throw std::runtime_error(os.str());
         }
@@ -870,7 +925,7 @@ namespace zmath
         if (bounds != mat.Bounds())
         {
             std::ostringstream os;
-            os << "Sampleable2D bounds mismatch: " << bounds << " vs. " << mat.Bounds();
+            os << "Mat2D bounds mismatch: " << bounds << " vs. " << mat.Bounds();
             throw std::runtime_error(os.str());
         }
     }
