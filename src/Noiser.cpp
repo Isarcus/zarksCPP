@@ -7,7 +7,7 @@ namespace zmath
 // Noiser Class //
 //              //
 
-Noiser::Noiser(double (*noiseFunc)(Vec, NoiseHash&), uint64_t seed)
+Noiser::Noiser(double (*noiseFunc)(Vec, NoiseHash&), size_t seed)
     : hash(seed)
     , noiseFunc(noiseFunc)
 {}
@@ -37,7 +37,7 @@ Map Noiser::operator()(VecInt dimensions, int octaves, bool interpolate)
 
 void Noiser::AddOctave(Map& map, int octave)
 {
-    hash.Clear();
+    hash.Shuffle();
 
     const double octPow = std::pow(2, octave);
     const double octInfluence = 1.0 / octPow;

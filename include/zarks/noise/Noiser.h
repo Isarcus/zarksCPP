@@ -12,7 +12,7 @@ namespace zmath
     class Noiser
     {
     public:
-        Noiser(double (*noiseFunc)(Vec, NoiseHash&), uint64_t seed = NoiseHash::RANDOM_SEED);
+        Noiser(double (*noiseFunc)(Vec, NoiseHash&), size_t seed = 0);
 
         Map operator()(VecInt dimensions, int octaves, bool interpolate = true);
         void AddOctave(Map& map, int octave);

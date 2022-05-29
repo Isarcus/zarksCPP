@@ -2,52 +2,61 @@
 #include <zarks/internal/zmath_internals.h>
 
 #include <chrono>
+#include <algorithm>
 
 namespace zmath
 {
 
-NoiseHash::NoiseHash(uint64_t seed)
-    : eng(seed == RANDOM_SEED ? std::chrono::system_clock::now().time_since_epoch().count() : seed)
-    , angleRNG(0, 2.0*PI)
-{}
-
-bool NoiseHash::Exists(VecInt key) const
+NoiseHash::NoiseHash(size_t seed, size_t numAngles, hash_t hash2D)
+    : eng((seed) ? seed : std::chrono::system_clock::now().time_since_epoch().count())
+    , hash2D(hash2D)
+    , angleTable(numAngles)
 {
-    return hash.count(key) == 1;
+    if (numAngles == 0)
+    {
+        throw std::runtime_error("numAngles must be at least 1");
+    }
+
+    // Create continuous angles table
+    for (size_t i = 0; i < numAngles; i++)
+    {
+        angleTable[i] = Vec::UnitVector(i * PIX2 / numAngles);
+    }
+
+    // Create random permutation table
+    std::iota(permTable, permTable + PERM_TABLE_SIZE, 0);
+    std::shuffle(permTable, permTable + PERM_TABLE_SIZE, eng);
 }
 
-Vec& NoiseHash::Create(VecInt key, Vec val)
+Vec NoiseHash::operator[](VecInt key) const
 {
-    hash.emplace(key, val);
-    return hash.at(key);
+    uint32_t perm = permTable[hash2D(key.X, key.Y) % PERM_TABLE_SIZE];
+    return angleTable[perm % angleTable.size()];
 }
 
-Vec& NoiseHash::Create(VecInt key)
+void NoiseHash::Shuffle()
 {
-    return Create(key, Vec::UnitVector(angleRNG(eng)));
+    std::shuffle(permTable, permTable + PERM_TABLE_SIZE, eng);
 }
 
-void NoiseHash::Clear()
+unsigned hash_cantor(unsigned a, unsigned b)
 {
-    hash.clear();
+    return (a + b) * (a + b + 1) / 2 + a;
 }
 
-Vec& NoiseHash::operator[](VecInt key)
+unsigned hash_cantor_improved(unsigned a, unsigned b)
 {
-    if (Exists(key))
-        return hash.at(key);
-    else
-        return Create(key);
+    return ((a + b) * (a + b + 1) / 2 + a) ^ (a*b);
 }
 
-Vec& NoiseHash::At(VecInt key)
+unsigned hash_szudzik(unsigned a, unsigned b)
 {
-    return hash.at(key);
+    return (a >= b) ? a*a + a + b : a + b*b;
 }
 
-const Vec& NoiseHash::At(VecInt key) const
+unsigned hash_szudzik_improved(unsigned a, unsigned b)
 {
-    return hash.at(key);
+    return ((a >= b) ? a*a + a + b : a + b*b) ^ (a*b);
 }
 
 } // namespace zmath

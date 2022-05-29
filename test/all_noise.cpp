@@ -39,6 +39,14 @@ void simplex()
     map = noiser(VecInt(1000, 1000), 8);
     image = Image(map);
     image.Save("simplex_noiser.png");
+
+    NoiseConfig cfg;
+    cfg.boxSize = cfg.bounds / 64;
+    cfg.r = 0.4;
+    cfg.octaves = 1;
+    map = Simplex(cfg);
+    image = Image(map);
+    image.Save("simplex_dots.png");
 }
 
 void perlin()

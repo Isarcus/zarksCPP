@@ -61,8 +61,8 @@ Map Simplex(const NoiseConfig& cfg)
     // Dive in
     for (int oct = 0; oct < cfg.octaves; oct++)
     {
-        // Empty the vector hashmap for a new octave
-        hash.Clear();
+        // Reshuffle the hash permutation table
+        hash.Shuffle();
 
         // Calculate the influence of this octave on the overall noise map.
         // Influence most commonly decreases by a factor of 2 each octave.
@@ -143,8 +143,8 @@ Map Perlin(const NoiseConfig& cfg)
     // Beep beep so let's ride
     for (int oct = 0; oct < cfg.octaves; oct++)
     {
-        // Empty the vector hashmap for a new octave
-        hash.Clear();
+        // Reshuffle the hash permutation table
+        hash.Shuffle();
 
         // Determine influence of this octave
         double octInfluence = std::pow(cfg.octDecrease, oct);
@@ -248,8 +248,8 @@ Map Worley(const NoiseConfig& cfg)
 
     for (int oct = 0; oct < cfg.octaves; oct++)
     {
-        // Empty the vector hashmap for a new octave
-        hash.Clear();
+        // Reshuffle the hash permutation table
+        hash.Shuffle();
 
         double octInfluence = std::pow(cfg.octDecrease, oct);
         Vec scaleVec = (Vec(1.0, 1.0) / cfg.boxSize) / std::pow(0.5, oct);
@@ -331,8 +331,8 @@ Map WorleyPlex(const NoiseConfig& cfg, const Map& baseMap)
 
     for (int oct = 0; oct < cfg.octaves; oct++)
     {
-        // Empty the vector hashmap for a new octave
-        hash.Clear();
+        // Reshuffle the hash permutation table
+        hash.Shuffle();
 
         double octInfluence = std::pow(cfg.octDecrease, oct);
         Vec scaleVec = (Vec(1.0, 1.0) / cfg.boxSize) / std::pow(0.5, oct);

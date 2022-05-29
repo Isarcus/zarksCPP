@@ -1,33 +1,34 @@
 #pragma once
 
-#include <zarks/math/hashing.h>
+#include <zarks/math/VecT.h>
 
 #include <random>
-#include <unordered_map>
+#include <vector>
 
 namespace zmath
 {
+    unsigned hash_cantor(unsigned a, unsigned b);
+    unsigned hash_cantor_improved(unsigned a, unsigned b);
+    unsigned hash_szudzik(unsigned a, unsigned b);
+    unsigned hash_szudzik_improved(unsigned a, unsigned b);
+
     class NoiseHash
     {
     public:
-        NoiseHash(uint64_t seed = 0);
+        typedef unsigned (*hash_t)(unsigned, unsigned);
 
-        bool Exists(VecInt key) const;
-        Vec& Create(VecInt key, Vec val);
-        Vec& Create(VecInt key);
+        NoiseHash(size_t seed = 0, size_t numAngles = 13, hash_t hash2D = hash_szudzik_improved);
 
-        void Clear();
+        Vec operator[](VecInt key) const;
 
-        Vec& operator[](VecInt key);
+        void Shuffle();
 
-        Vec& At(VecInt key);
-        const Vec& At(VecInt key) const;
-
-        static constexpr uint64_t RANDOM_SEED = 0;
+        static constexpr size_t PERM_TABLE_SIZE = 256;
 
     private:
-        std::unordered_map<VecInt, Vec> hash;
         std::default_random_engine eng;
-        std::uniform_real_distribution<double> angleRNG;
+        unsigned (*hash2D)(unsigned, unsigned);
+        std::vector<Vec> angleTable;
+        uint32_t permTable[PERM_TABLE_SIZE];
     };
 } // namespace zmath
