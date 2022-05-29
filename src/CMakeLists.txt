@@ -20,3 +20,5 @@ add_library(${ZARKS_LIB_NAME}
     Triangle3D.cpp
     Vec3.cpp
 )
+
+target_link_libraries(${ZARKS_LIB_NAME} pthread)

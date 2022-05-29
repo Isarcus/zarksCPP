@@ -33,6 +33,9 @@ namespace zmath
 
         // Worley-specific values
         std::pair<int, int> nearest;
+
+        // For multithreading
+        int numThreads;
     } NoiseConfig;
 
     Map Simplex(const NoiseConfig& cfg);

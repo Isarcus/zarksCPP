@@ -14,17 +14,22 @@
 #include <zarks/noise/Noiser.h>
 #include <zarks/image/Image.h>
 
+#include <chrono>
+#include <filesystem>
+
 using namespace zmath;
 
 void simplex();
 void perlin();
 void worley();
+void time_threads();
 
 int main()
 {
     ::simplex();
-    ::perlin();
-    ::worley();
+    perlin();
+    worley();
+    time_threads();
 
     return 0;
 }
@@ -68,4 +73,33 @@ void worley()
     Map map = Worley(cfg);
     Image image(map);
     image.Save("worley.png");
+}
+
+void time_threads()
+{
+    Map map, mapThreaded;
+    NoiseConfig cfg;
+    cfg.bounds = VecInt(2000, 2000);
+    cfg.boxSize = cfg.bounds / 2;
+    cfg.octaves = 8;
+    cfg.seed = std::chrono::system_clock::now().time_since_epoch().count();
+
+    std::vector<int> threads{ 1, 2, 3, 4, 6, 8, 12, 16, 24, 32, 64 };
+
+    std::string dir("timed_noise");
+    std::filesystem::create_directory(dir);
+    
+    for (int t : threads)
+    {
+        cfg.numThreads = t;
+
+        decltype(std::chrono::system_clock::now()) start, end;
+        start = std::chrono::system_clock::now();
+        map = Simplex(cfg);
+        end = std::chrono::system_clock::now();
+        std::cout.precision(3);
+        std::cout << t << " threads: " << (end - start).count() / 1.0e9 << " sec \n";
+
+        Image(map).Save(dir + "/simplex_" + std::to_string(t) + "t.png");
+    }
 }

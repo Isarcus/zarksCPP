@@ -8,9 +8,12 @@
 #include <iostream>
 #include <utility>
 #include <algorithm>
+#include <thread>
 
 namespace zmath
 {
+
+static Map SimplexThreaded(const NoiseConfig& cfg);
 
 GridConfig::GridConfig()
     : bounds(Vec(1000, 1000))
@@ -44,6 +47,11 @@ void NoiseConfig::NewSeed()
 
 Map Simplex(const NoiseConfig& cfg)
 {
+    if (cfg.numThreads > 0)
+    {
+        return SimplexThreaded(cfg);
+    }
+    
     // Helpful constant
     const double r2 = cfg.r * cfg.r;
 
@@ -375,6 +383,109 @@ Map WorleyPlex(const NoiseConfig& cfg, const Map& baseMap)
     std::cout << " -> All done!                       \n";
 
     if (cfg.normalize) map.Interpolate(0, 1);
+
+    return map;
+}
+
+//                          //
+// Multithreaded Algorithms //
+//                          //
+
+void SimplexChunk(const NoiseConfig* cfg, Map* map, VecInt min, VecInt max, const std::vector<NoiseHash>* hashes)
+{
+    const double r2 = std::pow(cfg->r, 2);
+
+    for (int oct = 0; oct < cfg->octaves; oct++)
+    {
+        const NoiseHash& hash = (*hashes)[oct];
+
+        double octInfluence = std::pow(cfg->octDecrease, oct);
+        Vec scaleVec = (Vec(1.0, 1.0) / cfg->boxSize) / std::pow(0.5, oct);
+
+        for (int x = min.X; x < max.X; x++)
+        {
+            for (int y = min.Y; y < max.Y; y++)
+            {
+                // Compute input coordinate
+                Vec ipt = scaleVec * Vec(x, y);
+                // Compute skewed coordinate
+                Vec skewed = simplex::skew(ipt);
+                // Compute internal simplex coordinate
+                Vec itl = skewed - skewed.Floor();
+
+                // Corners of this simplex
+                VecInt corners[3];
+                // Angle vectors of this simplex's corners
+                Vec vectors[3];
+
+                // Base corner is just lowest point in this simplex
+                corners[0] = skewed.Floor();
+                // "Middle" corner depends on internal X and Y
+                corners[1] = (itl.X > itl.Y) ? corners[0] + VecInt(1, 0) : corners[0] + VecInt(0, 1);
+                // High corner is just highers point in this simplex
+                corners[2] = corners[0] + Vec(1, 1);
+
+                for (int i = 0; i < 3; i++)
+                {
+                    vectors[i] = hash[corners[i]];
+                }
+
+                // Perform final summation for this coordinate
+                double Z = 0;
+                for (int i = 0; i < 3; i++)
+                {
+                    Vec displacement = ipt - simplex::unskew(corners[i]);
+                    double distance = displacement.LNorm(cfg->lNorm); // Distance formula
+
+                    double influence = std::pow(std::max(0.0, r2 - distance * distance), cfg->rMinus);
+                    Z += influence * displacement.Dot(vectors[i]);
+                }
+
+                // Add this coordinate to the map, weighted appropriately
+                (*map)(x, y) += Z * octInfluence;
+            }
+        }
+    }
+}
+
+Map SimplexThreaded(const NoiseConfig& cfg)
+{
+    size_t seed = (cfg.seed) ? cfg.seed : std::chrono::system_clock::now().time_since_epoch().count();
+    Map map(cfg.bounds);
+    
+    std::vector<NoiseHash> hashes;
+    hashes.reserve(cfg.octaves);
+    NoiseHash hash(seed);
+    for (int i = 0; i < cfg.octaves; i++)
+    {
+        hash.Shuffle();
+        hashes.push_back(hash);
+    }
+
+    std::vector<std::thread> threads(cfg.numThreads);
+    for (int i = 0; i < cfg.numThreads; i++)
+    {
+        VecInt min(
+            double(i) / cfg.numThreads * cfg.bounds.X,
+            0
+        );
+        VecInt max(
+            double(i + 1) / cfg.numThreads * cfg.bounds.X,
+            cfg.bounds.Y
+        );
+
+        threads[i] = std::thread(SimplexChunk, &cfg, &map, min, max, &hashes);
+    }
+
+    for (int i = 0; i < cfg.numThreads; i++)
+    {
+        threads[i].join();
+    }
+
+    if (cfg.normalize)
+    {
+        map.Interpolate(0, 1);
+    }
 
     return map;
 }
