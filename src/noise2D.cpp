@@ -45,15 +45,58 @@ void NoiseConfig::NewSeed()
     seed = std::chrono::system_clock::now().time_since_epoch().count();
 }
 
+//                 //
+// Noise Functions //
+//                 //
+
+static auto GetSimplexFunc(const NoiseHash& hash, const NoiseConfig& cfg)
+{
+    const double r2 = std::pow(cfg.r, 2);
+    return [=](Vec ipt)
+    {
+        // Compute skewed coordinate
+        Vec skewed = simplex::skew(ipt);
+        // Compute internal simplex coordinate
+        Vec itl = skewed - skewed.Floor();
+
+        // Corners of this simplex
+        VecInt corners[3];
+        // Angle vectors of this simplex's corners
+        Vec vectors[3];
+
+        // Base corner is just lowest point in this simplex
+        corners[0] = skewed.Floor();
+        // "Middle" corner depends on internal X and Y
+        corners[1] = (itl.X > itl.Y) ? corners[0] + VecInt(1, 0) : corners[0] + VecInt(0, 1);
+        // High corner is just highers point in this simplex
+        corners[2] = corners[0] + Vec(1, 1);
+
+        for (int i = 0; i < 3; i++)
+        {
+            vectors[i] = hash[corners[i]];
+        }
+
+        // Perform final summation for this coordinate
+        double ret = 0;
+        for (int i = 0; i < 3; i++)
+        {
+            Vec displacement = ipt - simplex::unskew(corners[i]);
+            double distance = displacement.LNorm(cfg.lNorm); // Distance formula
+            double influence = std::pow(std::max(0.0, r2 - distance * distance), cfg.rMinus);
+
+            ret += influence * displacement.Dot(vectors[i]);
+        }
+
+        return ret;
+    };
+}
+
 Map Simplex(const NoiseConfig& cfg)
 {
     if (cfg.numThreads > 0)
     {
         return SimplexThreaded(cfg);
     }
-    
-    // Helpful constant
-    const double r2 = cfg.r * cfg.r;
 
     // RNG
     NoiseHash hash(cfg.seed);
@@ -67,6 +110,7 @@ Map Simplex(const NoiseConfig& cfg)
                 << " -> Seed:   " << cfg.seed << "\n";
     
     // Dive in
+    auto func = GetSimplexFunc(hash, cfg);
     for (int oct = 0; oct < cfg.octaves; oct++)
     {
         // Reshuffle the hash permutation table
@@ -86,41 +130,9 @@ Map Simplex(const NoiseConfig& cfg)
             {
                 // Compute input coordinate
                 Vec ipt = scaleVec * Vec(x, y);
-                // Compute skewed coordinate
-                Vec skewed = simplex::skew(ipt);
-                // Compute internal simplex coordinate
-                Vec itl = skewed - skewed.Floor();
-
-                // Corners of this simplex
-                VecInt corners[3];
-                // Angle vectors of this simplex's corners
-                Vec vectors[3];
-
-                // Base corner is just lowest point in this simplex
-                corners[0] = skewed.Floor();
-                // "Middle" corner depends on internal X and Y
-                corners[1] = (itl.X > itl.Y) ? corners[0] + VecInt(1, 0) : corners[0] + VecInt(0, 1);
-                // High corner is just highers point in this simplex
-                corners[2] = corners[0] + Vec(1, 1);
-
-                for (int i = 0; i < 3; i++)
-                {
-                    vectors[i] = hash[corners[i]];
-                }
-
-                // Perform final summation for this coordinate
-                double Z = 0;
-                for (int i = 0; i < 3; i++)
-                {
-                    Vec displacement = ipt - simplex::unskew(corners[i]);
-                    double distance = displacement.LNorm(cfg.lNorm); // Distance formula
-
-                    double influence = std::pow(std::max(0.0, r2 - distance * distance), cfg.rMinus);
-                    Z += influence * displacement.Dot(vectors[i]);
-                }
-
+                
                 // Add this coordinate to the map, weighted appropriately
-                map.At(x, y) += Z * octInfluence;
+                map.At(x, y) += func(ipt) * octInfluence;
             }
         } 
 
@@ -393,11 +405,10 @@ Map WorleyPlex(const NoiseConfig& cfg, const Map& baseMap)
 
 void SimplexChunk(const NoiseConfig* cfg, Map* map, VecInt min, VecInt max, const std::vector<NoiseHash>* hashes)
 {
-    const double r2 = std::pow(cfg->r, 2);
-
     for (int oct = 0; oct < cfg->octaves; oct++)
     {
         const NoiseHash& hash = (*hashes)[oct];
+        auto func = GetSimplexFunc(hash, *cfg);
 
         double octInfluence = std::pow(cfg->octDecrease, oct);
         Vec scaleVec = (Vec(1.0, 1.0) / cfg->boxSize) / std::pow(0.5, oct);
@@ -408,41 +419,9 @@ void SimplexChunk(const NoiseConfig* cfg, Map* map, VecInt min, VecInt max, cons
             {
                 // Compute input coordinate
                 Vec ipt = scaleVec * Vec(x, y);
-                // Compute skewed coordinate
-                Vec skewed = simplex::skew(ipt);
-                // Compute internal simplex coordinate
-                Vec itl = skewed - skewed.Floor();
-
-                // Corners of this simplex
-                VecInt corners[3];
-                // Angle vectors of this simplex's corners
-                Vec vectors[3];
-
-                // Base corner is just lowest point in this simplex
-                corners[0] = skewed.Floor();
-                // "Middle" corner depends on internal X and Y
-                corners[1] = (itl.X > itl.Y) ? corners[0] + VecInt(1, 0) : corners[0] + VecInt(0, 1);
-                // High corner is just highers point in this simplex
-                corners[2] = corners[0] + Vec(1, 1);
-
-                for (int i = 0; i < 3; i++)
-                {
-                    vectors[i] = hash[corners[i]];
-                }
-
-                // Perform final summation for this coordinate
-                double Z = 0;
-                for (int i = 0; i < 3; i++)
-                {
-                    Vec displacement = ipt - simplex::unskew(corners[i]);
-                    double distance = displacement.LNorm(cfg->lNorm); // Distance formula
-
-                    double influence = std::pow(std::max(0.0, r2 - distance * distance), cfg->rMinus);
-                    Z += influence * displacement.Dot(vectors[i]);
-                }
 
                 // Add this coordinate to the map, weighted appropriately
-                (*map)(x, y) += Z * octInfluence;
+                (*map)(x, y) += func(ipt) * octInfluence;
             }
         }
     }
