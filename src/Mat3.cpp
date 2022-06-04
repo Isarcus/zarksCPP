@@ -13,25 +13,12 @@ namespace zmath
 Mat3::Mat3() 
     : data{ {1, 0, 0},
             {0, 1, 0},
-            {0, 0, 1} } {}
+            {0, 0, 1} }
+{}
 
 Mat3::Mat3(const double arr[3][3])
-    : data{ {arr[0][0], arr[0][1], arr[0][2]},
-            {arr[1][0], arr[1][1], arr[1][2]},
-            {arr[2][0], arr[2][1], arr[2][2]} } {}
-
-Mat3& Mat3::operator=(const Mat3& mat3)
 {
-    LOOP data[row][col] = mat3.data[row][col];
-
-    return *this;
-}
-
-Mat3& Mat3::operator=(const double* const* arr)
-{
-    LOOP data[row][col] = arr[row][col];
-
-    return *this;
+    memcpy(data, arr, sizeof(data));
 }
 
 double* Mat3::operator[](int row)
