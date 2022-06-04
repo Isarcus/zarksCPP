@@ -13,52 +13,35 @@ void GaussianBlur(Mat2D<T>& mat, int sigma, int devs = 2)
 {
     GaussField gauss(sigma, 1.0);
     VecInt bounds = mat.Bounds();
-    Mat2D<std::pair<SUM_T, double>> blurred(bounds);
+    Mat2D<T> blurred(bounds);
 
     // Pre-compute weights for each point
-    const int halfSide = devs*sigma;
-    const int weightSide = halfSide*2 + 1;
-    const VecInt offset(halfSide, halfSide);
-    Mat2D<double> weights(weightSide, weightSide);
-    for (int dx = -halfSide; dx <= halfSide; dx++)
-    {
-        for (int dy = -halfSide; dy <= halfSide; dy++)
-        {
-            VecInt rel(dx, dy);
-            weights(rel + offset) = gauss(dx, dy);
-        }
-    }
+    const std::vector<std::pair<VecInt, double>> points = gauss.Points(sigma*devs);
 
     // Perform Gaussian summation
     for (int x = 0; x < bounds.X; x++)
     {
         for (int y = 0; y < bounds.Y; y++)
         {
-            // Summation for this pixel
-            T val = mat(x, y);
-            for (int dx = -halfSide; dx <= halfSide; dx++)
+            VecInt blurCoord(x, y);
+
+            // Summation for this blurred pixel
+            SUM_T sum = SUM_T();
+            double weight = 0;
+            for (auto pair : points)
             {
-                for (int dy = -halfSide; dy <= halfSide; dy++)
+                VecInt origCoord = blurCoord + pair.first;
+                if (blurred.ContainsCoord(origCoord))
                 {
-                    VecInt coord(x + dx, y + dy);
-                    if (blurred.ContainsCoord(coord))
-                    {
-                        double weight = weights(VecInt(dx, dy) + offset);
-                        auto& pair = blurred(coord);
-                        pair.first += val * weight;
-                        pair.second += weight;
-                    }
+                    sum += mat(origCoord) * pair.second;
+                    weight += pair.second;
                 }
             }
+            blurred(blurCoord) = sum / weight;
         }
     }
 
-    // Scale result according to weights
-    auto mat_it = mat.begin();
-    for (const auto& pair : blurred)
-    {
-        *mat_it++ = pair.first / pair.second;
-    }
+    mat = blurred;
 }
 
 }
