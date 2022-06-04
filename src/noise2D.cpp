@@ -38,6 +38,8 @@ NoiseConfig::NoiseConfig()
     , rMinus(4.0)
     // Worley
     , nearest{0, 2}
+    // Threading
+    , numThreads(1)
 {}
 
 void NoiseConfig::NewSeed()
