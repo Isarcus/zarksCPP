@@ -21,8 +21,6 @@ namespace zmath
 
         VecT();
         VecT(T x, T y);
-        VecT(const VecT& vec) = default;
-        VecT(VecT&& vec) = default;
 
         T Min() const;
         T Max() const;
@@ -38,15 +36,12 @@ namespace zmath
         VecT Flip() const;
         VecT Bound(VecT min, VecT max) const;
         VecT Round() const;
+        VecT UnitVector() const;
 
         VecT Mod(VecT denom) const;
         VecT Floor() const;
         VecT Ceil() const;
         VecT Abs() const;
-
-        VecT& operator=  (const VecT& v);
-        VecT& operator=  (VecT&& v);
-        bool operator!() const;
 
         VecT operator+  (VecT v) const;
         VecT operator-  (VecT v) const;
@@ -207,6 +202,12 @@ inline VecT<T> VecT<T>::Round() const
 }
 
 template <typename T>
+inline VecT<T> VecT<T>::UnitVector() const
+{
+    return *this / DistForm();
+}
+
+template <typename T>
 inline VecT<T> VecT<T>::Mod(VecT denom) const
 {
     return VecT(
@@ -234,27 +235,6 @@ inline VecT<T> VecT<T>::Abs() const
 {
     return VecT<T>(std::abs(X),
         std::abs(Y));
-}
-
-template <typename T>
-inline VecT<T>& VecT<T>::operator=(const VecT& v)
-{
-    X = v.X;
-    Y = v.Y;
-
-    return *this;
-}
-
-template <typename T>
-inline VecT<T>& VecT<T>::operator=(VecT&& v)
-{
-    return *this = v;
-}
-
-template <typename T>
-inline bool VecT<T>::operator!() const
-{
-    return !(X || Y);
 }
 
 template <typename T>

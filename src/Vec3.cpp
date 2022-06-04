@@ -88,6 +88,11 @@ Vec3 Vec3::Scale(const Vec3& by, const Vec3& around) const
     );
 }
 
+Vec3 Vec3::UnitVector() const
+{
+    return *this / DistForm();
+}
+
 Vec3 Vec3::operator+(const Vec3& v) const { return Vec3(X + v.X, Y + v.Y, Z + v.Z); }
 Vec3 Vec3::operator-(const Vec3& v) const { return Vec3(X - v.X, Y - v.Y, Z - v.Z); }
 Vec3 Vec3::operator*(const Vec3& v) const { return Vec3(X * v.X, Y * v.Y, Z * v.Z); }
