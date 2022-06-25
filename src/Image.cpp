@@ -325,7 +325,7 @@ Image& Image::Droppify(const std::array<Vec, 3>& origins, const std::array<doubl
         }
 
         // Adjust intensity of weights
-        double intensity = DistForm<double, 3>(weights);
+        double intensity = distForm<double, 3>(weights);
         for (auto& w : weights) w /= intensity;
 
         // Apply weights

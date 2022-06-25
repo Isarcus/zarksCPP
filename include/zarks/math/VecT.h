@@ -37,6 +37,11 @@ namespace zmath
         VecT Bound(VecT min, VecT max) const;
         VecT Round() const;
         VecT UnitVector() const;
+        VecT Rotate(double theta) const;
+        VecT Rotate(double theta, VecT about) const;
+
+        template <typename FUNC = T(*)(T)>
+        VecT Apply(FUNC func) const;
 
         VecT Mod(VecT denom) const;
         VecT Floor() const;
@@ -205,6 +210,33 @@ template <typename T>
 inline VecT<T> VecT<T>::UnitVector() const
 {
     return *this / DistForm();
+}
+
+template <typename T>
+inline VecT<T> VecT<T>::Rotate(double theta) const
+{
+    double cos = std::cos(theta);
+    double sin = std::sin(theta);
+    return VecT(
+        X*cos - Y*sin,
+        Y*cos + X*sin
+    );
+}
+
+template <typename T>
+VecT<T> VecT<T>::Rotate(double theta, VecT about) const
+{
+    return (*this - about).Rotate(theta) + about;
+}
+
+template <typename T>
+template <typename FUNC>
+VecT<T> VecT<T>::Apply(FUNC func) const
+{
+    return VecT(
+        func(X),
+        func(Y)
+    );
 }
 
 template <typename T>

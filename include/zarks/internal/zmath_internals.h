@@ -25,7 +25,7 @@ class VecT;
 //       //
 
 template <typename T, int N>
-constexpr T DistForm(const std::array<T, N>& arr)
+constexpr T distForm(const std::array<T, N>& arr)
 {
     T sum = 0;
     for (const T& elem : arr)
@@ -38,6 +38,21 @@ constexpr T DistForm(const std::array<T, N>& arr)
 //      //
 // MATH //
 //      //
+
+inline double radians(double deg)
+{
+    return deg / 180 * PI;
+}
+
+inline double degrees(double rad)
+{
+    return rad / PI * 180;
+}
+
+inline double distForm(double X, double Y)
+{
+    return std::sqrt(std::pow(X, 2) + std::pow(Y, 2));
+}
 
 inline auto getInterpolator(double oldMin, double oldMax, double newMin, double newMax)
 {

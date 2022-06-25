@@ -1,5 +1,6 @@
 add_library(${ZARKS_LIB_NAME}
     BitBuffer.cpp
+    Camera.cpp
     fractals.cpp
     GaussField.cpp
     GIF.cpp
