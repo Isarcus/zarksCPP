@@ -1,6 +1,7 @@
 #pragma once
 
 #include <unordered_map>
+#include <cstddef>
 
 namespace zmath
 {
