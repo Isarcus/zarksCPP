@@ -3,7 +3,11 @@ cmake_minimum_required(VERSION 3.10)
 project(zarks VERSION 0.2)
 
 # Convert CMAKE_BUILD_TYPE to upper case for easy comparison
-string(TOUPPER ${CMAKE_BUILD_TYPE} CMAKE_BUILD_TYPE)
+IF (NOT CMAKE_BUILD_TYPE)
+   set (CMAKE_BUILD_TYPE RELEASE)
+ELSE (CMAKE_BUILD_TYPE)
+    string(TOUPPER ${CMAKE_BUILD_TYPE} CMAKE_BUILD_TYPE)
+ENDIF (NOT CMAKE_BUILD_TYPE)
 
 # General C++ options
 set(CMAKE_CXX_STANDARD 17)
